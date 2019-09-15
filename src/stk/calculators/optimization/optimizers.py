@@ -715,6 +715,22 @@ class MetalOptimizer(Optimizer):
         """
         super().__init__(use_cache=use_cache)
 
+    def restricted_optimization(self, mol):
+        """
+        Optimize `mol` with restrictions on metal-ligand bonds.
+
+        Parameters
+        ----------
+        mol : :class:`.Molecule`
+            The molecule to be optimized.
+
+        Returns
+        -------
+        None : :class:`NoneType`
+
+        """
+        raise NotImplementedError
+
     def optimize(self, mol):
         """
         Optimize `mol`.
@@ -723,6 +739,74 @@ class MetalOptimizer(Optimizer):
         ----------
         mol : :class:`.Molecule`
             The molecule to be optimized.
+
+        xtb_path : :class:`str`
+            The path to the xTB executable.
+
+        output_dir : :class:`str`, optional
+            The name of the directory into which files generated during
+            the optimization are written, if ``None`` then
+            :func:`uuid.uuid4` is used.
+
+        charge : :class:`int`, optional
+            Formal molecular charge.
+
+        num_unpaired_electrons : :class:`int`, optional
+            Number of unpaired electrons.
+
+        Returns
+        -------
+        None : :class:`NoneType`
+
+        """
+
+        # First step is to pre-arrange the metal centre based on the
+        # MetalComplex topology.
+        bbs = [i for i in mol.get_building_blocks()]
+        print(bbs)
+        input()
+        print(mol.building_block_vertices)
+        print(mol.construction_bonds)
+        for bond in mol.construction_bonds:
+            print(bond)
+            print(bond.atom1)
+            print(bond.atom2)
+            a1_bb_ids = bond.atom1.building_block_id
+            a2_bb_ids = bond.atom2.building_block_id
+            print(a1_bb_ids, a2_bb_ids)
+            a1_vertex = mol.building_block_vertices[
+                mol.buila1_bb_ids
+            ]
+            a2_vertex = mol.building_block_vertices[a2_bb_ids]
+            print(a1_vertex, a2_vertex)
+
+
+        # for building_block in mol.building_blocks:
+        #     print(building_block.atoms)
+
+        import sys
+        sys.exit()
+        # Second step is to perform a forcefield optimisation that
+        # only optimises non metal atoms that are not bonded to the
+        # metal.
+        self.restricted_optimization(mol=mol)
+
+        # # Final step is to perform an unrestricted optimisation
+        # # using xTB. This xTB optimisation is limited to one run.
+        # xtb_opt = XTB(
+        #     xtb_path=xtb_path,
+        #     output_dir=output_dir,
+        #     max_runs=1,
+        #     calculate_hessian=False,
+        #     num_cores=num_cores,
+        #     charge=charge,
+        #     num_unpaired_electrons=num_unpaired_electrons,
+        #     unlimited_memory=True
+        # )
+        # xtb_opt.optimize(mol)
+        # , xtb_path, output_dir=None, num_cores=1,
+        #              charge=0, num_unpaired_electrons=0
+
 
 class XTBOptimizerError(Exception):
     ...
