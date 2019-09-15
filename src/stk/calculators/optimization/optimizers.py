@@ -14,6 +14,7 @@ Optimizers
 #. :class:`.CageOptimizerSequence`
 #. :class:`.TryCatchOptimizer`
 #. :class:`.RaisingOptimizer`
+#. :class:`.MetalOptimizer`
 
 
 Optimizers are objects used to optimize molecules. Each optimizer is
@@ -685,6 +686,43 @@ class ETKDG(Optimizer):
             position_matrix=rdkit_mol.GetConformer().GetPositions()
         )
 
+
+class MetalOptimizer(Optimizer):
+    """
+    Applies optimizers that maintain metal centre coordination.
+
+    Examples
+    --------
+
+    FULL optimize
+
+    Just rest opt
+
+
+    """
+
+    def __init__(self, use_cache=False):
+        """
+        Initialize a :class:`MetalOptimizer` instance.
+
+        Parameters
+        ----------
+
+        use_cache : :class:`bool`, optional
+            If ``True`` :meth:`optimize` will not run twice on the same
+            molecule.
+
+        """
+        super().__init__(use_cache=use_cache)
+
+    def optimize(self, mol):
+        """
+        Optimize `mol`.
+
+        Parameters
+        ----------
+        mol : :class:`.Molecule`
+            The molecule to be optimized.
 
 class XTBOptimizerError(Exception):
     ...
