@@ -6,6 +6,7 @@ from rdkit.Chem import AllChem as Chem
 
 
 def main():
+    optimizer = stk.MetalOptimizer()
     print('testing script')
     m = Chem.MolFromSmiles('[Pb+2]')
     m.AddConformer(Chem.Conformer(m.GetNumAtoms()))
@@ -44,23 +45,9 @@ def main():
         'NCCN',
         functional_groups=['amine_metal']
     )
-
-    print(metal)
-    print(metal.func_groups)
-    print(ligand)
-    print(ligand.func_groups)
     ligand.write('lig.pdb')
-    input()
 
-    # v0 = stk.metal_complex.SquarePlanarBidentate.vertices[0]
-    # v1 = stk.metal_complex.SquarePlanarBidentate.vertices[1]
-    # v2 = stk.metal_complex.SquarePlanarBidentate.vertices[2]
-    sqpl = stk.metal_complex.SquarePlanarBidentate(
-        unsatured_vertices=[],
-        # vertex_alignments={
-        #
-        # }
-    )
+    sqpl = stk.metal_complex.SquarePlanarBidentate()
     print(sqpl)
     print('--------------------------------------------------------')
     pdl2_sqpl_complex = stk.ConstructedMolecule(
@@ -76,6 +63,18 @@ def main():
     print(pdl2_sqpl_complex.get_position_matrix()[:5])
     pdl2_sqpl_complex.write('metal_complex.mol')
     pdl2_sqpl_complex.write('metal_complex.pdb')
+    optimizer.optimize(
+        mol=pdl2_sqpl_complex,
+        # xtb_path='/home/atarzia/software/xtb_190418/bin/xtb',
+        # output_dir='comp1',
+        # num_cores=1,
+        # charge=2,
+        # num_unpaired_electrons=0
+    )
+    print(pdl2_sqpl_complex)
+    print(pdl2_sqpl_complex.get_position_matrix()[:5])
+    pdl2_sqpl_complex.write('metal_complex_opt.mol')
+    pdl2_sqpl_complex.write('metal_complex_opt.pdb')
 
     ligand = stk.BuildingBlock(
         'c1cc(-c2ccc(-c3ccncc3)cc2)ccn1',
@@ -83,10 +82,6 @@ def main():
     )
     # Handle multiple functional groups.
     ligand.func_groups = tuple(i for i in [ligand.func_groups[0]])
-    print(metal)
-    print(metal.func_groups)
-    print(ligand)
-    print(ligand.func_groups)
     ligand.write('lig1.pdb')
     input()
 
@@ -108,8 +103,51 @@ def main():
     print(pdl2_sqpl_complex.get_position_matrix()[:5])
     pdl2_sqpl_complex.write('metal_complex_1.mol')
     pdl2_sqpl_complex.write('metal_complex_1.pdb')
+    optimizer.optimize(
+        mol=pdl2_sqpl_complex,
+        # xtb_path='/home/atarzia/software/xtb_190418/bin/xtb',
+        # output_dir='comp2',
+        # num_cores=1,
+        # charge=2,
+        # num_unpaired_electrons=0
+    )
+    print(pdl2_sqpl_complex)
+    print(pdl2_sqpl_complex.get_position_matrix()[:5])
+    pdl2_sqpl_complex.write('metal_complex_1_opt.mol')
+    pdl2_sqpl_complex.write('metal_complex_1_opt.pdb')
     import sys
     sys.exit()
+
+    sqpl = stk.metal_complex.SquarePlanarMonodentate(
+        unsatured_vertices=[1, 2, 3, 4]
+    )
+    print(sqpl)
+    print('--------------------------------------------------------')
+    pdl2_sqpl_complex = stk.ConstructedMolecule(
+        building_blocks=[metal],
+        topology_graph=sqpl,
+        building_block_vertices={
+            metal: tuple([sqpl.vertices[0]])
+        }
+    )
+    print('--------------------------------------------------------')
+    print(pdl2_sqpl_complex)
+    print(pdl2_sqpl_complex.get_position_matrix()[:5])
+    pdl2_sqpl_complex.write('metal_complex_0.mol')
+    pdl2_sqpl_complex.write('metal_complex_0.pdb')
+    optimizer.optimize(
+        mol=pdl2_sqpl_complex,
+        # xtb_path='/home/atarzia/software/xtb_190418/bin/xtb',
+        # output_dir='comp3',
+        # num_cores=1,
+        # charge=2,
+        # num_unpaired_electrons=0
+    )
+    print(pdl2_sqpl_complex)
+    print(pdl2_sqpl_complex.get_position_matrix()[:5])
+    pdl2_sqpl_complex.write('metal_complex_0_opt.mol')
+    pdl2_sqpl_complex.write('metal_complex_0_opt.pdb')
+
     print('testing script done')
 
 
