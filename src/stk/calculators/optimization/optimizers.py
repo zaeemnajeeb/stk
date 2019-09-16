@@ -701,18 +701,21 @@ class MetalOptimizer(Optimizer):
 
     """
 
-    def __init__(self, use_cache=False):
+    def __init__(self, scale, use_cache=False):
         """
         Initialize a :class:`MetalOptimizer` instance.
 
         Parameters
         ----------
 
+        scale : :class:`float`
+            Distance to place ligand binder atoms from metal.
         use_cache : :class:`bool`, optional
             If ``True`` :meth:`optimize` will not run twice on the same
             molecule.
 
         """
+        self._scale = scale
         super().__init__(use_cache=use_cache)
 
     def restricted_optimization(self, mol):
