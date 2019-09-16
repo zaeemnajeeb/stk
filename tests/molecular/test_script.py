@@ -6,9 +6,8 @@ from rdkit.Chem import AllChem as Chem
 
 
 def main():
-    optimizer = stk.MetalOptimizer(scale=2)
     print('testing script')
-    m = Chem.MolFromSmiles('[Pb+2]')
+    m = Chem.MolFromSmiles('[Pd+2]')
     m.AddConformer(Chem.Conformer(m.GetNumAtoms()))
     metal = stk.BuildingBlock.init_from_rdkit_mol(
         m,
@@ -64,18 +63,22 @@ def main():
     pdl2_sqpl_complex.write('metal_complex.mol')
     pdl2_sqpl_complex.write('metal_complex.pdb')
     print('--------------------------------------------------------')
-    optimizer.optimize(
-        mol=pdl2_sqpl_complex,
-        # xtb_path='/home/atarzia/software/xtb_190418/bin/xtb',
-        # output_dir='comp1',
-        # num_cores=1,
-        # charge=2,
-        # num_unpaired_electrons=0
+    optimizer = stk.MetalOptimizer(scale=2)
+    xtb_opt = stk.XTB(
+        xtb_path='/home/atarzia/software/xtb_190418/bin/xtb',
+        output_dir='comp1',
+        num_cores=1,
+        charge=2,
+        num_unpaired_electrons=0,
+        max_runs=1,
+        calculate_hessian=False,
+        unlimited_memory=True
     )
+    optimizer.optimize(mol=pdl2_sqpl_complex)
+    xtb_opt.optimize(mol=pdl2_sqpl_complex)
     print('--------------------------------------------------------')
     print(pdl2_sqpl_complex)
     print(pdl2_sqpl_complex.get_position_matrix()[:5])
-    input()
     pdl2_sqpl_complex.write('metal_complex_opt.mol')
     pdl2_sqpl_complex.write('metal_complex_opt.pdb')
 
@@ -86,10 +89,9 @@ def main():
     # Handle multiple functional groups.
     ligand.func_groups = tuple(i for i in [ligand.func_groups[0]])
     ligand.write('lig1.pdb')
-    input()
 
     sqpl = stk.metal_complex.SquarePlanarMonodentate(
-        # unsatured_vertices=[3, 4]
+        unsatured_vertices=[3, 4]
     )
     print(sqpl)
     print('--------------------------------------------------------')
@@ -106,14 +108,10 @@ def main():
     print(pdl2_sqpl_complex.get_position_matrix()[:5])
     pdl2_sqpl_complex.write('metal_complex_1.mol')
     pdl2_sqpl_complex.write('metal_complex_1.pdb')
-    optimizer.optimize(
-        mol=pdl2_sqpl_complex,
-        # xtb_path='/home/atarzia/software/xtb_190418/bin/xtb',
-        # output_dir='comp2',
-        # num_cores=1,
-        # charge=2,
-        # num_unpaired_electrons=0
-    )
+    print('--------------------------------------------------------')
+    optimizer = stk.MetalOptimizer(scale=2)
+    optimizer.optimize(mol=pdl2_sqpl_complex)
+    print('--------------------------------------------------------')
     print(pdl2_sqpl_complex)
     print(pdl2_sqpl_complex.get_position_matrix()[:5])
     pdl2_sqpl_complex.write('metal_complex_1_opt.mol')
@@ -138,18 +136,6 @@ def main():
     print(pdl2_sqpl_complex.get_position_matrix()[:5])
     pdl2_sqpl_complex.write('metal_complex_0.mol')
     pdl2_sqpl_complex.write('metal_complex_0.pdb')
-    optimizer.optimize(
-        mol=pdl2_sqpl_complex,
-        # xtb_path='/home/atarzia/software/xtb_190418/bin/xtb',
-        # output_dir='comp3',
-        # num_cores=1,
-        # charge=2,
-        # num_unpaired_electrons=0
-    )
-    print(pdl2_sqpl_complex)
-    print(pdl2_sqpl_complex.get_position_matrix()[:5])
-    pdl2_sqpl_complex.write('metal_complex_0_opt.mol')
-    pdl2_sqpl_complex.write('metal_complex_0_opt.pdb')
 
     print('testing script done')
 
