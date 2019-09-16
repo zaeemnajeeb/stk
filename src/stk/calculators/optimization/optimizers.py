@@ -88,6 +88,7 @@ import logging
 import numpy as np
 import rdkit.Chem.AllChem as rdkit
 import warnings
+from itertools import combinations
 import os
 from functools import wraps
 import subprocess as sp
@@ -96,7 +97,8 @@ import shutil
 from ...utilities import (
     is_valid_xtb_solvent,
     XTBInvalidSolventError,
-    XTBExtractor
+    XTBExtractor,
+    vector_angle
 )
 import pywindow
 
@@ -710,6 +712,7 @@ class MetalOptimizer(Optimizer):
 
         scale : :class:`float`
             Distance to place ligand binder atoms from metal.
+
         use_cache : :class:`bool`, optional
             If ``True`` :meth:`optimize` will not run twice on the same
             molecule.
@@ -732,7 +735,102 @@ class MetalOptimizer(Optimizer):
         None : :class:`NoneType`
 
         """
-        raise NotImplementedError
+        # Find all metal atoms and atoms they are bonded to.
+        metal_a_no = list(range(21, 31))
+        metal_a_no += list(range(39, 49))+list(range(72, 81))
+        metal_atoms = []
+        for atom in mol.atoms:
+            if atom.atomic_number in metal_a_no:
+                metal_atoms.append(atom)
+
+        metal_bonds = []
+        for bond in mol.bonds:
+            if bond.atom1 in metal_atoms or bond.atom2 in metal_atoms:
+                metal_bonds.append(bond)
+
+        # Write rdkit molecule with metal atoms and bonds deleted.
+        edit_mol = rdkit.EditableMol(rdkit.Mol())
+        for atom in mol.atoms:
+            if atom in metal_atoms:
+                # In place of metals, add H's that will be constrained.
+                # This allows the atom ids to not be changed.
+                rdkit_atom = rdkit.Atom(1)
+                rdkit_atom.SetFormalCharge(0)
+            else:
+                rdkit_atom = rdkit.Atom(atom.atomic_number)
+                rdkit_atom.SetFormalCharge(atom.charge)
+            edit_mol.AddAtom(rdkit_atom)
+
+        for bond in mol.bonds:
+            if bond in metal_bonds:
+                # Do not add bonds to metal atoms (replaced with H's).
+                continue
+            edit_mol.AddBond(
+                beginAtomIdx=bond.atom1.id,
+                endAtomIdx=bond.atom2.id,
+                order=rdkit.BondType(bond.order)
+            )
+
+        edit_mol = edit_mol.GetMol()
+        rdkit_conf = rdkit.Conformer(len(mol.atoms))
+        for atom_id, atom_coord in enumerate(mol._position_matrix.T):
+            rdkit_conf.SetAtomPosition(atom_id, atom_coord)
+            edit_mol.GetAtomWithIdx(atom_id).SetNoImplicit(True)
+        edit_mol.AddConformer(rdkit_conf)
+
+        # Constrain selected bonds, angles and dihedrals and metal
+        # atoms.
+        rdkit.SanitizeMol(edit_mol)
+        ff = rdkit.UFFGetMoleculeForceField(edit_mol)
+
+        # Add constraints to UFF to hold metal geometry in place.
+        for bond in metal_bonds:
+            idx1 = bond.atom1.id
+            idx2 = bond.atom2.id
+            # Add distance constraints in place of metal bonds.
+            ff.UFFAddDistanceConstraint(
+                idx1=idx1,
+                idx2=idx2,
+                relative=False,
+                minLen=self._scale-0.1,
+                maxLen=self._scale+0.1,
+                forceConstant=1.0e5
+            )
+        # Also implement angular constraints.
+        for bonds in combinations(metal_bonds, r=2):
+            bond1, bond2 = bonds
+            bond1_atoms = [bond1.atom1, bond1.atom2]
+            bond2_atoms = [bond2.atom1, bond2.atom2]
+            pres_atoms = list(set(bond1_atoms + bond2_atoms))
+            for atom in pres_atoms:
+                if atom in bond1_atoms and atom in bond2_atoms:
+                    idx2 = atom.id
+                elif atom in bond1_atoms:
+                    idx1 = atom.id
+                elif atom in bond2_atoms:
+                    idx3 = atom.id
+            pos1 = [i for i in mol.get_atom_coords(atom_ids=[idx1])][0]
+            pos2 = [i for i in mol.get_atom_coords(atom_ids=[idx2])][0]
+            pos3 = [i for i in mol.get_atom_coords(atom_ids=[idx3])][0]
+            v1 = pos1 - pos2
+            v2 = pos3 - pos2
+            angle = vector_angle(v1, v2)
+            ff.UFFAddAngleConstraint(
+                idx1=idx1,
+                idx2=idx2,
+                idx3=idx3,
+                relative=False,
+                minAngleDeg=np.degrees(angle)-2,
+                maxAngleDeg=np.degrees(angle)+2,
+                forceConstant=1.0e4
+            )
+
+        # Perform UFF optimization with rdkit.
+        ff.Minimize()
+        # Update stk molecule from optimized molecule. This should
+        # only modify atom positions, which means metal atoms will be
+        # reinstated.
+        mol.update_from_rdkit_mol(edit_mol)
 
     def optimize(self, mol):
         """
