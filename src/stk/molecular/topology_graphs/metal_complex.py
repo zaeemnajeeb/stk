@@ -11,6 +11,7 @@ import logging
 import numpy as np
 
 from .topology_graph import TopologyGraph, Vertex, Edge
+from ..reactor import Reactor
 from ...utilities import vector_angle
 
 logger = logging.getLogger(__name__)
@@ -366,7 +367,6 @@ class _MetalComplexVertex(Vertex):
         None : :class:`NoneType`
 
         """
-
         bb_fgs = set(func_groups)
         for edge in self.edges:
             for func_group in edge.get_func_groups():
@@ -621,6 +621,43 @@ class MetalComplex(TopologyGraph):
             ),
             num_processes=num_processes
         )
+
+    def construct(self, mol):
+        """
+        Construct a :class:`.ConstructedMolecule`.
+
+        Parameters
+        ----------
+        mol : :class:`.ConstructedMolecule`
+            The :class:`.ConstructedMolecule` instance which needs to
+            be constructed.
+
+        Returns
+        -------
+        None : :class:`NoneType`
+
+        """
+
+        scale = self._get_scale(mol)
+        vertices = tuple(self._get_vertex_clones(mol, scale))
+        edges = tuple(self._get_edge_clones(vertices, scale))
+
+        self._prepare(mol)
+        self._place_building_blocks(mol, vertices, edges)
+
+        vertices, edges = self._before_react(mol, vertices, edges)
+        reactor = Reactor(mol)
+        for edge in edges:
+            reactor.add_reaction(
+                func_groups=edge.get_func_groups(),
+                periodicity=tuple(edge.get_periodicity())
+            )
+        reactor.finalize()
+
+        self.vertex_edge_assignments = {}
+        for vertex in vertices:
+            self.vertex_edge_assignments[vertex.id] = vertex
+        self._clean_up(mol)
 
     def _get_scale(self, mol):
         """
