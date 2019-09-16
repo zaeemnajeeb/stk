@@ -793,22 +793,6 @@ class MetalOptimizer(Optimizer):
         # metal.
         self.restricted_optimization(mol=mol)
 
-        # # Final step is to perform an unrestricted optimisation
-        # # using xTB. This xTB optimisation is limited to one run.
-        # xtb_opt = XTB(
-        #     xtb_path=xtb_path,
-        #     output_dir=output_dir,
-        #     max_runs=1,
-        #     calculate_hessian=False,
-        #     num_cores=num_cores,
-        #     charge=charge,
-        #     num_unpaired_electrons=num_unpaired_electrons,
-        #     unlimited_memory=True
-        # )
-        # xtb_opt.optimize(mol)
-        # , xtb_path, output_dir=None, num_cores=1,
-        #              charge=0, num_unpaired_electrons=0
-
 
 class XTBOptimizerError(Exception):
     ...
