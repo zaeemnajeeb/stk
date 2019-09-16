@@ -703,16 +703,18 @@ class MetalOptimizer(Optimizer):
 
     """
 
-    def __init__(self, scale, use_cache=False):
+    def __init__(self, scale, force_constant, prearrange=True,
+                 use_cache=False):
         """
         Initialize a :class:`MetalOptimizer` instance.
 
         Parameters
         ----------
-
         scale : :class:`float`
             Distance to place ligand binder atoms from metal.
 
+        force_constant : :class:`float`
+            Force_constant to use for restricted bonds.
 
         prearrange : :class:`bool`
             `True` to prearrange functional groups around metal centre.
@@ -723,6 +725,7 @@ class MetalOptimizer(Optimizer):
 
         """
         self._scale = scale
+        self._force_constant = force_constant
         self._prearrange = prearrange
         super().__init__(use_cache=use_cache)
 
@@ -838,6 +841,33 @@ class MetalOptimizer(Optimizer):
         rdkit.SanitizeMol(edit_mol)
         ff = rdkit.UFFGetMoleculeForceField(edit_mol)
 
+        # # If there are more than 1 metal centres, implement an
+        # # enforcement of their separation.
+        # if len(metal_atoms) > 1:
+        #     for atoms in combinations(metal_atoms, r=2):
+        #         print(atoms)
+        #         idx1 = atoms[0].id
+        #         idx2 = atoms[1].id
+        #         print(idx1, idx2)
+        #         pos1 = [
+        #             i for i in mol.get_atom_coords(atom_ids=[idx1])
+        #         ][0]
+        #         pos2 = [
+        #             i for i in mol.get_atom_coords(atom_ids=[idx2])
+        #         ][0]
+        #         print(pos1, pos2)
+        #         curr_dis = np.linalg.norm(pos1 - pos2)
+        #         print(curr_dis)
+        #         # Add distance constraints in place of metal bonds.
+        #         ff.UFFAddDistanceConstraint(
+        #             idx1=idx1,
+        #             idx2=idx2,
+        #             relative=False,
+        #             minLen=0.3*curr_dis,
+        #             maxLen=1.1*curr_dis,
+        #             forceConstant=1e02
+        #         )
+
         # Add constraints to UFF to hold metal geometry in place.
         for bond in metal_bonds:
             idx1 = bond.atom1.id
@@ -847,16 +877,21 @@ class MetalOptimizer(Optimizer):
                 idx1=idx1,
                 idx2=idx2,
                 relative=False,
-                minLen=self._scale-0.1,
-                maxLen=self._scale+0.1,
-                forceConstant=1.0e5
+                minLen=self._scale,
+                maxLen=self._scale,
+                forceConstant=self._force_constant
             )
+
         # Also implement angular constraints.
         for bonds in combinations(metal_bonds, r=2):
             bond1, bond2 = bonds
             bond1_atoms = [bond1.atom1, bond1.atom2]
             bond2_atoms = [bond2.atom1, bond2.atom2]
             pres_atoms = list(set(bond1_atoms + bond2_atoms))
+            # If there are more than 3 atoms, implies two independant
+            # bonds.
+            if len(pres_atoms) > 3:
+                continue
             for atom in pres_atoms:
                 if atom in bond1_atoms and atom in bond2_atoms:
                     idx2 = atom.id
