@@ -743,20 +743,6 @@ class MetalOptimizer(Optimizer):
         mol : :class:`.Molecule`
             The molecule to be optimized.
 
-        xtb_path : :class:`str`
-            The path to the xTB executable.
-
-        output_dir : :class:`str`, optional
-            The name of the directory into which files generated during
-            the optimization are written, if ``None`` then
-            :func:`uuid.uuid4` is used.
-
-        charge : :class:`int`, optional
-            Formal molecular charge.
-
-        num_unpaired_electrons : :class:`int`, optional
-            Number of unpaired electrons.
-
         Returns
         -------
         None : :class:`NoneType`
@@ -766,29 +752,6 @@ class MetalOptimizer(Optimizer):
         # First step is to pre-arrange the metal centre based on the
         # MetalComplex topology.
         bbs = [i for i in mol.get_building_blocks()]
-        print(bbs)
-        input()
-        print(mol.building_block_vertices)
-        print(mol.construction_bonds)
-        for bond in mol.construction_bonds:
-            print(bond)
-            print(bond.atom1)
-            print(bond.atom2)
-            a1_bb_ids = bond.atom1.building_block_id
-            a2_bb_ids = bond.atom2.building_block_id
-            print(a1_bb_ids, a2_bb_ids)
-            a1_vertex = mol.building_block_vertices[
-                mol.buila1_bb_ids
-            ]
-            a2_vertex = mol.building_block_vertices[a2_bb_ids]
-            print(a1_vertex, a2_vertex)
-
-
-        # for building_block in mol.building_blocks:
-        #     print(building_block.atoms)
-
-        import sys
-        sys.exit()
         metal_bbs = [
             i for i in bbs if i.func_groups
             if 'metal' in [j.fg_type.name for j in i.func_groups]
