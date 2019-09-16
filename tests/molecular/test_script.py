@@ -6,7 +6,7 @@ from rdkit.Chem import AllChem as Chem
 
 
 def main():
-    optimizer = stk.MetalOptimizer()
+    optimizer = stk.MetalOptimizer(scale=2)
     print('testing script')
     m = Chem.MolFromSmiles('[Pb+2]')
     m.AddConformer(Chem.Conformer(m.GetNumAtoms()))
@@ -63,6 +63,7 @@ def main():
     print(pdl2_sqpl_complex.get_position_matrix()[:5])
     pdl2_sqpl_complex.write('metal_complex.mol')
     pdl2_sqpl_complex.write('metal_complex.pdb')
+    print('--------------------------------------------------------')
     optimizer.optimize(
         mol=pdl2_sqpl_complex,
         # xtb_path='/home/atarzia/software/xtb_190418/bin/xtb',
@@ -71,8 +72,10 @@ def main():
         # charge=2,
         # num_unpaired_electrons=0
     )
+    print('--------------------------------------------------------')
     print(pdl2_sqpl_complex)
     print(pdl2_sqpl_complex.get_position_matrix()[:5])
+    input()
     pdl2_sqpl_complex.write('metal_complex_opt.mol')
     pdl2_sqpl_complex.write('metal_complex_opt.pdb')
 
