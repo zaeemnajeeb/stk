@@ -722,7 +722,7 @@ class SquarePlanarMonodentate(MetalComplex):
         Edge(vertices[0], vertices[1], position=[0, 0.2, 0]),
         Edge(vertices[0], vertices[2], position=[0, 0, 0.2]),
         Edge(vertices[0], vertices[3], position=[0, -0.2, 0]),
-        Edge(vertices[0], vertices[4], position=[0, 0, 0.2]),
+        Edge(vertices[0], vertices[4], position=[0, 0, -0.2]),
     )
 
 
