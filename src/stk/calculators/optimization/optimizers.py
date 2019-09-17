@@ -867,6 +867,168 @@ class MetalOptimizer(Optimizer):
         #             maxLen=1.1*curr_dis,
         #             forceConstant=1e02
         #         )
+    def get_input_constraints(self, mol, ids_to_metals, metal_atoms):
+        """
+        Get a series of constraint definitions based on mol.
+
+        Parameters
+        ----------
+        mol : :class:`.Molecule`
+            The molecule to be optimized.
+
+        Returns
+        -------
+        constraints : :class:`dict`
+            Dictionary of all constraints of the form:
+                bonds: {KEY: {VALUES}}
+                angles: {KEY: {VALUES}}
+                torsions: {KEY: {VALUES}}
+
+        """
+        constraints = {}
+        # Bond constraints.
+        for bond in mol.bonds:
+            idx1 = bond.atom1.id
+            idx2 = bond.atom2.id
+            if idx1 in ids_to_metals or idx2 in ids_to_metals:
+                continue
+            # Do not restrict H atom distances.
+            if self.has_h(bond):
+                continue
+            if self.has_M(bond, metal_atoms):
+                continue
+            constraints[bond] = {
+                'idx1': idx1,
+                'idx2': idx2,
+                'type': 'bond',
+                'fc': 1.0e2
+            }
+
+        # Angle constraints
+        # Add angle constraints to angles containing H atoms.
+        for bonds in combinations(mol.bonds, r=2):
+            bond1, bond2 = bonds
+            bond1_atoms = [bond1.atom1, bond1.atom2]
+            bond2_atoms = [bond2.atom1, bond2.atom2]
+            pres_atoms = list(set(bond1_atoms + bond2_atoms))
+            # If there are more than 3 atoms, implies two
+            # independant bonds.
+            if len(pres_atoms) > 3:
+                continue
+            # Only want angles with at least 1 X-H bond.
+            # if not self.has_h(bond1) and not self.has_h(bond2):
+            #     continue
+            # Do not want any metal containing bonds.
+            if any([self.has_M(i, metal_atoms) for i in bonds]):
+                continue
+            for atom in pres_atoms:
+                if atom in bond1_atoms and atom in bond2_atoms:
+                    idx2 = atom.id
+                elif atom in bond1_atoms:
+                    idx1 = atom.id
+                elif atom in bond2_atoms:
+                    idx3 = atom.id
+            # # Do not restrict angles of bonds to atoms bonded to
+            # # metals.
+            # bonded_to_metals = [
+            #     idx1 in ids_to_metals,
+            #     idx2 in ids_to_metals,
+            #     idx3 in ids_to_metals
+            # ]
+            # if any(bonded_to_metals):
+            #     continue
+            pos1 = [
+                i for i in mol.get_atom_coords(atom_ids=[idx1])
+            ][0]
+            pos2 = [
+                i for i in mol.get_atom_coords(atom_ids=[idx2])
+            ][0]
+            pos3 = [
+                i for i in mol.get_atom_coords(atom_ids=[idx3])
+            ][0]
+            v1 = pos1 - pos2
+            v2 = pos3 - pos2
+            angle = vector_angle(v1, v2)
+            if self.has_h(bond1) or self.has_h(bond2):
+                # Increased force constant for angles with H atoms.
+                constraints[(bond1, bond2)] = {
+                    'idx1': idx1,
+                    'idx2': idx2,
+                    'idx3': idx3,
+                    'type': 'angle',
+                    'angle': np.degrees(angle),
+                    'fc': 1.0e2
+                }
+            else:
+                constraints[(bond1, bond2)] = {
+                    'idx1': idx1,
+                    'idx2': idx2,
+                    'idx3': idx3,
+                    'type': 'angle',
+                    'angle': np.degrees(angle),
+                    'fc': 1.0e1
+                }
+
+            # # Dihedral constraints.
+            # for bond3 in mol.bonds:
+            #     if bond3 == bond2 or bond3 == bond1:
+            #         continue
+            #     # Want bonds connected to idx3 atom.
+            #     bond3_atoms = [bond3.atom1, bond3.atom2]
+            #     if bond3.atom1.id == idx3:
+            #         idx4 = bond3.atom2.id
+            #     elif bond3.atom2.id == idx3:
+            #         idx4 = bond3.atom1.id
+            #     else:
+            #         continue
+            #     pres_atoms = list(set(
+            #         bond1_atoms + bond2_atoms + bond3_atoms
+            #     ))
+            #     # If there are more than 3 atoms, implies at least two
+            #     # independant bonds.
+            #     if len(pres_atoms) > 4:
+            #         continue
+            #     print('p', bond1, bond2, bond3)
+            #     # Do not want any metal containing bonds.
+            #     if self.has_M(bond3, metal_atoms):
+            #         continue
+            #
+            #     # Do not restrict angles of bonds to atoms bonded to
+            #     # metals.
+            #     bonded_to_metals = [
+            #         idx1 in ids_to_metals,
+            #         idx2 in ids_to_metals,
+            #         idx3 in ids_to_metals,
+            #         idx4 in ids_to_metals
+            #     ]
+            #     if any(bonded_to_metals):
+            #         continue
+            #     print(idx1, idx2, idx3, idx4)
+            #     pos1 = [
+            #         i for i in mol.get_atom_coords(atom_ids=[idx1])
+            #     ][0]
+            #     pos2 = [
+            #         i for i in mol.get_atom_coords(atom_ids=[idx2])
+            #     ][0]
+            #     pos3 = [
+            #         i for i in mol.get_atom_coords(atom_ids=[idx3])
+            #     ][0]
+            #     pos4 = [
+            #         i for i in mol.get_atom_coords(atom_ids=[idx4])
+            #     ][0]
+            #     torsion = get_dihedral(pos1, pos2, pos3, pos4)
+            #     print(bond1, bond2, bond3, torsion)
+            #     constraints[(bond1, bond2)] = {
+            #         'idx1': idx1,
+            #         'idx2': idx2,
+            #         'idx3': idx3,
+            #         'idx4': idx4,
+            #         'type': 'torsion',
+            #         'torsion': torsion,
+            #         'fc': 0
+            #     }
+        return constraints
+
 
         # Add constraints to UFF to hold metal geometry in place.
         for bond in metal_bonds:
