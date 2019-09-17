@@ -47,7 +47,17 @@ def main():
     )
     print(ligand.func_groups)
     ligand.write('lig_cage.pdb')
-
+    xtb_opt = stk.XTB(
+        xtb_path='/home/atarzia/software/xtb_190418/bin/xtb',
+        output_dir='ligopt',
+        num_cores=1,
+        charge=0,
+        num_unpaired_electrons=0,
+        max_runs=1,
+        calculate_hessian=False,
+        unlimited_memory=True
+    )
+    xtb_opt.optimize(ligand)
     m2l4_lantern = stk.metal_organic_cage.M2L4_Lantern()
     print(m2l4_lantern)
     print('--------------------------------------------------------')
@@ -67,7 +77,7 @@ def main():
     xtb_opt = stk.XTB(
         xtb_path='/home/atarzia/software/xtb_190418/bin/xtb',
         output_dir='compL',
-        num_cores=1,
+        num_cores=4,
         charge=4,
         num_unpaired_electrons=0,
         max_runs=1,
@@ -79,37 +89,110 @@ def main():
     optimizer = stk.MetalOptimizer(
         scale=2,
         force_constant=1.0e2,
-        prearrange=True
+        prearrange=True,
+        restrict_all_bonds=True,
+        restrict_orientation=True,
+        res_steps=9
     )
     optimizer.optimize(mol=lantern)
     lantern.write('lantern_opt_2.mol')
-    optimizer = stk.MetalOptimizer(
-        scale=2,
-        force_constant=1.0e2,
-        prearrange=False
-    )
-    optimizer.optimize(mol=lantern)
-    lantern.write('lantern_opt_3.mol')
-    optimizer = stk.MetalOptimizer(
-        scale=2,
-        force_constant=1.0e3,
-        prearrange=False
-    )
-    optimizer.optimize(mol=lantern)
-    lantern.write('lantern_opt_4.mol')
-    optimizer = stk.MetalOptimizer(
-        scale=2,
-        force_constant=1.0e5,
-        prearrange=False
-    )
-    optimizer.optimize(mol=lantern)
-    lantern.write('lantern_opt_5.mol')
     xtb_opt.optimize(mol=lantern)
     print('--------------------------------------------------------')
     print(lantern)
     lantern.write('lantern_opt.mol')
     lantern.write('lantern_opt.pdb')
-    input()
+
+    ligand1 = stk.BuildingBlock(
+        'C(#Cc1cccc(C#Cc2cccnc2)c1)c1cccnc1',
+        functional_groups=['pyridine_N_metal']
+    )
+    ligand2 = stk.BuildingBlock(
+        'COc1c(OC)c2ccc(-c3ccncc3)cc2c2cc(-c3ccncc3)ccc12',
+        functional_groups=['pyridine_N_metal']
+    )
+    xtb_opt = stk.XTB(
+        xtb_path='/home/atarzia/software/xtb_190418/bin/xtb',
+        output_dir='lig1opt',
+        num_cores=1,
+        charge=0,
+        num_unpaired_electrons=0,
+        max_runs=1,
+        calculate_hessian=False,
+        unlimited_memory=True
+    )
+    xtb_opt.optimize(ligand1)
+    xtb_opt = stk.XTB(
+        xtb_path='/home/atarzia/software/xtb_190418/bin/xtb',
+        output_dir='lig2opt',
+        num_cores=1,
+        charge=0,
+        num_unpaired_electrons=0,
+        max_runs=1,
+        calculate_hessian=False,
+        unlimited_memory=True
+    )
+    xtb_opt.optimize(ligand2)
+    print(ligand1.func_groups)
+    ligand1.write('lig1_cage.pdb')
+    print(ligand2.func_groups)
+    ligand2.write('lig2_cage.pdb')
+
+    m2l4_lantern = stk.metal_organic_cage.M2L4_Lantern()
+    print(m2l4_lantern)
+    print('--------------------------------------------------------')
+    hetero_lantern = stk.ConstructedMolecule(
+        building_blocks=[metal, ligand1, ligand2],
+        topology_graph=m2l4_lantern,
+        building_block_vertices={
+            metal: m2l4_lantern.vertices[0:2],
+            ligand1: m2l4_lantern.vertices[2:4],
+            ligand2: m2l4_lantern.vertices[4:]
+        }
+    )
+    print('--------------------------------------------------------')
+    print(hetero_lantern)
+    hetero_lantern.write('hetero_lantern.mol')
+    hetero_lantern.write('hetero_lantern.pdb')
+    print('--------------------------------------------------------')
+    xtb_opt = stk.XTB(
+        xtb_path='/home/atarzia/software/xtb_190418/bin/xtb',
+        output_dir='compHL',
+        num_cores=4,
+        charge=4,
+        num_unpaired_electrons=0,
+        max_runs=1,
+        electronic_temperature=600,
+        calculate_hessian=False,
+        unlimited_memory=True
+    )
+    # Ramp up force constant.
+    hetero_lantern.write('hetero_lantern_opt_1.mol')
+    optimizer = stk.MetalOptimizer(
+        scale=2,
+        force_constant=1.0e2,
+        prearrange=True,
+        restrict_all_bonds=True,
+        restrict_orientation=True,
+        res_steps=9
+    )
+    optimizer.optimize(mol=hetero_lantern)
+    hetero_lantern.write('hetero_lantern_opt_2.mol')
+    xtb_opt.optimize(mol=hetero_lantern)
+    xtb_opt = stk.XTB(
+        xtb_path='/home/atarzia/software/xtb_190418/bin/xtb',
+        output_dir='compHL',
+        num_cores=4,
+        charge=4,
+        num_unpaired_electrons=0,
+        max_runs=1,
+        calculate_hessian=False,
+        unlimited_memory=True
+    )
+    xtb_opt.optimize(mol=hetero_lantern)
+    print('--------------------------------------------------------')
+    print(hetero_lantern)
+    hetero_lantern.write('hetero_lantern_opt.mol')
+    hetero_lantern.write('hetero_lantern_opt.pdb')
 
     ligand = stk.BuildingBlock(
         'NCCN',
@@ -136,8 +219,11 @@ def main():
     print('--------------------------------------------------------')
     optimizer = stk.MetalOptimizer(
         scale=2,
-        force_constant=1.0e5,
-        prearrange=True
+        force_constant=1.0e2,
+        prearrange=True,
+        restrict_all_bonds=True,
+        restrict_orientation=True,
+        res_steps=9
     )
     xtb_opt = stk.XTB(
         xtb_path='/home/atarzia/software/xtb_190418/bin/xtb',
@@ -150,6 +236,7 @@ def main():
         unlimited_memory=True
     )
     optimizer.optimize(mol=pdl2_sqpl_complex)
+    pdl2_sqpl_complex.write('metal_complex_opt_2.mol')
     xtb_opt.optimize(mol=pdl2_sqpl_complex)
     print('--------------------------------------------------------')
     print(pdl2_sqpl_complex)
@@ -186,8 +273,11 @@ def main():
     print('--------------------------------------------------------')
     optimizer = stk.MetalOptimizer(
         scale=2,
-        force_constant=1.0e3,
-        prearrange=True
+        force_constant=1.0e2,
+        prearrange=True,
+        restrict_all_bonds=True,
+        restrict_orientation=True,
+        res_steps=6
     )
     optimizer.optimize(mol=pdl2_sqpl_complex)
     print('--------------------------------------------------------')
