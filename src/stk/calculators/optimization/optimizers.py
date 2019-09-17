@@ -98,7 +98,8 @@ from ...utilities import (
     is_valid_xtb_solvent,
     XTBInvalidSolventError,
     XTBExtractor,
-    vector_angle
+    vector_angle,
+    get_dihedral
 )
 import pywindow
 
@@ -704,6 +705,8 @@ class MetalOptimizer(Optimizer):
     """
 
     def __init__(self, scale, force_constant, prearrange=True,
+                 restrict_all_bonds=False, restrict_orientation=False,
+                 res_steps=False,
                  use_cache=False):
         """
         Initialize a :class:`MetalOptimizer` instance.
@@ -716,8 +719,18 @@ class MetalOptimizer(Optimizer):
         force_constant : :class:`float`
             Force_constant to use for restricted bonds.
 
-        prearrange : :class:`bool`
+        prearrange : :class:`bool`, optional
             `True` to prearrange functional groups around metal centre.
+
+        restrict_all_bonds : :class:`bool`, optional
+            `True` to restrict all bonds except for ligand-FG bonds.
+
+        restrict_orientation : :class:`bool`, optional
+            `True` to restrict metal complex FG angles relative to
+            topology centre of mass.
+
+        res_steps : :class:`bool`, optional
+
 
         use_cache : :class:`bool`, optional
             If ``True`` :meth:`optimize` will not run twice on the same
@@ -727,6 +740,9 @@ class MetalOptimizer(Optimizer):
         self._scale = scale
         self._force_constant = force_constant
         self._prearrange = prearrange
+        self._restrict_all_bonds = restrict_all_bonds
+        self._restrict_orientation = restrict_orientation
+        self._res_steps = res_steps
         super().__init__(use_cache=use_cache)
 
     def prearrange_fgs(self, mol):
@@ -779,7 +795,11 @@ class MetalOptimizer(Optimizer):
                     pos_matrix[atom_to_move.id] = new_position
                     mol.set_position_matrix(pos_matrix)
 
-    def restricted_optimization(self, mol):
+    def restricted_optimization(self, mol, metal_atoms, metal_bonds,
+                                ids_to_metals,
+                                rel_distance=None,
+                                force_constant=None,
+                                input_constraints=None):
         """
         Optimize `mol` with restrictions on metal-ligand bonds.
 
@@ -788,23 +808,20 @@ class MetalOptimizer(Optimizer):
         mol : :class:`.Molecule`
             The molecule to be optimized.
 
+        rel_distance : :class:`.Molecule`
+            The molecule to be optimized.
+
+        force_constant : :class:`.Molecule`
+            The molecule to be optimized.
+
+        input_constraints : :class:`.Molecule`
+            The molecule to be optimized.
+
         Returns
         -------
         None : :class:`NoneType`
 
         """
-        # Find all metal atoms and atoms they are bonded to.
-        metal_a_no = list(range(21, 31))
-        metal_a_no += list(range(39, 49))+list(range(72, 81))
-        metal_atoms = []
-        for atom in mol.atoms:
-            if atom.atomic_number in metal_a_no:
-                metal_atoms.append(atom)
-
-        metal_bonds = []
-        for bond in mol.bonds:
-            if bond.atom1 in metal_atoms or bond.atom2 in metal_atoms:
-                metal_bonds.append(bond)
 
         # Write rdkit molecule with metal atoms and bonds deleted.
         edit_mol = rdkit.EditableMol(rdkit.Mol())
@@ -841,32 +858,155 @@ class MetalOptimizer(Optimizer):
         rdkit.SanitizeMol(edit_mol)
         ff = rdkit.UFFGetMoleculeForceField(edit_mol)
 
-        # # If there are more than 1 metal centres, implement an
-        # # enforcement of their separation.
-        # if len(metal_atoms) > 1:
-        #     for atoms in combinations(metal_atoms, r=2):
-        #         print(atoms)
-        #         idx1 = atoms[0].id
-        #         idx2 = atoms[1].id
-        #         print(idx1, idx2)
-        #         pos1 = [
-        #             i for i in mol.get_atom_coords(atom_ids=[idx1])
-        #         ][0]
-        #         pos2 = [
-        #             i for i in mol.get_atom_coords(atom_ids=[idx2])
-        #         ][0]
-        #         print(pos1, pos2)
-        #         curr_dis = np.linalg.norm(pos1 - pos2)
-        #         print(curr_dis)
-        #         # Add distance constraints in place of metal bonds.
-        #         ff.UFFAddDistanceConstraint(
-        #             idx1=idx1,
-        #             idx2=idx2,
-        #             relative=False,
-        #             minLen=0.3*curr_dis,
-        #             maxLen=1.1*curr_dis,
-        #             forceConstant=1e02
-        #         )
+        # Constrain the metal centre.
+        self.apply_metal_centre_constraints(
+            mol,
+            ff,
+            metal_bonds,
+            metal_atoms
+        )
+
+        # Add angular constraints that enforce relative orientation
+        # between metal complexes + the topology centre of mass.
+        if self._restrict_orientation:
+            self.apply_orientation_restriction(
+                ff,
+                mol,
+                metal_bonds,
+                metal_atoms
+            )
+
+        # Constrain all bonds and angles based on input structure
+        # except for:
+        # (1) bonds including metals
+        # (2) bonds including atoms bonded to metals
+        if self._restrict_all_bonds:
+            for const in input_constraints:
+                constraint = input_constraints[const]
+                if constraint['type'] == 'bond':
+                    # Add distance constraints in place of metal bonds.
+                    ff.UFFAddDistanceConstraint(
+                        idx1=constraint['idx1'],
+                        idx2=constraint['idx2'],
+                        relative=True,
+                        minLen=1.0,
+                        maxLen=1.0,
+                        forceConstant=constraint['fc']
+                    )
+                elif constraint['type'] == 'angle':
+                    ff.UFFAddAngleConstraint(
+                        idx1=constraint['idx1'],
+                        idx2=constraint['idx2'],
+                        idx3=constraint['idx3'],
+                        relative=False,
+                        minAngleDeg=constraint['angle'],
+                        maxAngleDeg=constraint['angle'],
+                        forceConstant=constraint['fc']
+                    )
+                elif constraint['type'] == 'torsion':
+                    ff.UFFAddTorsionConstraint(
+                        idx1=constraint['idx1'],
+                        idx2=constraint['idx2'],
+                        idx3=constraint['idx3'],
+                        idx4=constraint['idx4'],
+                        relative=False,
+                        minDihedralDeg=constraint['torsion'],
+                        maxDihedralDeg=constraint['torsion'],
+                        forceConstant=constraint['fc']
+                    )
+
+        # For bonds (2), a weak force constant is applied to minimize
+        # to rel_distance.
+        if rel_distance is not None and force_constant is not None:
+            for bond in mol.bonds:
+                idx1 = bond.atom1.id
+                idx2 = bond.atom2.id
+                if idx1 in ids_to_metals or idx2 in ids_to_metals:
+                    # Do not restrict H atom distances.
+                    if self.has_h(bond):
+                        continue
+                    if self.has_M(bond, metal_atoms):
+                        continue
+                    # Add distance constraints in place of metal bonds.
+                    ff.UFFAddDistanceConstraint(
+                        idx1=idx1,
+                        idx2=idx2,
+                        relative=True,
+                        minLen=rel_distance,
+                        maxLen=rel_distance,
+                        forceConstant=force_constant
+                    )
+
+        # Perform UFF optimization with rdkit.
+        ff.Minimize(maxIts=50)
+
+        # Update stk molecule from optimized molecule. This should
+        # only modify atom positions, which means metal atoms will be
+        # reinstated.
+        mol.update_from_rdkit_mol(edit_mol)
+
+    def optimize(self, mol):
+        """
+        Optimize `mol`.
+
+        Parameters
+        ----------
+        mol : :class:`.Molecule`
+            The molecule to be optimized.
+
+        Returns
+        -------
+        None : :class:`NoneType`
+
+        """
+        # Find all metal atoms and atoms they are bonded to.
+        metal_a_no = list(range(21, 31))
+        metal_a_no += list(range(39, 49))+list(range(72, 81))
+        metal_atoms = []
+        for atom in mol.atoms:
+            if atom.atomic_number in metal_a_no:
+                metal_atoms.append(atom)
+
+        metal_bonds = []
+        ids_to_metals = []
+        for bond in mol.bonds:
+            if bond.atom1 in metal_atoms:
+                metal_bonds.append(bond)
+                ids_to_metals.append(bond.atom2.id)
+            elif bond.atom2 in metal_atoms:
+                metal_bonds.append(bond)
+                ids_to_metals.append(bond.atom1.id)
+
+        # Second step is to perform a forcefield optimisation that
+        # only optimises non metal atoms that are not bonded to the
+        # metal.
+        # This is done in loops, where the metal-ligand bonds are
+        # slowly relaxed to normal values.
+        # The rest of the ligand is constrained to the input value.
+        input_constraints = self.get_input_constraints(
+            mol,
+            ids_to_metals,
+            metal_atoms
+        )
+
+        # First step is to pre-arrange the metal centre based on the
+        # MetalComplex topology.
+        if self._prearrange:
+            self.prearrange_fgs(mol)
+
+        for i in range(self._res_steps):
+            print(i)
+            self.restricted_optimization(
+                mol=mol,
+                metal_atoms=metal_atoms,
+                metal_bonds=metal_bonds,
+                ids_to_metals=ids_to_metals,
+                rel_distance=0.9,
+                force_constant=1e2,
+                input_constraints=input_constraints
+            )
+            mol.write(f'opt{i}.mol')
+
     def get_input_constraints(self, mol, ids_to_metals, metal_atoms):
         """
         Get a series of constraint definitions based on mol.
@@ -1029,6 +1169,47 @@ class MetalOptimizer(Optimizer):
             #     }
         return constraints
 
+    def has_h(self, bond):
+        """
+        Check if a bond has a H atom.
+
+        """
+        if bond.atom1.atomic_number == 1:
+            return True
+        if bond.atom2.atomic_number == 1:
+            return True
+        return False
+
+    def has_M(self, bond, metal_atoms):
+        """
+        Check if a bond has a metal atom.
+
+        """
+        if bond.atom1 in metal_atoms:
+            return True
+        if bond.atom2 in metal_atoms:
+            return True
+        return False
+
+    def apply_metal_centre_constraints(self, mol, ff, metal_bonds,
+                                       metal_atoms):
+        """
+        Applies UFF metal centre constraints.
+
+        """
+        metal_dist = max(
+            bb.get_maximum_diameter()
+            for bb in mol.building_block_vertices
+        )
+        for atoms in combinations(metal_atoms, r=2):
+            ff.UFFAddDistanceConstraint(
+                idx1=atoms[0].id,
+                idx2=atoms[1].id,
+                relative=False,
+                minLen=metal_dist,
+                maxLen=metal_dist,
+                forceConstant=0.25e1
+            )
 
         # Add constraints to UFF to hold metal geometry in place.
         for bond in metal_bonds:
@@ -1050,8 +1231,8 @@ class MetalOptimizer(Optimizer):
             bond1_atoms = [bond1.atom1, bond1.atom2]
             bond2_atoms = [bond2.atom1, bond2.atom2]
             pres_atoms = list(set(bond1_atoms + bond2_atoms))
-            # If there are more than 3 atoms, implies two independant
-            # bonds.
+            # If there are more than 3 atoms, implies two
+            # independant bonds.
             if len(pres_atoms) > 3:
                 continue
             for atom in pres_atoms:
@@ -1061,9 +1242,15 @@ class MetalOptimizer(Optimizer):
                     idx1 = atom.id
                 elif atom in bond2_atoms:
                     idx3 = atom.id
-            pos1 = [i for i in mol.get_atom_coords(atom_ids=[idx1])][0]
-            pos2 = [i for i in mol.get_atom_coords(atom_ids=[idx2])][0]
-            pos3 = [i for i in mol.get_atom_coords(atom_ids=[idx3])][0]
+            pos1 = [
+                i for i in mol.get_atom_coords(atom_ids=[idx1])
+            ][0]
+            pos2 = [
+                i for i in mol.get_atom_coords(atom_ids=[idx2])
+            ][0]
+            pos3 = [
+                i for i in mol.get_atom_coords(atom_ids=[idx3])
+            ][0]
             v1 = pos1 - pos2
             v2 = pos3 - pos2
             angle = vector_angle(v1, v2)
@@ -1077,37 +1264,121 @@ class MetalOptimizer(Optimizer):
                 forceConstant=1.0e4
             )
 
-        # Perform UFF optimization with rdkit.
-        ff.Minimize()
-        # Update stk molecule from optimized molecule. This should
-        # only modify atom positions, which means metal atoms will be
-        # reinstated.
-        mol.update_from_rdkit_mol(edit_mol)
-
-    def optimize(self, mol):
+    def apply_orientation_restriction(self, ff, mol, metal_bonds,
+                                      metal_atoms):
         """
-        Optimize `mol`.
-
-        Parameters
-        ----------
-        mol : :class:`.Molecule`
-            The molecule to be optimized.
-
-        Returns
-        -------
-        None : :class:`NoneType`
+        Applies UFF relative orientation restrcitions.
 
         """
-
-        # First step is to pre-arrange the metal centre based on the
-        # MetalComplex topology.
-        if self._prearrange:
-            self.prearrange_fgs(mol)
-
-        # Second step is to perform a forcefield optimisation that
-        # only optimises non metal atoms that are not bonded to the
-        # metal.
-        self.restricted_optimization(mol=mol)
+        # Add a fixed point.
+        COM = mol.get_center_of_mass()
+        nidx = ff.AddExtraPoint(
+            x=COM[0],
+            y=COM[1],
+            z=COM[2],
+            fixed=True
+        )
+        ff.Initialize()
+        for bond in metal_bonds:
+            if bond.atom1 in metal_atoms:
+                idx2 = bond.atom1.id
+                idx1 = bond.atom2.id
+            elif bond.atom2 in metal_atoms:
+                idx1 = bond.atom1.id
+                idx2 = bond.atom2.id
+            pos1 = [
+                i for i in mol.get_atom_coords(atom_ids=[idx1])
+            ][0]
+            pos2 = [
+                i for i in mol.get_atom_coords(atom_ids=[idx2])
+            ][0]
+            pos3 = COM
+            v1 = pos1 - pos2
+            v2 = pos3 - pos2
+            angle = vector_angle(v1, v2)
+            ff.UFFAddAngleConstraint(
+                idx1=idx1,
+                idx2=idx2,
+                idx3=nidx-1,
+                relative=False,
+                minAngleDeg=np.degrees(angle)-2,
+                maxAngleDeg=np.degrees(angle)+2,
+                forceConstant=1.0e4
+            )
+            # Add fixed points at all other vertex positions (this
+            # can be achieved using the COM of all building_blocks)
+            # and enforce the relative orientation to all of them
+            # also.
+            # bb_atoms_ids = {}
+            # for atom in mol.atoms:
+            #     # Skip H atoms.
+            #     if atom.atomic_number == 1:
+            #         continue
+            #     atom_bb_fgs = list(set([
+            #         i.fg_type.name
+            #         for i in atom.building_block.func_groups
+            #     ]))
+            #     print(atom, atom_bb_fgs)
+            #     # Skip metal building blocks.
+            #     if 'metal' in atom_bb_fgs:
+            #         continue
+            #     bb_key = (
+            #         atom.building_block,
+            #         atom.building_block_id
+            #     )
+            #     print(bb_key)
+            #     if bb_key not in bb_atoms_ids:
+            #         bb_atoms_ids[bb_key] = []
+            #     bb_atoms_ids[bb_key].append(atom.id)
+            #
+            # print(bb_atoms_ids)
+            # input()
+            # for bb_key in bb_atoms_ids:
+            #     # Add a fixed point.
+            #     COM = mol.get_center_of_mass(
+            #         atom_ids=bb_atoms_ids[bb_key]
+            #     )
+            #     print(COM)
+            #     input(bb_key)
+            #     nidx = ff.AddExtraPoint(
+            #         x=COM[0],
+            #         y=COM[1],
+            #         z=COM[2],
+            #         fixed=True
+            #     )
+            #     ff.Initialize()
+            #     for bond in metal_bonds:
+            #         if bond.atom1 in metal_atoms:
+            #             idx2 = bond.atom1.id
+            #             idx1 = bond.atom2.id
+            #         elif bond.atom2 in metal_atoms:
+            #             idx1 = bond.atom1.id
+            #             idx2 = bond.atom2.id
+            #         pos1 = [
+            #             i for i in mol.get_atom_coords(
+            #                 atom_ids=[idx1]
+            #             )
+            #         ][0]
+            #         pos2 = [
+            #             i for i in mol.get_atom_coords(
+            #                 atom_ids=[idx2]
+            #             )
+            #         ][0]
+            #         pos3 = COM
+            #         v1 = pos1 - pos2
+            #         v2 = pos3 - pos2
+            #         angle = vector_angle(v1, v2)
+            #         print(bond)
+            #         print(v1, v2, angle)
+            #         ff.UFFAddAngleConstraint(
+            #             idx1=idx1,
+            #             idx2=idx2,
+            #             idx3=nidx-1,
+            #             relative=False,
+            #             minAngleDeg=np.degrees(angle)-2,
+            #             maxAngleDeg=np.degrees(angle)+2,
+            #             forceConstant=1.0e6
+            #         )
 
 
 class XTBOptimizerError(Exception):
