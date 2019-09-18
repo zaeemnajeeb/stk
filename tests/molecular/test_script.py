@@ -6,6 +6,7 @@ from rdkit.Chem import AllChem as Chem
 
 
 def main():
+    _md_path = '/home/atarzia/software/schrodinger_install'
     print('testing script')
     m = Chem.MolFromSmiles('[Pd+2]')
     m.AddConformer(Chem.Conformer(m.GetNumAtoms()))
@@ -105,14 +106,12 @@ def main():
         unlimited_memory=True
     )
     # Ramp up force constant.
-    hetero_lantern.write('hetero_lantern_opt_1.mol')
     optimizer = stk.MetalOptimizer(
-        scale=2,
-        force_constant=1.0e2,
-        prearrange=True,
+        scale=1.2,
+        output_dir='compHL',
+        macromodel_path=_md_path,
         restrict_all_bonds=True,
-        restrict_orientation=True,
-        res_steps=9
+        prearrange=True,
     )
     optimizer.optimize(mol=hetero_lantern)
     hetero_lantern.write('hetero_lantern_opt_2.mol')
@@ -177,14 +176,12 @@ def main():
         unlimited_memory=True
     )
     # Ramp up force constant.
-    lantern.write('lantern_opt_1.mol')
     optimizer = stk.MetalOptimizer(
-        scale=2,
-        force_constant=1.0e2,
-        prearrange=True,
+        scale=1.2,
+        output_dir='compL',
+        macromodel_path=_md_path,
         restrict_all_bonds=True,
-        restrict_orientation=True,
-        res_steps=9
+        prearrange=True,
     )
     optimizer.optimize(mol=lantern)
     lantern.write('lantern_opt_2.mol')
@@ -218,12 +215,11 @@ def main():
     pdl2_sqpl_complex.write('metal_complex.pdb')
     print('--------------------------------------------------------')
     optimizer = stk.MetalOptimizer(
-        scale=2,
-        force_constant=1.0e2,
-        prearrange=True,
+        scale=1.2,
+        output_dir='comp1',
+        macromodel_path=_md_path,
         restrict_all_bonds=True,
-        restrict_orientation=True,
-        res_steps=9
+        prearrange=True,
     )
     xtb_opt = stk.XTB(
         xtb_path='/home/atarzia/software/xtb_190418/bin/xtb',
@@ -272,12 +268,11 @@ def main():
     pdl2_sqpl_complex.write('metal_complex_1.pdb')
     print('--------------------------------------------------------')
     optimizer = stk.MetalOptimizer(
-        scale=2,
-        force_constant=1.0e2,
-        prearrange=True,
+        scale=1.2,
+        output_dir='comp2',
+        macromodel_path=_md_path,
         restrict_all_bonds=True,
-        restrict_orientation=True,
-        res_steps=6
+        prearrange=True,
     )
     optimizer.optimize(mol=pdl2_sqpl_complex)
     print('--------------------------------------------------------')
