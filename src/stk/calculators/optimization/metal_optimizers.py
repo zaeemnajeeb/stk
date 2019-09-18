@@ -30,10 +30,7 @@ class MetalOptimizer(Optimizer):
 
     """
 
-    def __init__(self, scale, force_constant, prearrange=True,
-                 restrict_all_bonds=False, restrict_orientation=False,
-                 res_steps=False,
-                 use_cache=False):
+    def __init__(self, scale, prearrange=True, use_cache=False):
         """
         Initialize a :class:`MetalOptimizer` instance.
 
@@ -64,11 +61,11 @@ class MetalOptimizer(Optimizer):
 
         """
         self._scale = scale
-        self._force_constant = force_constant
         self._prearrange = prearrange
-        self._restrict_all_bonds = restrict_all_bonds
-        self._restrict_orientation = restrict_orientation
-        self._res_steps = res_steps
+
+        self.metal_a_no = list(range(21, 31))
+        self.metal_a_no += list(range(39, 49))+list(range(72, 81))
+
         super().__init__(use_cache=use_cache)
 
     def prearrange_fgs(self, mol):
@@ -299,11 +296,9 @@ class MetalOptimizer(Optimizer):
 
         """
         # Find all metal atoms and atoms they are bonded to.
-        metal_a_no = list(range(21, 31))
-        metal_a_no += list(range(39, 49))+list(range(72, 81))
         metal_atoms = []
         for atom in mol.atoms:
-            if atom.atomic_number in metal_a_no:
+            if atom.atomic_number in self.metal_a_no:
                 metal_atoms.append(atom)
 
         metal_bonds = []
@@ -316,12 +311,6 @@ class MetalOptimizer(Optimizer):
                 metal_bonds.append(bond)
                 ids_to_metals.append(bond.atom1.id)
 
-        # Second step is to perform a forcefield optimisation that
-        # only optimises non metal atoms that are not bonded to the
-        # metal.
-        # This is done in loops, where the metal-ligand bonds are
-        # slowly relaxed to normal values.
-        # The rest of the ligand is constrained to the input value.
         input_constraints = self.get_input_constraints(
             mol,
             ids_to_metals,
@@ -333,6 +322,26 @@ class MetalOptimizer(Optimizer):
         # MetalComplex topology.
         if self._prearrange:
             self.prearrange_fgs(mol)
+
+        # Second step is to perform a forcefield optimisation that
+        # only optimises non metal atoms that are not bonded to the
+        # metal.
+
+        # Optimisation can be attempted with MacroModel or with UFF in
+        # RDKit. Either method uses constraints on the metal centre
+        # to attempt to enforce the metal geometry described by
+        # the metal complex topology.
+        # For RDKit, the optimisation is done in loops, where the
+        # metal-ligand and adjacent bonds slowly relaxed to normal
+        # values. For MacroModel, the metal-ligand bonds are
+        # constrained and the other ligand bonds are allowed to relax.
+        # The rest of the ligands are constrained to the input value.
+        self.restricted_MD(
+            mol,
+            metal_atoms=metal_atoms,
+            metal_bonds=metal_bonds,
+            input_constraints=input_constraints
+        )
 
     def get_input_constraints(self, mol, ids_to_metals, metal_atoms,
                               include_bonders=False):
@@ -348,9 +357,29 @@ class MetalOptimizer(Optimizer):
         -------
         constraints : :class:`dict`
             Dictionary of all constraints of the form:
-                bonds: {KEY: {VALUES}}
-                angles: {KEY: {VALUES}}
-                torsions: {KEY: {VALUES}}
+                bonds: {stk.bond: {
+                    'idx1': :class:`int`,
+                    'idx2': :class:`int`,
+                    'type': 'bond',
+                    'fc': :class:`float`
+                }}
+                angles: {(stk.bond2, stk.bond): {
+                    'idx1': :class:`int`,
+                    'idx2': :class:`int`,
+                    'idx3': :class:`int`,
+                    'type': 'angle',
+                    'angle': :class:`float`,
+                    'fc': :class:`float`
+                }}
+                torsions: {(stk.bond, stk.bond, stk.bond): {
+                    'idx1': :class:`int`,
+                    'idx2': :class:`int`,
+                    'idx3': :class:`int`,
+                    'idx4': :class:`int`,
+                    'type': 'torsion',
+                    'torsion': :class:`float`,
+                    'fc': :class:`float`
+                }}
 
         """
         constraints = {}
@@ -519,6 +548,259 @@ class MetalOptimizer(Optimizer):
         if bond.atom2 in metal_atoms:
             return True
         return False
+
+
+class UFFMetalOptimizer(MetalOptimizer):
+    """
+    Applies optimizers that maintain metal centre coordination.
+
+    Examples
+    --------
+
+    FULL optimize
+
+    Just rest opt
+
+
+    """
+
+    def __init__(self, scale, force_constant, prearrange=True,
+                 restrict_all_bonds=False, restrict_orientation=False,
+                 res_steps=False, use_cache=False):
+        """
+        Initialize a :class:`MetalOptimizer` instance.
+
+        Parameters
+        ----------
+        scale : :class:`float`
+            Distance to place ligand binder atoms from metal.
+
+        force_constant : :class:`float`
+            Force_constant to use for restricted bonds.
+
+        prearrange : :class:`bool`, optional
+            `True` to prearrange functional groups around metal centre.
+
+        restrict_all_bonds : :class:`bool`, optional
+            `True` to restrict all bonds except for ligand-FG bonds.
+
+        restrict_orientation : :class:`bool`, optional
+            `True` to restrict metal complex FG angles relative to
+            topology centre of mass.
+
+        res_steps : :class:`bool`, optional
+
+
+        use_cache : :class:`bool`, optional
+            If ``True`` :meth:`optimize` will not run twice on the same
+            molecule.
+
+        """
+        self._scale = scale
+        self._force_constant = force_constant
+        self._prearrange = prearrange
+        self._restrict_all_bonds = restrict_all_bonds
+        self._restrict_orientation = restrict_orientation
+        self._res_steps = res_steps
+
+        self.metal_a_no = list(range(21, 31))
+        self.metal_a_no += list(range(39, 49))+list(range(72, 81))
+
+        super().__init__(use_cache=use_cache)
+
+    def restricted_optimization(self, mol, metal_atoms,
+                                metal_bonds,
+                                ids_to_metals,
+                                rel_distance=None,
+                                force_constant=None,
+                                input_constraints=None):
+        """
+        Optimize `mol` with restrictions on metal-ligand bonds.
+
+        Parameters
+        ----------
+        mol : :class:`.Molecule`
+            The molecule to be optimized.
+
+        rel_distance : :class:`.Molecule`
+            The molecule to be optimized.
+
+        force_constant : :class:`.Molecule`
+            The molecule to be optimized.
+
+        input_constraints : :class:`.Molecule`
+            The molecule to be optimized.
+
+        Returns
+        -------
+        None : :class:`NoneType`
+
+        """
+
+        # Write rdkit molecule with metal atoms and bonds deleted.
+        edit_mol = self.to_rdkit_mol_no_metals(
+            mol,
+            metal_atoms=metal_atoms,
+            metal_bonds=metal_bonds
+        )
+
+        # Constrain selected bonds, angles and dihedrals and metal
+        # atoms.
+        rdkit.SanitizeMol(edit_mol)
+        ff = rdkit.UFFGetMoleculeForceField(edit_mol)
+
+        # Constrain the metal centre.
+        self.apply_metal_centre_constraints(
+            mol,
+            ff,
+            metal_bonds,
+            metal_atoms
+        )
+
+        # Add angular constraints that enforce relative orientation
+        # between metal complexes + the topology centre of mass.
+        if self._restrict_orientation:
+            self.apply_orientation_restriction(
+                ff,
+                mol,
+                metal_bonds,
+                metal_atoms
+            )
+
+        # Constrain all bonds and angles based on input structure
+        # except for:
+        # (1) bonds including metals
+        # (2) bonds including atoms bonded to metals
+        if self._restrict_all_bonds:
+            for const in input_constraints:
+                constraint = input_constraints[const]
+                if constraint['type'] == 'bond':
+                    # Add distance constraints in place of metal bonds.
+                    ff.UFFAddDistanceConstraint(
+                        idx1=constraint['idx1'],
+                        idx2=constraint['idx2'],
+                        relative=True,
+                        minLen=1.0,
+                        maxLen=1.0,
+                        forceConstant=constraint['fc']
+                    )
+                elif constraint['type'] == 'angle':
+                    ff.UFFAddAngleConstraint(
+                        idx1=constraint['idx1'],
+                        idx2=constraint['idx2'],
+                        idx3=constraint['idx3'],
+                        relative=False,
+                        minAngleDeg=constraint['angle'],
+                        maxAngleDeg=constraint['angle'],
+                        forceConstant=constraint['fc']
+                    )
+                elif constraint['type'] == 'torsion':
+                    ff.UFFAddTorsionConstraint(
+                        idx1=constraint['idx1'],
+                        idx2=constraint['idx2'],
+                        idx3=constraint['idx3'],
+                        idx4=constraint['idx4'],
+                        relative=False,
+                        minDihedralDeg=constraint['torsion'],
+                        maxDihedralDeg=constraint['torsion'],
+                        forceConstant=constraint['fc']
+                    )
+
+        # For bonds (2), a weak force constant is applied to minimize
+        # to rel_distance.
+        if rel_distance is not None and force_constant is not None:
+            for bond in mol.bonds:
+                idx1 = bond.atom1.id
+                idx2 = bond.atom2.id
+                if idx1 in ids_to_metals or idx2 in ids_to_metals:
+                    # Do not restrict H atom distances.
+                    if self.has_h(bond):
+                        continue
+                    if self.has_M(bond, metal_atoms):
+                        continue
+                    # Add distance constraints in place of metal bonds.
+                    ff.UFFAddDistanceConstraint(
+                        idx1=idx1,
+                        idx2=idx2,
+                        relative=True,
+                        minLen=rel_distance,
+                        maxLen=rel_distance,
+                        forceConstant=force_constant
+                    )
+
+        # Perform UFF optimization with rdkit.
+        ff.Minimize(maxIts=50)
+
+        # Update stk molecule from optimized molecule. This should
+        # only modify atom positions, which means metal atoms will be
+        # reinstated.
+        mol.update_from_rdkit_mol(edit_mol)
+
+    def optimize(self, mol):
+        """
+        Optimize `mol`.
+
+        Parameters
+        ----------
+        mol : :class:`.Molecule`
+            The molecule to be optimized.
+
+        Returns
+        -------
+        None : :class:`NoneType`
+
+        """
+        # Find all metal atoms and atoms they are bonded to.
+        metal_atoms = []
+        for atom in mol.atoms:
+            if atom.atomic_number in self.metal_a_no:
+                metal_atoms.append(atom)
+
+        metal_bonds = []
+        ids_to_metals = []
+        for bond in mol.bonds:
+            if bond.atom1 in metal_atoms:
+                metal_bonds.append(bond)
+                ids_to_metals.append(bond.atom2.id)
+            elif bond.atom2 in metal_atoms:
+                metal_bonds.append(bond)
+                ids_to_metals.append(bond.atom1.id)
+
+        input_constraints = self.get_input_constraints(
+            mol,
+            ids_to_metals,
+            metal_atoms,
+            include_bonders=False
+        )
+
+        # First step is to pre-arrange the metal centre based on the
+        # MetalComplex topology.
+        if self._prearrange:
+            self.prearrange_fgs(mol)
+
+        # Second step is to perform a forcefield optimisation that
+        # only optimises non metal atoms that are not bonded to the
+        # metal.
+
+        # Optimisation can be attempted with MacroModel or with UFF in
+        # RDKit. Either method uses constraints on the metal centre
+        # to attempt to enforce the metal geometry described by
+        # the metal complex topology.
+        # For RDKit, the optimisation is done in loops, where the
+        # metal-ligand and adjacent bonds slowly relaxed to normal
+        # values. For MacroModel, the metal-ligand bonds are
+        # constrained and the other ligand bonds are allowed to relax.
+        # The rest of the ligands are constrained to the input value.
+        for i in range(self._res_steps):
+            self.restricted_optimization(
+                mol=mol,
+                metal_atoms=metal_atoms,
+                metal_bonds=metal_bonds,
+                ids_to_metals=ids_to_metals,
+                rel_distance=0.9,
+                force_constant=1e2,
+                input_constraints=input_constraints
+            )
 
     def apply_metal_centre_constraints(self, mol, ff, metal_bonds,
                                        metal_atoms):
