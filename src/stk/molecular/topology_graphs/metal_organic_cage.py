@@ -729,3 +729,62 @@ class M2L4_Lantern(MetalCage):
         Edge(vertices[1], vertices[4], position=[-0.2, -1, 0]),
         Edge(vertices[1], vertices[5], position=[0, -1, -0.2]),
     )
+
+
+class M4L8_sqpl(MetalCage):
+    """
+    Represents a M4L8 topology graph with square planar metal.
+
+    See :class:`.MetalCage` for more details and examples.
+
+    Attributes
+    ----------
+    vertices : :class:`tuple` of :class:`.Vertex`
+        The vertices which make up the topology graph.
+
+    edges : :class:`tuple` of :class:`.Edge`
+        The edges which make up the topology graph.
+
+    """
+
+    vertices = (
+        _MetalCageVertex(1, 0, 0),
+        _MetalCageVertex(0, 1, 0),
+        _MetalCageVertex(-1, 0, 0),
+        _MetalCageVertex(0, -1, 0),
+
+        _MetalCageVertex(1, 1, 1),
+        _MetalCageVertex(1, 1, -1),
+
+        _MetalCageVertex(1, -1, 1),
+        _MetalCageVertex(1, -1, -1),
+
+        _MetalCageVertex(-1, -1, 1),
+        _MetalCageVertex(-1, -1, -1),
+
+        _MetalCageVertex(-1, 1, 1),
+        _MetalCageVertex(-1, 1, -1),
+
+    )
+
+    edges = (
+        Edge(vertices[0], vertices[4], position=[1, 0.2, 0.2]),
+        Edge(vertices[0], vertices[5], position=[1, 0.2, -0.2]),
+        Edge(vertices[0], vertices[6], position=[1, -0.2, 0.2]),
+        Edge(vertices[0], vertices[7], position=[1, -0.2, -0.2]),
+
+        Edge(vertices[1], vertices[4], position=[0.2, 1, 0.2]),
+        Edge(vertices[1], vertices[5], position=[0.2, 1, -0.2]),
+        Edge(vertices[1], vertices[10], position=[-0.2, 1, 0.2]),
+        Edge(vertices[1], vertices[11], position=[-0.2, 1, -0.2]),
+
+        Edge(vertices[2], vertices[10], position=[-1, 0.2, 0.2]),
+        Edge(vertices[2], vertices[11], position=[-1, 0.2, -0.2]),
+        Edge(vertices[2], vertices[8], position=[-1, -0.2, 0.2]),
+        Edge(vertices[2], vertices[9], position=[-1, -0.2, -0.2]),
+
+        Edge(vertices[3], vertices[8], position=[-0.2, -1, 0.2]),
+        Edge(vertices[3], vertices[9], position=[-0.2, -1, -0.2]),
+        Edge(vertices[3], vertices[6], position=[0.2, -1, 0.2]),
+        Edge(vertices[3], vertices[7], position=[0.2, -1, -0.2]),
+    )
