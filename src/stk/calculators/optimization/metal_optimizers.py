@@ -16,6 +16,112 @@ from .optimizers import Optimizer
 logger = logging.getLogger(__name__)
 
 
+class MetalMacroModelMD(MacroModelMD):
+    """
+    Runs a molecular dynamics conformer search using MacroModel.
+
+    """
+    def _fix_distances(self, mol, fix_block):
+        """
+        Add lines fixing bond distances to ``.com`` body.
+
+        Parameters
+        ----------
+        mol : :class:`.Molecule`
+            The molecule to be optimized.
+
+        fix_block : :class:`str`
+            A string holding fix commands in the ``.com`` file.
+
+        Returns
+        -------
+        :class:`str`
+            A string holding fix commands in the ``.com`` file.
+
+        """
+
+        for bond in self._restricted_bonds:
+            bond = list(bond)
+
+            # Make sure that the indices are increased by 1 in the .mae
+            # file.
+            atom1_id = bond[0] + 1
+            atom2_id = bond[1] + 1
+            args = ('FXDI', atom1_id, atom2_id, 0, 0, 99999, 0, 0, 0)
+            fix_block += self._get_com_line(*args)
+            fix_block += '\n'
+
+        return fix_block
+
+    def _fix_bond_angles(self, mol, fix_block):
+        """
+        Add lines fixing bond angles to the ``.com`` body.
+
+        Parameters
+        ----------
+        mol : :class:`.Molecule`
+            The molecule to be optimized.
+
+        fix_block : :class:`str`
+            A string holding fix commands in the ``.com`` file.
+
+        Returns
+        -------
+        :class:`str`
+            A string holding fix commands in the ``.com`` file.
+
+        """
+
+        for angle in self._restricted_bond_angles:
+            angle = list(angle)
+
+            # Make sure that the indices are increased by 1 in the .mae
+            # file.
+            atom1_id = angle[0] + 1
+            atom2_id = angle[1] + 1
+            atom3_id = angle[2] + 1
+            atom_ids = [atom1_id, atom2_id, atom3_id]
+            args = ('FXBA', *atom_ids, 0, 99999, 0, 0, 0)
+            fix_block += self._get_com_line(*args)
+            fix_block += '\n'
+
+        return fix_block
+
+    def _fix_torsional_angles(self, mol, fix_block):
+        """
+        Add lines fixing torsional bond angles to the ``.com`` body.
+
+        Parameters
+        ----------
+        mol : :class:`.Molecule`
+            The molecule to be optimized.
+
+        fix_block : :class:`str`
+            A string holding fix commands in the ``.com`` file.
+
+        Returns
+        -------
+        :class:`str`
+            A string holding fix commands in the ``.com`` file.
+
+        """
+        for torsion in self._restricted_torsional_angles:
+            torsion = list(torsion)
+
+            # Make sure that the indices are increased by 1 in the .mae
+            # file.
+            atom1_id = torsion[0] + 1
+            atom2_id = torsion[1] + 1
+            atom3_id = torsion[2] + 1
+            atom4_id = torsion[3] + 1
+            atom_ids = [atom1_id, atom2_id, atom3_id, atom4_id]
+            args = ('FXTA', *atom_ids, 99999, 361, 0, 0)
+            fix_block += self._get_com_line(*args)
+            fix_block += '\n'
+
+        return fix_block
+
+
 class MetalOptimizer(Optimizer):
     """
     Applies optimizers that maintain metal centre coordination.
@@ -30,7 +136,9 @@ class MetalOptimizer(Optimizer):
 
     """
 
-    def __init__(self, scale, prearrange=True, use_cache=False):
+    def __init__(self, scale, output_dir, macromodel_path,
+                 restrict_all_bonds,
+                 prearrange=True, use_cache=False):
         """
         Initialize a :class:`MetalOptimizer` instance.
 
@@ -62,6 +170,9 @@ class MetalOptimizer(Optimizer):
         """
         self._scale = scale
         self._prearrange = prearrange
+        self._output_dir = output_dir
+        self._macromodel_path = macromodel_path
+        self._restrict_all_bonds = restrict_all_bonds
 
         self.metal_a_no = list(range(21, 31))
         self.metal_a_no += list(range(39, 49))+list(range(72, 81))
@@ -154,11 +265,8 @@ class MetalOptimizer(Optimizer):
 
         return edit_mol
 
-    def restricted_optimization(self, mol, metal_atoms, metal_bonds,
-                                ids_to_metals,
-                                rel_distance=None,
-                                force_constant=None,
-                                input_constraints=None):
+    def restricted_MD(self, mol, metal_bonds, metal_atoms,
+                      input_constraints):
         """
         Optimize `mol` with restrictions on metal-ligand bonds.
 
@@ -167,10 +275,10 @@ class MetalOptimizer(Optimizer):
         mol : :class:`.Molecule`
             The molecule to be optimized.
 
-        rel_distance : :class:`.Molecule`
+        metal_bonds : :class:`.Molecule`
             The molecule to be optimized.
 
-        force_constant : :class:`.Molecule`
+        metal_atoms : :class:`.Molecule`
             The molecule to be optimized.
 
         input_constraints : :class:`.Molecule`
@@ -182,35 +290,15 @@ class MetalOptimizer(Optimizer):
 
         """
 
-        # Write rdkit molecule with metal atoms and bonds deleted.
-        edit_mol = self.to_rdkit_mol_no_metals(
-            mol,
-            metal_atoms=metal_atoms,
-            metal_bonds=metal_bonds
-        )
-
-        # Constrain selected bonds, angles and dihedrals and metal
-        # atoms.
-        rdkit.SanitizeMol(edit_mol)
-        ff = rdkit.UFFGetMoleculeForceField(edit_mol)
-
         # Constrain the metal centre.
-        self.apply_metal_centre_constraints(
+        restrictions = self.apply_metal_centre_constraints(
             mol,
-            ff,
             metal_bonds,
             metal_atoms
         )
-
-        # Add angular constraints that enforce relative orientation
-        # between metal complexes + the topology centre of mass.
-        if self._restrict_orientation:
-            self.apply_orientation_restriction(
-                ff,
-                mol,
-                metal_bonds,
-                metal_atoms
-            )
+        restricted_bonds = restrictions[0]
+        restricted_bond_angles = restrictions[1]
+        restricted_torsional_angles = restrictions[2]
 
         # Constrain all bonds and angles based on input structure
         # except for:
@@ -221,65 +309,63 @@ class MetalOptimizer(Optimizer):
                 constraint = input_constraints[const]
                 if constraint['type'] == 'bond':
                     # Add distance constraints in place of metal bonds.
-                    ff.UFFAddDistanceConstraint(
-                        idx1=constraint['idx1'],
-                        idx2=constraint['idx2'],
-                        relative=True,
-                        minLen=1.0,
-                        maxLen=1.0,
-                        forceConstant=constraint['fc']
-                    )
+                    restricted_bonds.append(frozenset((
+                        constraint['idx1'],
+                        constraint['idx2']
+                    )))
                 elif constraint['type'] == 'angle':
-                    ff.UFFAddAngleConstraint(
-                        idx1=constraint['idx1'],
-                        idx2=constraint['idx2'],
-                        idx3=constraint['idx3'],
-                        relative=False,
-                        minAngleDeg=constraint['angle'],
-                        maxAngleDeg=constraint['angle'],
-                        forceConstant=constraint['fc']
-                    )
+                    restricted_bond_angles.append(frozenset((
+                        constraint['idx1'],
+                        constraint['idx2'],
+                        constraint['idx3']
+                    )))
                 elif constraint['type'] == 'torsion':
-                    ff.UFFAddTorsionConstraint(
-                        idx1=constraint['idx1'],
-                        idx2=constraint['idx2'],
-                        idx3=constraint['idx3'],
-                        idx4=constraint['idx4'],
-                        relative=False,
-                        minDihedralDeg=constraint['torsion'],
-                        maxDihedralDeg=constraint['torsion'],
-                        forceConstant=constraint['fc']
-                    )
+                    restricted_torsional_angles.append(frozenset((
+                        constraint['idx1'],
+                        constraint['idx2'],
+                        constraint['idx3'],
+                        constraint['idx4']
+                    )))
 
-        # For bonds (2), a weak force constant is applied to minimize
-        # to rel_distance.
-        if rel_distance is not None and force_constant is not None:
-            for bond in mol.bonds:
-                idx1 = bond.atom1.id
-                idx2 = bond.atom2.id
-                if idx1 in ids_to_metals or idx2 in ids_to_metals:
-                    # Do not restrict H atom distances.
-                    if self.has_h(bond):
-                        continue
-                    if self.has_M(bond, metal_atoms):
-                        continue
-                    # Add distance constraints in place of metal bonds.
-                    ff.UFFAddDistanceConstraint(
-                        idx1=idx1,
-                        idx2=idx2,
-                        relative=True,
-                        minLen=rel_distance,
-                        maxLen=rel_distance,
-                        forceConstant=force_constant
-                    )
+        md1 = MetalMacroModelMD(
+            macromodel_path=self._macromodel_path,
+            output_dir=self._output_dir,
+            time_step=0.01,
+            temperature=100,
+            conformers=50,
+            eq_time=50,
+            simulation_time=0,
+            restricted_bonds=restricted_bonds,
+            restricted_bond_angles=restricted_bond_angles,
+            restricted_torsional_angles=restricted_torsional_angles
+        )
+        md2 = MetalMacroModelMD(
+            macromodel_path=self._macromodel_path,
+            output_dir=self._output_dir,
+            time_step=0.1,
+            temperature=100,
+            conformers=50,
+            eq_time=10,
+            simulation_time=20,
+            restricted_bonds=restricted_bonds,
+            restricted_bond_angles=restricted_bond_angles,
+            restricted_torsional_angles=restricted_torsional_angles
+        )
 
-        # Perform UFF optimization with rdkit.
-        ff.Minimize(maxIts=50)
+        # ConstructedMolecule -> rdkit -> stk.Molecule -> optimize
+        # -> rdkit_mol -> ConstructedMolecule.update_from_rdkit_mol
+        # Write rdkit molecule with metal atoms and bonds deleted.
+        edit_mol = self.to_rdkit_mol_no_metals(
+            mol,
+            metal_atoms=metal_atoms,
+            metal_bonds=metal_bonds
+        )
 
-        # Update stk molecule from optimized molecule. This should
-        # only modify atom positions, which means metal atoms will be
-        # reinstated.
-        mol.update_from_rdkit_mol(edit_mol)
+        new_mol = BuildingBlock.init_from_rdkit_mol(edit_mol)
+        md1.optimize(new_mol)
+        md2.optimize(new_mol)
+        new_rdkit_mol = new_mol.to_rdkit_mol()
+        mol.update_from_rdkit_mol(new_rdkit_mol)
 
     def optimize(self, mol):
         """
@@ -548,6 +634,70 @@ class MetalOptimizer(Optimizer):
         if bond.atom2 in metal_atoms:
             return True
         return False
+
+    def apply_metal_centre_constraints(self, mol, metal_bonds,
+                                       metal_atoms):
+        """
+        Defines metal centre constraints.
+
+        """
+
+        restricted_bonds = []
+        restricted_bond_angles = []
+        restricted_torsional_angles = []
+
+        # Define restricted bonds.
+        for bond in metal_bonds:
+            restricted_bonds.append(
+                frozenset((bond.atom1.id, bond.atom2.id))
+            )
+
+        # Also implement angular and torsional constraints.
+        for bonds in combinations(metal_bonds, r=2):
+            bond1, bond2 = bonds
+            bond1_atoms = [bond1.atom1, bond1.atom2]
+            bond2_atoms = [bond2.atom1, bond2.atom2]
+            pres_atoms = list(set(bond1_atoms + bond2_atoms))
+            # If there are more than 3 atoms, implies two
+            # independant bonds.
+            if len(pres_atoms) > 3:
+                continue
+            for atom in pres_atoms:
+                if atom in bond1_atoms and atom in bond2_atoms:
+                    idx2 = atom.id
+                elif atom in bond1_atoms:
+                    idx1 = atom.id
+                elif atom in bond2_atoms:
+                    idx3 = atom.id
+            restricted_bond_angles.append(
+                frozenset((idx1, idx2, idx3))
+            )
+            for bond3 in metal_bonds:
+                if bond3 == bond2 or bond3 == bond1:
+                    continue
+
+                bond3_atoms = [bond3.atom1, bond3.atom2]
+                pres_atoms_2 = list(set(
+                    bond1_atoms + bond2_atoms + bond3_atoms
+                ))
+                if bond3.atom1 in pres_atoms:
+                    idx4 = bond3.atom2.id
+                elif bond3.atom2 in pres_atoms:
+                    idx4 = bond3.atom1.id
+                # If there are more than 3 atoms, implies at least two
+                # independant bonds.
+                if len(pres_atoms_2) > 4:
+                    continue
+                restricted_torsional_angles.append(
+                    frozenset((idx1, idx2, idx3, idx4))
+                )
+
+        restrictions = (
+            restricted_bonds,
+            restricted_bond_angles,
+            restricted_torsional_angles
+        )
+        return restrictions
 
 
 class UFFMetalOptimizer(MetalOptimizer):
