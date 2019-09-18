@@ -41,67 +41,6 @@ def main():
         coordination_info=metal_coord_info
     )
 
-    ligand = stk.BuildingBlock(
-        'C(#Cc1cccc(C#Cc2cccnc2)c1)c1cccnc1',
-        functional_groups=['pyridine_N_metal']
-    )
-    print(ligand.func_groups)
-    ligand.write('lig_cage.pdb')
-    xtb_opt = stk.XTB(
-        xtb_path='/home/atarzia/software/xtb_190418/bin/xtb',
-        output_dir='ligopt',
-        num_cores=1,
-        charge=0,
-        num_unpaired_electrons=0,
-        max_runs=1,
-        calculate_hessian=False,
-        unlimited_memory=True
-    )
-    xtb_opt.optimize(ligand)
-    m2l4_lantern = stk.metal_organic_cage.M2L4_Lantern()
-    print(m2l4_lantern)
-    print('--------------------------------------------------------')
-    lantern = stk.ConstructedMolecule(
-        building_blocks=[metal, ligand],
-        topology_graph=m2l4_lantern,
-        building_block_vertices={
-            metal: m2l4_lantern.vertices[0:2],
-            ligand: m2l4_lantern.vertices[2:]
-        }
-    )
-    print('--------------------------------------------------------')
-    print(lantern)
-    lantern.write('lantern.mol')
-    lantern.write('lantern.pdb')
-    print('--------------------------------------------------------')
-    xtb_opt = stk.XTB(
-        xtb_path='/home/atarzia/software/xtb_190418/bin/xtb',
-        output_dir='compL',
-        num_cores=4,
-        charge=4,
-        num_unpaired_electrons=0,
-        max_runs=1,
-        calculate_hessian=False,
-        unlimited_memory=True
-    )
-    # Ramp up force constant.
-    lantern.write('lantern_opt_1.mol')
-    optimizer = stk.MetalOptimizer(
-        scale=2,
-        force_constant=1.0e2,
-        prearrange=True,
-        restrict_all_bonds=True,
-        restrict_orientation=True,
-        res_steps=9
-    )
-    optimizer.optimize(mol=lantern)
-    lantern.write('lantern_opt_2.mol')
-    xtb_opt.optimize(mol=lantern)
-    print('--------------------------------------------------------')
-    print(lantern)
-    lantern.write('lantern_opt.mol')
-    lantern.write('lantern_opt.pdb')
-
     ligand1 = stk.BuildingBlock(
         'C(#Cc1cccc(C#Cc2cccnc2)c1)c1cccnc1',
         functional_groups=['pyridine_N_metal']
@@ -193,6 +132,67 @@ def main():
     print(hetero_lantern)
     hetero_lantern.write('hetero_lantern_opt.mol')
     hetero_lantern.write('hetero_lantern_opt.pdb')
+
+    ligand = stk.BuildingBlock(
+        'C(#Cc1cccc(C#Cc2cccnc2)c1)c1cccnc1',
+        functional_groups=['pyridine_N_metal']
+    )
+    print(ligand.func_groups)
+    ligand.write('lig_cage.pdb')
+    xtb_opt = stk.XTB(
+        xtb_path='/home/atarzia/software/xtb_190418/bin/xtb',
+        output_dir='ligopt',
+        num_cores=1,
+        charge=0,
+        num_unpaired_electrons=0,
+        max_runs=1,
+        calculate_hessian=False,
+        unlimited_memory=True
+    )
+    xtb_opt.optimize(ligand)
+    m2l4_lantern = stk.metal_organic_cage.M2L4_Lantern()
+    print(m2l4_lantern)
+    print('--------------------------------------------------------')
+    lantern = stk.ConstructedMolecule(
+        building_blocks=[metal, ligand],
+        topology_graph=m2l4_lantern,
+        building_block_vertices={
+            metal: m2l4_lantern.vertices[0:2],
+            ligand: m2l4_lantern.vertices[2:]
+        }
+    )
+    print('--------------------------------------------------------')
+    print(lantern)
+    lantern.write('lantern.mol')
+    lantern.write('lantern.pdb')
+    print('--------------------------------------------------------')
+    xtb_opt = stk.XTB(
+        xtb_path='/home/atarzia/software/xtb_190418/bin/xtb',
+        output_dir='compL',
+        num_cores=4,
+        charge=4,
+        num_unpaired_electrons=0,
+        max_runs=1,
+        calculate_hessian=False,
+        unlimited_memory=True
+    )
+    # Ramp up force constant.
+    lantern.write('lantern_opt_1.mol')
+    optimizer = stk.MetalOptimizer(
+        scale=2,
+        force_constant=1.0e2,
+        prearrange=True,
+        restrict_all_bonds=True,
+        restrict_orientation=True,
+        res_steps=9
+    )
+    optimizer.optimize(mol=lantern)
+    lantern.write('lantern_opt_2.mol')
+    xtb_opt.optimize(mol=lantern)
+    print('--------------------------------------------------------')
+    print(lantern)
+    lantern.write('lantern_opt.mol')
+    lantern.write('lantern_opt.pdb')
 
     ligand = stk.BuildingBlock(
         'NCCN',
