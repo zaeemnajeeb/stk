@@ -575,10 +575,7 @@ class MetalCage(TopologyGraph):
                 if set(i.vertices).issubset(set(self.vertices))
             ]
             self.edges = tuple(i for i in used_edges)
-        print('---init----')
-        print(self.vertices)
-        print(self.edges)
-        print('---init----')
+
         if vertex_alignments is None:
             vertex_alignments = {}
 
