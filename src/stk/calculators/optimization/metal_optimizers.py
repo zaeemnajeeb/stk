@@ -341,9 +341,9 @@ class MetalOptimizer(Optimizer):
             macromodel_path=self._macromodel_path,
             output_dir=self._output_dir,
             time_step=0.01,
-            temperature=100,
-            conformers=50,
-            eq_time=50,
+            temperature=0,
+            conformers=1,
+            eq_time=25,
             simulation_time=0,
             restricted_bonds=restricted_bonds,
             restricted_bond_angles=restricted_bond_angles,
@@ -353,8 +353,8 @@ class MetalOptimizer(Optimizer):
             macromodel_path=self._macromodel_path,
             output_dir=self._output_dir,
             time_step=0.1,
-            temperature=100,
-            conformers=50,
+            temperature=0,
+            conformers=1,
             eq_time=10,
             simulation_time=20,
             restricted_bonds=restricted_bonds,
@@ -774,7 +774,7 @@ class UFFMetalOptimizer(MetalOptimizer):
         self.metal_a_no = list(range(21, 31))
         self.metal_a_no += list(range(39, 49))+list(range(72, 81))
 
-        super().__init__(use_cache=use_cache)
+        super(MetalOptimizer, self).__init__(use_cache=use_cache)
 
     def restricted_optimization(self, mol, metal_atoms,
                                 metal_bonds,
@@ -897,7 +897,7 @@ class UFFMetalOptimizer(MetalOptimizer):
                     )
 
         # Perform UFF optimization with rdkit.
-        ff.Minimize(maxIts=50)
+        ff.Minimize(maxIts=25)
 
         # Update stk molecule from optimized molecule. This should
         # only modify atom positions, which means metal atoms will be
