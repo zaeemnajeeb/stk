@@ -780,7 +780,6 @@ class UFFMetalOptimizer(MetalOptimizer):
                                 metal_bonds,
                                 ids_to_metals,
                                 rel_distance=None,
-                                force_constant=None,
                                 input_constraints=None):
         """
         Optimize `mol` with restrictions on metal-ligand bonds.
@@ -791,9 +790,6 @@ class UFFMetalOptimizer(MetalOptimizer):
             The molecule to be optimized.
 
         rel_distance : :class:`.Molecule`
-            The molecule to be optimized.
-
-        force_constant : :class:`.Molecule`
             The molecule to be optimized.
 
         input_constraints : :class:`.Molecule`
@@ -876,7 +872,7 @@ class UFFMetalOptimizer(MetalOptimizer):
 
         # For bonds (2), a weak force constant is applied to minimize
         # to rel_distance.
-        if rel_distance is not None and force_constant is not None:
+        if rel_distance is not None:
             for bond in mol.bonds:
                 idx1 = bond.atom1.id
                 idx2 = bond.atom2.id
@@ -893,7 +889,7 @@ class UFFMetalOptimizer(MetalOptimizer):
                         relative=True,
                         minLen=rel_distance,
                         maxLen=rel_distance,
-                        forceConstant=force_constant
+                        forceConstant=self._force_constant
                     )
 
         # Perform UFF optimization with rdkit.
@@ -966,7 +962,6 @@ class UFFMetalOptimizer(MetalOptimizer):
                 metal_bonds=metal_bonds,
                 ids_to_metals=ids_to_metals,
                 rel_distance=0.9,
-                force_constant=1e2,
                 input_constraints=input_constraints
             )
 
