@@ -137,7 +137,7 @@ class MetalOptimizer(Optimizer):
     """
 
     def __init__(self, scale, output_dir, macromodel_path,
-                 restrict_all_bonds,
+                 restrict_all_bonds=False, restrict_orientation=False,
                  prearrange=True, use_cache=False):
         """
         Initialize a :class:`MetalOptimizer` instance.
@@ -173,6 +173,7 @@ class MetalOptimizer(Optimizer):
         self._output_dir = output_dir
         self._macromodel_path = macromodel_path
         self._restrict_all_bonds = restrict_all_bonds
+        self._restrict_orientation = restrict_orientation
 
         self.metal_a_no = list(range(21, 31))
         self.metal_a_no += list(range(39, 49))+list(range(72, 81))
@@ -326,6 +327,15 @@ class MetalOptimizer(Optimizer):
                         constraint['idx3'],
                         constraint['idx4']
                     )))
+
+        # Add angular constraints that enforce relative orientation
+        # between metal complexes + the topology centre of mass.
+        if self._restrict_orientation:
+            self.apply_orientation_restriction(
+                mol,
+                metal_bonds,
+                metal_atoms
+            )
 
         md1 = MetalMacroModelMD(
             macromodel_path=self._macromodel_path,
@@ -698,6 +708,14 @@ class MetalOptimizer(Optimizer):
             restricted_torsional_angles
         )
         return restrictions
+
+    def apply_orientation_restriction(self, mol, metal_bonds,
+                                      metal_atoms):
+        """
+        Applies relative orientation of metal centre restrcitions.
+
+        """
+        raise NotImplementedError
 
 
 class UFFMetalOptimizer(MetalOptimizer):
