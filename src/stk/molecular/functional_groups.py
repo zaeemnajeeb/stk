@@ -584,9 +584,18 @@ _fg_types = (
             '[$([#6]([H])(~[#6R1])~[#6][N]([H])[H])]',
         ],
         deleter_smarts=(
-                ['[$([H][N]([H])[#6]~[#6]([H])~[#6R1])]']*2 +
-                ['[$([H][#6](~[#6R1])~[#6][N]([H])[H])]']
+            ['[$([H][N]([H])[#6]~[#6]([H])~[#6R1])]']*2 +
+            ['[$([H][#6](~[#6R1])~[#6][N]([H])[H])]']
         )
+    ),
+
+    # Dummy metal functional group.
+
+    FGType(
+        name="metal",
+        func_group_smarts="",
+        bonder_smarts=[""],
+        deleter_smarts=[]
     ),
 
     # Metal interacting functional groups.
