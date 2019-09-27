@@ -10,12 +10,7 @@ Metal Complex
 import logging
 import numpy as np
 
-<<<<<<< HEAD
-from .topology_graph import TopologyGraph, Vertex, Edge
-from ..reactor import Reactor
-=======
 from .topology_graph import TopologyGraph, VertexData, Vertex, EdgeData
->>>>>>> f7fecb92102e96a1b2bbc7808cafbcd40659aa06
 from ...utilities import vector_angle
 
 logger = logging.getLogger(__name__)
@@ -1020,13 +1015,6 @@ class SquarePlanarMonodentate(MetalComplex):
         _MetalComplexVertexData(0, 0, -1),
     )
 
-<<<<<<< HEAD
-    edges = (
-        Edge(vertices[0], vertices[1], position=[0, 0.2, 0]),
-        Edge(vertices[0], vertices[2], position=[0, 0, 0.2]),
-        Edge(vertices[0], vertices[3], position=[0, -0.2, 0]),
-        Edge(vertices[0], vertices[4], position=[0, 0, -0.2]),
-=======
     edge_data = (
         EdgeData(
             vertex_data[0],
@@ -1048,7 +1036,6 @@ class SquarePlanarMonodentate(MetalComplex):
             vertex_data[4],
             position=[0, 0, 0.2]
         ),
->>>>>>> f7fecb92102e96a1b2bbc7808cafbcd40659aa06
     )
 
 
