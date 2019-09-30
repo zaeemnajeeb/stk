@@ -691,7 +691,12 @@ class ETKDG(Optimizer):
 
 class MetalOptimizer(Optimizer):
     """
-    Applies optimizers that maintain metal centre coordination.
+    Applies forcefield optimizers that can handle metal centres.
+
+    Attributes
+    ----------
+    _scale : :class:`float`
+        Distance to place ligand binder atoms from metal.
 
     Examples
     --------
