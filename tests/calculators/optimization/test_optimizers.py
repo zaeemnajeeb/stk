@@ -92,6 +92,16 @@ def test_etkdg(tmp_polymer):
     assert energy_calculator.get_energy(tmp_polymer) < init_energy
 
 
+def test_metal_uff(tmp_bidentage_sqpl):
+    # Because RDKit UFF cannot handle the metals appropriately, we
+    # simply test that the optimizer does not crash, and output the
+    # structure for visualisation.
+    tmp_bidentage_sqpl.write(join(odir, 'metal_uff_before.mol'))
+    optimizer = stk.MetalOptimizer(scale=2)
+    optimizer.optimize(mol=tmp_bidentage_sqpl)
+    tmp_bidentage_sqpl.write(join(odir, 'metal_uff_after.mol'))
+
+
 def test_optimizer_sequence(tmp_polymer):
     # If the optimization was successful the energy should be lowered.
     energy_calculator = stk.MMFFEnergy()
