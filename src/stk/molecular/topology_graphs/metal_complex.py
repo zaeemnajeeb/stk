@@ -2,7 +2,8 @@
 Metal Complex
 =============
 
-#. :class:`.SquarePlanar`
+#. :class:`.SquarePlanarMonodentate`
+#. :class:`.SquarePlanarBidentate`
 
 """
 
