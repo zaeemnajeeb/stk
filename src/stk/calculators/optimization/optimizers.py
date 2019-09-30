@@ -693,18 +693,98 @@ class MetalOptimizer(Optimizer):
     """
     Applies forcefield optimizers that can handle metal centres.
 
+    Notes
+    -----
+    By default, :meth:`optimize` will run a restricted optimization
+    using constraints and the UFF. To implement this, metal atoms are
+    replaced by noninteracting H atoms, and constraints are applied
+    to maintain the metal centre geometry.
+
     Attributes
     ----------
     _scale : :class:`float`
         Distance to place ligand binder atoms from metal.
 
+    _metal_a_no : :class:`list` of :class:`int`
+        Atomic numbers of metals based on the periodic table.
+
     Examples
     --------
 
-    FULL optimize
+    :class:`MetalOptimizer` allows for the restricted optimization of
+    :class:`ConstructedMolecule` containing metals.
 
-    Just rest opt
+    .. code-block:: python
 
+        import stk
+        from rdkit.Chem import AllChem as rdkit
+        import numpy as np
+
+        # Define an stk BuildingBlock with no functional groups and a
+        # single metal (Pd with 2+ charge) atom.
+        m = rdkit.MolFromSmiles('[Pd+2]')
+        m.AddConformer(rdkit.Conformer(m.GetNumAtoms()))
+        metal = stk.BuildingBlock.init_from_rdkit_mol(
+            m,
+            functional_groups=None,
+        )
+
+        # Manually set functional group information for the metal
+        # centre. The key of this dictionary is the fg.id.
+        # Pd2+ is 4 coordinate, so we write 4 metal functiongal groups.
+        metal_coord_info = {
+            0: {
+                'atom_ids': [0],
+                'bonder_ids': [0],
+                'deleter_ids': [None]
+            },
+            1: {
+                'atom_ids': [0],
+                'bonder_ids': [0],
+                'deleter_ids': [None]
+            },
+            2: {
+                'atom_ids': [0],
+                'bonder_ids': [0],
+                'deleter_ids': [None]
+            },
+            3: {
+                'atom_ids': [0],
+                'bonder_ids': [0],
+                'deleter_ids': [None]
+            },
+        }
+        metal = stk.assign_metal_fgs(
+            building_block=metal,
+            coordination_info=metal_coord_info
+        )
+
+        ligand = stk.BuildingBlock(
+            'c1cc(-c2ccc(-c3ccncc3)cc2)ccn1',
+            functional_groups=['pyridine_N_metal']
+        )
+        # Handle multiple functional groups on the ligand to ensure
+        # only one functional group is bound to the metal.
+        ligand.func_groups = tuple(i for i in [ligand.func_groups[0]])
+
+        # Construct four-coordinated Pd 2+ square planar complex.
+        sqpl = stk.metal_complex.SquarePlanarMonodentate()
+        pdl2_sqpl_complex = stk.ConstructedMolecule(
+            building_blocks=[metal, ligand],
+            topology_graph=sqpl,
+            # Assign the metal to vertex 0, although this is not a
+            # requirement.
+            building_block_vertices={
+                metal: tuple([sqpl.vertices[0]]),
+                ligand: sqpl.vertices[1:]
+            }
+        )
+
+        # Define an optimizer, with ligand bonder atoms placed 2
+        # Angstrom from the metal centres.
+        optimizer = stk.MetalOptimizer(scale=2)
+        # Optimize.
+        optimizer.optimize(mol=pdl2_sqpl_complex)
 
     """
 
@@ -724,6 +804,8 @@ class MetalOptimizer(Optimizer):
 
         """
         self._scale = scale
+        self._metal_a_no = list(range(21, 31))
+        self._metal_a_no += list(range(39, 49))+list(range(72, 81))
         super().__init__(use_cache=use_cache)
 
     def restricted_optimization(self, mol):
