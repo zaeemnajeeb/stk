@@ -808,9 +808,9 @@ class MetalOptimizer(Optimizer):
         self._metal_a_no += list(range(39, 49))+list(range(72, 81))
         super().__init__(use_cache=use_cache)
 
-    def restricted_optimization(self, mol):
+    def _prearrange_fgs(self, mol):
         """
-        Optimize `mol` with restrictions on metal-ligand bonds.
+        Prearrange the metal interacting ligand functional groups.
 
         Parameters
         ----------
@@ -822,20 +822,63 @@ class MetalOptimizer(Optimizer):
         None : :class:`NoneType`
 
         """
-        # Find all metal atoms and atoms they are bonded to.
-        metal_a_no = list(range(21, 31))
-        metal_a_no += list(range(39, 49))+list(range(72, 81))
-        metal_atoms = []
-        for atom in mol.atoms:
-            if atom.atomic_number in metal_a_no:
-                metal_atoms.append(atom)
+        bbs = [i for i in mol.get_building_blocks()]
+        metal_bbs = [
+            i for i in bbs if i.func_groups
+            if 'metal' in [j.fg_type.name for j in i.func_groups]
+        ]
+        bb_vertices = mol.building_block_vertices
+        metal_vertices = [i for j in metal_bbs for i in bb_vertices[j]]
+        metal_vertex_ids = [i.id for i in metal_vertices]
+        topo_graph = mol.topology_graph
 
-        metal_bonds = []
-        for bond in mol.bonds:
-            if bond.atom1 in metal_atoms or bond.atom2 in metal_atoms:
-                metal_bonds.append(bond)
+        for vertex_id in metal_vertex_ids:
+            vertex = topo_graph.vertex_edge_assignments[vertex_id]
+            for edge in vertex.edges:
+                fg1, fg2 = edge.get_func_groups()
+                fg1_name = fg1.fg_type.name
+                if fg1_name == 'metal':
+                    # Get new position as defined by edge position.
+                    edge_vect = edge._position - vertex._position
+                    edge_vect = edge_vect / np.linalg.norm(
+                        edge._position - vertex._position
+                    )
+                    edge_vect = edge_vect * self._scale
+                    new_position = edge_vect + vertex._position
 
-        # Write rdkit molecule with metal atoms and bonds deleted.
+                    # Get atoms to move.
+                    if len(fg2.bonders) > 1:
+                        raise ValueError(
+                            'Metal interacting FGs should only have'
+                            f'1 bonder. {fg2} does not.'
+                        )
+                    atom_to_move = fg2.bonders[0]
+                    # Move atoms to new position.
+                    pos_matrix = mol.get_position_matrix()
+                    pos_matrix[atom_to_move.id] = new_position
+                    mol.set_position_matrix(pos_matrix)
+
+    def _to_rdkit_mol_no_metals(self, mol, metal_atoms, metal_bonds):
+        """
+        Write :class:`rdkit.Mol` with metals replaced by H atoms.
+
+        Parameters
+        ----------
+        mol : :class:`.Molecule`
+            The molecule to be optimized.
+
+        metal_atoms : :class:`.list` of :class:`stk.Atom`
+            List of metal atoms.
+
+        metal_bonds : :class:`.list` of :class:`stk.Bond`
+            List of bonds including metal atoms.
+
+        Returns
+        -------
+        edit_mol : :class:`rdkit.Mol`
+            RDKit molecule with metal atoms replaced with H atoms.
+
+        """
         edit_mol = rdkit.EditableMol(rdkit.Mol())
         for atom in mol.atoms:
             if atom in metal_atoms:
@@ -865,6 +908,16 @@ class MetalOptimizer(Optimizer):
             edit_mol.GetAtomWithIdx(atom_id).SetNoImplicit(True)
         edit_mol.AddConformer(rdkit_conf)
 
+        return edit_mol
+
+
+        # Write rdkit molecule with metal atoms and bonds deleted.
+        edit_mol = self._to_rdkit_mol_no_metals(
+            mol,
+            metal_atoms=metal_atoms,
+            metal_bonds=metal_bonds
+        )
+
         # Constrain selected bonds, angles and dihedrals and metal
         # atoms.
         rdkit.SanitizeMol(edit_mol)
@@ -883,6 +936,7 @@ class MetalOptimizer(Optimizer):
                 maxLen=self._scale+0.1,
                 forceConstant=1.0e5
             )
+
         # Also implement angular constraints.
         for bonds in combinations(metal_bonds, r=2):
             bond1, bond2 = bonds
@@ -939,46 +993,19 @@ class MetalOptimizer(Optimizer):
         None : :class:`NoneType`
 
         """
+        # Find all metal atoms and atoms they are bonded to.
+        metal_atoms = []
+        for atom in mol.atoms:
+            if atom.atomic_number in self.metal_a_no:
+                metal_atoms.append(atom)
+
+        metal_bonds = []
+        for bond in mol.bonds:
+            metal_bonds.append(bond)
 
         # First step is to pre-arrange the metal centre based on the
         # MetalComplex topology.
-        bbs = [i for i in mol.get_building_blocks()]
-        metal_bbs = [
-            i for i in bbs if i.func_groups
-            if 'metal' in [j.fg_type.name for j in i.func_groups]
-        ]
-        bb_vertices = mol.building_block_vertices
-        metal_vertices = [i for j in metal_bbs for i in bb_vertices[j]]
-        metal_vertex_ids = [i.id for i in metal_vertices]
-        topo_graph = mol.topology_graph
-
-        for vertex_id in metal_vertex_ids:
-            vertex = topo_graph.vertex_edge_assignments[vertex_id]
-            for edge in vertex.edges:
-                fg1, fg2 = edge.get_func_groups()
-                fg1_name = fg1.fg_type.name
-                if fg1_name == 'metal':
-                    # Get new position as defined by edge position.
-                    edge_vect = (
-                        edge.get_position() - vertex.get_position()
-                    )
-                    edge_vect = edge_vect / np.linalg.norm(
-                        edge.get_position() - vertex.get_position()
-                    )
-                    edge_vect = edge_vect * self._scale
-                    new_position = np.asarray(edge_vect)
-
-                    # Get atoms to move.
-                    if len(fg2.bonders) > 1:
-                        raise ValueError(
-                            'Metal interacting FGs should only have'
-                            f'1 bonder. {fg2} does not.'
-                        )
-                    atom_to_move = fg2.bonders[0]
-                    # Move atoms to new position.
-                    pos_matrix = mol.get_position_matrix()
-                    pos_matrix[atom_to_move.id] = new_position
-                    mol.set_position_matrix(pos_matrix)
+        self._prearrange_fgs(mol=mol)
 
         # Second step is to perform a forcefield optimisation that
         # only optimises non metal atoms that are not bonded to the
