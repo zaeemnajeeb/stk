@@ -1017,12 +1017,13 @@ class MetalOptimizer(Optimizer):
         # Find all metal atoms and atoms they are bonded to.
         metal_atoms = []
         for atom in mol.atoms:
-            if atom.atomic_number in self.metal_a_no:
+            if atom.atomic_number in self._metal_a_no:
                 metal_atoms.append(atom)
 
         metal_bonds = []
         for bond in mol.bonds:
-            metal_bonds.append(bond)
+            if bond.atom1 in metal_atoms or bond.atom2 in metal_atoms:
+                metal_bonds.append(bond)
 
         # First step is to pre-arrange the metal centre based on the
         # MetalComplex topology.
