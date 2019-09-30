@@ -809,9 +809,15 @@ class MetalOptimizer(Optimizer):
                     idx1 = atom.id
                 elif atom in bond2_atoms:
                     idx3 = atom.id
-            pos1 = [i for i in mol.get_atom_coords(atom_ids=[idx1])][0]
-            pos2 = [i for i in mol.get_atom_coords(atom_ids=[idx2])][0]
-            pos3 = [i for i in mol.get_atom_coords(atom_ids=[idx3])][0]
+            pos1 = [
+                i for i in mol.get_atom_positions(atom_ids=[idx1])
+            ][0]
+            pos2 = [
+                i for i in mol.get_atom_positions(atom_ids=[idx2])
+            ][0]
+            pos3 = [
+                i for i in mol.get_atom_positions(atom_ids=[idx3])
+            ][0]
             v1 = pos1 - pos2
             v2 = pos3 - pos2
             angle = vector_angle(v1, v2)
@@ -861,15 +867,16 @@ class MetalOptimizer(Optimizer):
 
         for vertex_id in metal_vertex_ids:
             vertex = topo_graph.vertex_edge_assignments[vertex_id]
-
             for edge in vertex.edges:
                 fg1, fg2 = edge.get_func_groups()
                 fg1_name = fg1.fg_type.name
                 if fg1_name == 'metal':
                     # Get new position as defined by edge position.
-                    edge_vect = edge._position - vertex._position
+                    edge_vect = (
+                        edge.get_position() - vertex.get_position()
+                    )
                     edge_vect = edge_vect / np.linalg.norm(
-                        edge._position - vertex._position
+                        edge.get_position() - vertex.get_position()
                     )
                     edge_vect = edge_vect * self._scale
                     new_position = np.asarray(edge_vect)
