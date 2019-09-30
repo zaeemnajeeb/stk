@@ -910,6 +910,27 @@ class MetalOptimizer(Optimizer):
 
         return edit_mol
 
+    def _restricted_optimization(self, mol, metal_atoms, metal_bonds):
+        """
+        Optimize `mol` with restrictions on metal-ligand bonds.
+
+        Parameters
+        ----------
+        mol : :class:`.Molecule`
+            The molecule to be optimized.
+
+        metal_atoms : :class:`.list` of :class:`stk.Atom`
+            List of metal atoms.
+
+        metal_bonds : :class:`.list` of :class:`stk.Bond`
+            List of bonds including metal atoms.
+
+
+        Returns
+        -------
+        None : :class:`NoneType`
+
+        """
 
         # Write rdkit molecule with metal atoms and bonds deleted.
         edit_mol = self._to_rdkit_mol_no_metals(
@@ -1010,7 +1031,11 @@ class MetalOptimizer(Optimizer):
         # Second step is to perform a forcefield optimisation that
         # only optimises non metal atoms that are not bonded to the
         # metal.
-        self.restricted_optimization(mol=mol)
+        self._restricted_optimization(
+            mol=mol,
+            metal_atoms=metal_atoms,
+            metal_bonds=metal_bonds
+        )
 
 
 class XTBOptimizerError(Exception):
