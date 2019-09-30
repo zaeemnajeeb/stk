@@ -11,6 +11,7 @@ import logging
 import numpy as np
 
 from .topology_graph import TopologyGraph, VertexData, Vertex, EdgeData
+from ..reactor import Reactor
 from ...utilities import vector_angle
 
 logger = logging.getLogger(__name__)
@@ -923,7 +924,7 @@ class MetalComplex(TopologyGraph):
 
         scale = self._get_scale(mol)
         vertices = tuple(self._get_vertex_clones(mol, scale))
-        edges = tuple(self._get_edge_clones(vertices, scale))
+        edges = tuple(self._get_edge_clones(scale))
 
         self._prepare(mol)
         self._place_building_blocks(mol, vertices, edges)
@@ -937,9 +938,20 @@ class MetalComplex(TopologyGraph):
             )
         reactor.finalize()
 
+        # Assign the information of Edge and Vertex classes and their
+        # assignments.
         self.vertex_edge_assignments = {}
         for vertex in vertices:
+            v_id = vertex.id
+            vertex_edges = []
+            for edge in edges:
+                if edge in vertex_edges:
+                    continue
+                if v_id in edge._vertex_ids:
+                    vertex_edges.append(edge)
+            vertex.edges = vertex_edges
             self.vertex_edge_assignments[vertex.id] = vertex
+
         self._clean_up(mol)
 
     def _get_scale(self, mol):
