@@ -532,13 +532,13 @@ class MetalOptimizer(Optimizer):
                 if any(bonded_to_metals):
                     continue
             pos1 = [
-                i for i in mol.get_atom_coords(atom_ids=[idx1])
+                i for i in mol.get_atom_positions(atom_ids=[idx1])
             ][0]
             pos2 = [
-                i for i in mol.get_atom_coords(atom_ids=[idx2])
+                i for i in mol.get_atom_positions(atom_ids=[idx2])
             ][0]
             pos3 = [
-                i for i in mol.get_atom_coords(atom_ids=[idx3])
+                i for i in mol.get_atom_positions(atom_ids=[idx3])
             ][0]
             v1 = pos1 - pos2
             v2 = pos3 - pos2
@@ -599,16 +599,16 @@ class MetalOptimizer(Optimizer):
             #         continue
             #     print(idx1, idx2, idx3, idx4)
             #     pos1 = [
-            #         i for i in mol.get_atom_coords(atom_ids=[idx1])
+            #         i for i in mol.get_atom_positions(atom_ids=[idx1])
             #     ][0]
             #     pos2 = [
-            #         i for i in mol.get_atom_coords(atom_ids=[idx2])
+            #         i for i in mol.get_atom_positions(atom_ids=[idx2])
             #     ][0]
             #     pos3 = [
-            #         i for i in mol.get_atom_coords(atom_ids=[idx3])
+            #         i for i in mol.get_atom_positions(atom_ids=[idx3])
             #     ][0]
             #     pos4 = [
-            #         i for i in mol.get_atom_coords(atom_ids=[idx4])
+            #         i for i in mol.get_atom_positions(atom_ids=[idx4])
             #     ][0]
             #     torsion = get_dihedral(pos1, pos2, pos3, pos4)
             #     print(bond1, bond2, bond3, torsion)
@@ -1017,13 +1017,13 @@ class UFFMetalOptimizer(MetalOptimizer):
                 elif atom in bond2_atoms:
                     idx3 = atom.id
             pos1 = [
-                i for i in mol.get_atom_coords(atom_ids=[idx1])
+                i for i in mol.get_atom_positions(atom_ids=[idx1])
             ][0]
             pos2 = [
-                i for i in mol.get_atom_coords(atom_ids=[idx2])
+                i for i in mol.get_atom_positions(atom_ids=[idx2])
             ][0]
             pos3 = [
-                i for i in mol.get_atom_coords(atom_ids=[idx3])
+                i for i in mol.get_atom_positions(atom_ids=[idx3])
             ][0]
             v1 = pos1 - pos2
             v2 = pos3 - pos2
@@ -1061,10 +1061,10 @@ class UFFMetalOptimizer(MetalOptimizer):
                 idx1 = bond.atom1.id
                 idx2 = bond.atom2.id
             pos1 = [
-                i for i in mol.get_atom_coords(atom_ids=[idx1])
+                i for i in mol.get_atom_positions(atom_ids=[idx1])
             ][0]
             pos2 = [
-                i for i in mol.get_atom_coords(atom_ids=[idx2])
+                i for i in mol.get_atom_positions(atom_ids=[idx2])
             ][0]
             pos3 = COM
             v1 = pos1 - pos2
@@ -1129,12 +1129,12 @@ class UFFMetalOptimizer(MetalOptimizer):
             #             idx1 = bond.atom1.id
             #             idx2 = bond.atom2.id
             #         pos1 = [
-            #             i for i in mol.get_atom_coords(
+            #             i for i in mol.get_atom_positions(
             #                 atom_ids=[idx1]
             #             )
             #         ][0]
             #         pos2 = [
-            #             i for i in mol.get_atom_coords(
+            #             i for i in mol.get_atom_positions(
             #                 atom_ids=[idx2]
             #             )
             #         ][0]

@@ -6,7 +6,7 @@ from .topology_graphs import (
     cage,
     host_guest,
     metal_complex,
-    metal_organic_cage
+    metal_cage
 )
 from .topology_graphs.topology_graph import *
 from .functional_groups import *

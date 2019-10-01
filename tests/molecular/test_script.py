@@ -77,7 +77,7 @@ def main():
     print(ligand2.func_groups)
     ligand2.write('lig2_cage.pdb')
 
-    m2l4_lantern = stk.metal_organic_cage.M2L4_Lantern()
+    m2l4_lantern = stk.metal_cage.M2L4_Lantern()
     print(m2l4_lantern)
     print('--------------------------------------------------------')
     hetero_lantern = stk.ConstructedMolecule(
@@ -149,7 +149,7 @@ def main():
         unlimited_memory=True
     )
     xtb_opt.optimize(ligand)
-    m2l4_lantern = stk.metal_organic_cage.M2L4_Lantern()
+    m2l4_lantern = stk.metal_cage.M2L4_Lantern()
     print(m2l4_lantern)
     print('--------------------------------------------------------')
     lantern = stk.ConstructedMolecule(
@@ -249,7 +249,7 @@ def main():
     ligand.write('lig1.pdb')
 
     sqpl = stk.metal_complex.SquarePlanarMonodentate(
-        unsatured_vertices=[3, 4]
+        unsaturated_vertices=[3, 4]
     )
     print(sqpl)
     print('--------------------------------------------------------')
@@ -285,7 +285,7 @@ def main():
     sys.exit()
 
     sqpl = stk.metal_complex.SquarePlanarMonodentate(
-        unsatured_vertices=[1, 2, 3, 4]
+        unsaturated_vertices=[1, 2, 3, 4]
     )
     print(sqpl)
     print('--------------------------------------------------------')
