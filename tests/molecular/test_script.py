@@ -6,7 +6,6 @@ from rdkit.Chem import AllChem as Chem
 
 
 def main():
-    _md_path = '/home/atarzia/software/schrodinger_install'
     print('testing script')
     m = Chem.MolFromSmiles('[Pd+2]')
     m.AddConformer(Chem.Conformer(m.GetNumAtoms()))
@@ -50,33 +49,6 @@ def main():
         'COc1c(OC)c2ccc(-c3ccncc3)cc2c2cc(-c3ccncc3)ccc12',
         functional_groups=['pyridine_N_metal']
     )
-    xtb_opt = stk.XTB(
-        xtb_path='/home/atarzia/software/xtb_190418/bin/xtb',
-        output_dir='lig1opt',
-        num_cores=1,
-        charge=0,
-        num_unpaired_electrons=0,
-        max_runs=1,
-        calculate_hessian=False,
-        unlimited_memory=True
-    )
-    xtb_opt.optimize(ligand1)
-    xtb_opt = stk.XTB(
-        xtb_path='/home/atarzia/software/xtb_190418/bin/xtb',
-        output_dir='lig2opt',
-        num_cores=1,
-        charge=0,
-        num_unpaired_electrons=0,
-        max_runs=1,
-        calculate_hessian=False,
-        unlimited_memory=True
-    )
-    xtb_opt.optimize(ligand2)
-    print(ligand1.func_groups)
-    ligand1.write('lig1_cage.pdb')
-    print(ligand2.func_groups)
-    ligand2.write('lig2_cage.pdb')
-
     m2l4_lantern = stk.metal_cage.M2L4_Lantern()
     print(m2l4_lantern)
     print('--------------------------------------------------------')
@@ -94,61 +66,11 @@ def main():
     hetero_lantern.write('hetero_lantern.mol')
     hetero_lantern.write('hetero_lantern.pdb')
     print('--------------------------------------------------------')
-    xtb_opt = stk.XTB(
-        xtb_path='/home/atarzia/software/xtb_190418/bin/xtb',
-        output_dir='compHL',
-        num_cores=4,
-        charge=4,
-        num_unpaired_electrons=0,
-        max_runs=1,
-        electronic_temperature=600,
-        calculate_hessian=False,
-        unlimited_memory=True
-    )
-    # Ramp up force constant.
-    optimizer = stk.MetalOptimizer(
-        scale=1.2,
-        output_dir='compHL',
-        macromodel_path=_md_path,
-        restrict_all_bonds=True,
-        prearrange=True,
-    )
-    optimizer.optimize(mol=hetero_lantern)
-    hetero_lantern.write('hetero_lantern_opt_2.mol')
-    xtb_opt.optimize(mol=hetero_lantern)
-    xtb_opt = stk.XTB(
-        xtb_path='/home/atarzia/software/xtb_190418/bin/xtb',
-        output_dir='compHL',
-        num_cores=4,
-        charge=4,
-        num_unpaired_electrons=0,
-        max_runs=1,
-        calculate_hessian=False,
-        unlimited_memory=True
-    )
-    xtb_opt.optimize(mol=hetero_lantern)
-    print('--------------------------------------------------------')
-    print(hetero_lantern)
-    hetero_lantern.write('hetero_lantern_opt.mol')
-    hetero_lantern.write('hetero_lantern_opt.pdb')
 
     ligand = stk.BuildingBlock(
         'C(#Cc1cccc(C#Cc2cccnc2)c1)c1cccnc1',
         functional_groups=['pyridine_N_metal']
     )
-    print(ligand.func_groups)
-    ligand.write('lig_cage.pdb')
-    xtb_opt = stk.XTB(
-        xtb_path='/home/atarzia/software/xtb_190418/bin/xtb',
-        output_dir='ligopt',
-        num_cores=1,
-        charge=0,
-        num_unpaired_electrons=0,
-        max_runs=1,
-        calculate_hessian=False,
-        unlimited_memory=True
-    )
-    xtb_opt.optimize(ligand)
     m2l4_lantern = stk.metal_cage.M2L4_Lantern()
     print(m2l4_lantern)
     print('--------------------------------------------------------')
@@ -165,143 +87,12 @@ def main():
     lantern.write('lantern.mol')
     lantern.write('lantern.pdb')
     print('--------------------------------------------------------')
-    xtb_opt = stk.XTB(
-        xtb_path='/home/atarzia/software/xtb_190418/bin/xtb',
-        output_dir='compL',
-        num_cores=4,
-        charge=4,
-        num_unpaired_electrons=0,
-        max_runs=1,
-        calculate_hessian=False,
-        unlimited_memory=True
-    )
-    # Ramp up force constant.
-    optimizer = stk.MetalOptimizer(
-        scale=1.2,
-        output_dir='compL',
-        macromodel_path=_md_path,
-        restrict_all_bonds=True,
-        prearrange=True,
-    )
-    optimizer.optimize(mol=lantern)
-    lantern.write('lantern_opt_2.mol')
-    xtb_opt.optimize(mol=lantern)
-    print('--------------------------------------------------------')
-    print(lantern)
-    lantern.write('lantern_opt.mol')
-    lantern.write('lantern_opt.pdb')
 
     ligand = stk.BuildingBlock(
         'NCCN',
         functional_groups=['amine_metal']
     )
     ligand.write('lig.pdb')
-
-    sqpl = stk.metal_complex.SquarePlanarBidentate()
-    print(sqpl)
-    print('--------------------------------------------------------')
-    pdl2_sqpl_complex = stk.ConstructedMolecule(
-        building_blocks=[metal, ligand],
-        topology_graph=sqpl,
-        building_block_vertices={
-            metal: tuple([sqpl.vertices[0]]),
-            ligand: sqpl.vertices[1:]
-        }
-    )
-    print('--------------------------------------------------------')
-    print(pdl2_sqpl_complex)
-    print(pdl2_sqpl_complex.get_position_matrix()[:5])
-    pdl2_sqpl_complex.write('metal_complex.mol')
-    pdl2_sqpl_complex.write('metal_complex.pdb')
-    print('--------------------------------------------------------')
-    optimizer = stk.MetalOptimizer(
-        scale=1.2,
-        output_dir='comp1',
-        macromodel_path=_md_path,
-        restrict_all_bonds=True,
-        prearrange=True,
-    )
-    xtb_opt = stk.XTB(
-        xtb_path='/home/atarzia/software/xtb_190418/bin/xtb',
-        output_dir='comp1',
-        num_cores=1,
-        charge=2,
-        num_unpaired_electrons=0,
-        max_runs=1,
-        calculate_hessian=False,
-        unlimited_memory=True
-    )
-    optimizer.optimize(mol=pdl2_sqpl_complex)
-    pdl2_sqpl_complex.write('metal_complex_opt_2.mol')
-    xtb_opt.optimize(mol=pdl2_sqpl_complex)
-    print('--------------------------------------------------------')
-    print(pdl2_sqpl_complex)
-    print(pdl2_sqpl_complex.get_position_matrix()[:5])
-    pdl2_sqpl_complex.write('metal_complex_opt.mol')
-    pdl2_sqpl_complex.write('metal_complex_opt.pdb')
-
-    ligand = stk.BuildingBlock(
-        'c1cc(-c2ccc(-c3ccncc3)cc2)ccn1',
-        functional_groups=['pyridine_N_metal']
-    )
-    # Handle multiple functional groups.
-    ligand.func_groups = tuple(i for i in [ligand.func_groups[0]])
-    ligand.write('lig1.pdb')
-
-    sqpl = stk.metal_complex.SquarePlanarMonodentate(
-        unsaturated_vertices=[3, 4]
-    )
-    print(sqpl)
-    print('--------------------------------------------------------')
-    pdl2_sqpl_complex = stk.ConstructedMolecule(
-        building_blocks=[metal, ligand],
-        topology_graph=sqpl,
-        building_block_vertices={
-            metal: tuple([sqpl.vertices[0]]),
-            ligand: sqpl.vertices[1:]
-        }
-    )
-    print('--------------------------------------------------------')
-    print(pdl2_sqpl_complex)
-    print(pdl2_sqpl_complex.get_position_matrix()[:5])
-    pdl2_sqpl_complex.write('metal_complex_1.mol')
-    pdl2_sqpl_complex.write('metal_complex_1.pdb')
-    print('--------------------------------------------------------')
-    optimizer = stk.MetalOptimizer(
-        scale=1.2,
-        output_dir='comp2',
-        macromodel_path=_md_path,
-        restrict_all_bonds=True,
-        prearrange=True,
-    )
-    optimizer.optimize(mol=pdl2_sqpl_complex)
-    print('--------------------------------------------------------')
-    print(pdl2_sqpl_complex)
-    print(pdl2_sqpl_complex.get_position_matrix()[:5])
-    pdl2_sqpl_complex.write('metal_complex_1_opt.mol')
-    pdl2_sqpl_complex.write('metal_complex_1_opt.pdb')
-
-    import sys
-    sys.exit()
-
-    sqpl = stk.metal_complex.SquarePlanarMonodentate(
-        unsaturated_vertices=[1, 2, 3, 4]
-    )
-    print(sqpl)
-    print('--------------------------------------------------------')
-    pdl2_sqpl_complex = stk.ConstructedMolecule(
-        building_blocks=[metal],
-        topology_graph=sqpl,
-        building_block_vertices={
-            metal: tuple([sqpl.vertices[0]])
-        }
-    )
-    print('--------------------------------------------------------')
-    print(pdl2_sqpl_complex)
-    print(pdl2_sqpl_complex.get_position_matrix()[:5])
-    pdl2_sqpl_complex.write('metal_complex_0.mol')
-    pdl2_sqpl_complex.write('metal_complex_0.pdb')
-
     print('testing script done')
 
 

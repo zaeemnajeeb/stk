@@ -86,6 +86,7 @@ there are no requirements. New optimizers can be added into the
 
 import logging
 import numpy as np
+from itertools import combinations
 import rdkit.Chem.AllChem as rdkit
 import warnings
 
@@ -97,7 +98,8 @@ import shutil
 from ...utilities import (
     is_valid_xtb_solvent,
     XTBInvalidSolventError,
-    XTBExtractor
+    XTBExtractor,
+    vector_angle
 )
 import pywindow
 
