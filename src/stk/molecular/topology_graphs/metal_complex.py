@@ -878,11 +878,7 @@ class MetalComplex(TopologyGraph):
                 i for i in self.old_edge_data
                 if set(i.vertices).issubset(set(self.vertex_data))
             ]
-<<<<<<< HEAD
-            self.edges = tuple(i for i in used_edges)
-=======
             self.edge_data = tuple(i for i in used_edges)
->>>>>>> 8114567c458bc8f5125323769dd3d179ec2513d1
 
         if vertex_alignments is None:
             vertex_alignments = {}

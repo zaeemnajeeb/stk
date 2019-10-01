@@ -689,8 +689,6 @@ class ETKDG(Optimizer):
         )
 
 
-<<<<<<< HEAD
-=======
 class MetalOptimizer(Optimizer):
     """
     Applies forcefield optimizers that can handle metal centres.
@@ -1041,7 +1039,6 @@ class MetalOptimizer(Optimizer):
         )
 
 
->>>>>>> 8114567c458bc8f5125323769dd3d179ec2513d1
 class XTBOptimizerError(Exception):
     ...
 
