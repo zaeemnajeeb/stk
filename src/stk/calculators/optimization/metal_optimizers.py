@@ -16,112 +16,6 @@ from .optimizers import Optimizer
 logger = logging.getLogger(__name__)
 
 
-class MetalMacroModelMD(MacroModelMD):
-    """
-    Runs a molecular dynamics conformer search using MacroModel.
-
-    """
-    def _fix_distances(self, mol, fix_block):
-        """
-        Add lines fixing bond distances to ``.com`` body.
-
-        Parameters
-        ----------
-        mol : :class:`.Molecule`
-            The molecule to be optimized.
-
-        fix_block : :class:`str`
-            A string holding fix commands in the ``.com`` file.
-
-        Returns
-        -------
-        :class:`str`
-            A string holding fix commands in the ``.com`` file.
-
-        """
-
-        for bond in self._restricted_bonds:
-            bond = list(bond)
-
-            # Make sure that the indices are increased by 1 in the .mae
-            # file.
-            atom1_id = bond[0] + 1
-            atom2_id = bond[1] + 1
-            args = ('FXDI', atom1_id, atom2_id, 0, 0, 99999, 0, 0, 0)
-            fix_block += self._get_com_line(*args)
-            fix_block += '\n'
-
-        return fix_block
-
-    def _fix_bond_angles(self, mol, fix_block):
-        """
-        Add lines fixing bond angles to the ``.com`` body.
-
-        Parameters
-        ----------
-        mol : :class:`.Molecule`
-            The molecule to be optimized.
-
-        fix_block : :class:`str`
-            A string holding fix commands in the ``.com`` file.
-
-        Returns
-        -------
-        :class:`str`
-            A string holding fix commands in the ``.com`` file.
-
-        """
-
-        for angle in self._restricted_bond_angles:
-            angle = list(angle)
-
-            # Make sure that the indices are increased by 1 in the .mae
-            # file.
-            atom1_id = angle[0] + 1
-            atom2_id = angle[1] + 1
-            atom3_id = angle[2] + 1
-            atom_ids = [atom1_id, atom2_id, atom3_id]
-            args = ('FXBA', *atom_ids, 0, 99999, 0, 0, 0)
-            fix_block += self._get_com_line(*args)
-            fix_block += '\n'
-
-        return fix_block
-
-    def _fix_torsional_angles(self, mol, fix_block):
-        """
-        Add lines fixing torsional bond angles to the ``.com`` body.
-
-        Parameters
-        ----------
-        mol : :class:`.Molecule`
-            The molecule to be optimized.
-
-        fix_block : :class:`str`
-            A string holding fix commands in the ``.com`` file.
-
-        Returns
-        -------
-        :class:`str`
-            A string holding fix commands in the ``.com`` file.
-
-        """
-        for torsion in self._restricted_torsional_angles:
-            torsion = list(torsion)
-
-            # Make sure that the indices are increased by 1 in the .mae
-            # file.
-            atom1_id = torsion[0] + 1
-            atom2_id = torsion[1] + 1
-            atom3_id = torsion[2] + 1
-            atom4_id = torsion[3] + 1
-            atom_ids = [atom1_id, atom2_id, atom3_id, atom4_id]
-            args = ('FXTA', *atom_ids, 99999, 361, 0, 0)
-            fix_block += self._get_com_line(*args)
-            fix_block += '\n'
-
-        return fix_block
-
-
 class MetalOptimizer(Optimizer):
     """
     Applies forcefield optimizers that can handle metal centres.
@@ -847,6 +741,112 @@ class MetalOptimizer(Optimizer):
         return False
 
 
+class MetalMacroModelMD(MacroModelMD):
+    """
+    Runs a molecular dynamics conformer search using MacroModel.
+
+    """
+    def _fix_distances(self, mol, fix_block):
+        """
+        Add lines fixing bond distances to ``.com`` body.
+
+        Parameters
+        ----------
+        mol : :class:`.Molecule`
+            The molecule to be optimized.
+
+        fix_block : :class:`str`
+            A string holding fix commands in the ``.com`` file.
+
+        Returns
+        -------
+        :class:`str`
+            A string holding fix commands in the ``.com`` file.
+
+        """
+
+        for bond in self._restricted_bonds:
+            bond = list(bond)
+
+            # Make sure that the indices are increased by 1 in the .mae
+            # file.
+            atom1_id = bond[0] + 1
+            atom2_id = bond[1] + 1
+            args = ('FXDI', atom1_id, atom2_id, 0, 0, 99999, 0, 0, 0)
+            fix_block += self._get_com_line(*args)
+            fix_block += '\n'
+
+        return fix_block
+
+    def _fix_bond_angles(self, mol, fix_block):
+        """
+        Add lines fixing bond angles to the ``.com`` body.
+
+        Parameters
+        ----------
+        mol : :class:`.Molecule`
+            The molecule to be optimized.
+
+        fix_block : :class:`str`
+            A string holding fix commands in the ``.com`` file.
+
+        Returns
+        -------
+        :class:`str`
+            A string holding fix commands in the ``.com`` file.
+
+        """
+
+        for angle in self._restricted_bond_angles:
+            angle = list(angle)
+
+            # Make sure that the indices are increased by 1 in the .mae
+            # file.
+            atom1_id = angle[0] + 1
+            atom2_id = angle[1] + 1
+            atom3_id = angle[2] + 1
+            atom_ids = [atom1_id, atom2_id, atom3_id]
+            args = ('FXBA', *atom_ids, 0, 99999, 0, 0, 0)
+            fix_block += self._get_com_line(*args)
+            fix_block += '\n'
+
+        return fix_block
+
+    def _fix_torsional_angles(self, mol, fix_block):
+        """
+        Add lines fixing torsional bond angles to the ``.com`` body.
+
+        Parameters
+        ----------
+        mol : :class:`.Molecule`
+            The molecule to be optimized.
+
+        fix_block : :class:`str`
+            A string holding fix commands in the ``.com`` file.
+
+        Returns
+        -------
+        :class:`str`
+            A string holding fix commands in the ``.com`` file.
+
+        """
+        for torsion in self._restricted_torsional_angles:
+            torsion = list(torsion)
+
+            # Make sure that the indices are increased by 1 in the .mae
+            # file.
+            atom1_id = torsion[0] + 1
+            atom2_id = torsion[1] + 1
+            atom3_id = torsion[2] + 1
+            atom4_id = torsion[3] + 1
+            atom_ids = [atom1_id, atom2_id, atom3_id, atom4_id]
+            args = ('FXTA', *atom_ids, 99999, 361, 0, 0)
+            fix_block += self._get_com_line(*args)
+            fix_block += '\n'
+
+        return fix_block
+
+
 class MacroModelMetalOptimizer(MetalOptimizer):
     """
     Applies forcefield optimizers that can handle metal centres.
@@ -940,9 +940,10 @@ class MacroModelMetalOptimizer(MetalOptimizer):
 
         # Define an optimizer, with ligand bonder atoms placed 2
         # Angstrom from the metal centres.
-        optimizer = stk.MetalOptimizer(scale=2)
-        # Optimize.
-        optimizer.optimize(mol=pdl2_sqpl_complex)
+
+        Show MacroModel example.
+
+
 
     """
 
