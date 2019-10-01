@@ -97,7 +97,15 @@ def test_metal_uff(tmp_bidentage_sqpl):
     # simply test that the optimizer does not crash, and output the
     # structure for visualisation.
     tmp_bidentage_sqpl.write(join(odir, 'metal_uff_before.mol'))
-    optimizer = stk.MetalOptimizer(scale=2)
+    optimizer = stk.MetalOptimizer(
+        scale=1.9,
+        force_constant=1.0e2,
+        rel_distance=0.9,
+        res_steps=50,
+        restrict_all_bonds=True,
+        restrict_orientation=True,
+        prearrange=True,
+    )
     optimizer.optimize(mol=tmp_bidentage_sqpl)
     tmp_bidentage_sqpl.write(join(odir, 'metal_uff_after.mol'))
 
