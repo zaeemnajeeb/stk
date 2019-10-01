@@ -2,7 +2,8 @@
 Metal Complex
 =============
 
-#. :class:`.SquarePlanar`
+#. :class:`.SquarePlanarMonodentate`
+#. :class:`.SquarePlanarBidentate`
 
 """
 
@@ -10,37 +11,44 @@ Metal Complex
 import logging
 import numpy as np
 
-from .topology_graph import TopologyGraph, Vertex, Edge
+from .topology_graph import TopologyGraph, VertexData, Vertex, EdgeData
 from ..reactor import Reactor
 from ...utilities import vector_angle
 
 logger = logging.getLogger(__name__)
 
 
-class _MetalComplexVertex(Vertex):
+class _MetalComplexVertexData(VertexData):
     """
-    Represents a vertex of a :class:`.MetalComplex`.
+    Holds the data of a metal complex vertex.
 
     Attributes
     ----------
     id : :class:`int`
-        The id of the vertex. This should be its index in
+        The id of the vertex. Must match the index in
         :attr:`TopologyGraph.vertices`.
 
-    edges : :class:`list` of :class:`.Edge`
-        The edges the :class:`Vertex` is connected to.
+    position : :class:`numpy.ndarray`
+        The position of the vertex.
 
-    aligner_edge : :class:`.Edge`
-        The :class:`.Edge` in :attr:`edges`, which is used to align the
-        :class:`.BuildingBlock` placed on the vertex. The first
-        :class:`.FunctionalGroup` in :attr:`.BuildingBlock.func_groups`
-        is rotated such that it lies exactly on this :class:`.Edge`.
+    edges : :class:`list` of :class:`.EdgeData`
+        The edges connected to the vertex.
+
+    cell : :class:`numpy.ndarray`
+        The unit cell in which the vertex is found.
+
+    aligner_edge : :class:`int`
+        The edge which is used to align the :class:`.BuildingBlock`
+        placed on the vertex. The first :class:`.FunctionalGroup`
+        in :attr:`.BuildingBlock.func_groups` is rotated such that
+        it lies exactly on this :class:`.Edge`. Must be between
+        ``0`` and the number of edges the vertex is connected to.
 
     """
 
     def __init__(self, x, y, z):
         """
-        Initialize a :class:`_MetalComplexVertex`.
+        Initialize a :class:`_CageVertexData` instance.
 
         Parameters
         ----------
@@ -58,78 +66,70 @@ class _MetalComplexVertex(Vertex):
         self.aligner_edge = None
         super().__init__(x, y, z)
 
-    @classmethod
-    def init_at_center(cls, *vertices):
-        """
-        Initialize at the center of `vertices`.
-
-        Parameters
-        ----------
-        vertices : :class:`.Vertex`
-            Vertices at whose center this vertex should be initialized.
-
-        Returns
-        -------
-        :class:`.Vertex`
-            The vertex.
-
-        """
-
-        center = sum(vertex.get_position() for vertex in vertices)
-        center /= len(vertices)
-        return cls(*center)
-
     def clone(self, clear_edges=False):
         """
-        Create a clone of the instance.
+        Return a clone.
 
         Parameters
         ----------
         clear_edges : :class:`bool`, optional
-            If ``True`` the :attr:`edges` attribute of the clone will
-            be empty.
+            ``True`` if the clone should not be connected to any edges.
 
         Returns
         -------
-        :class:`Vertex`
-            A clone with the same position but not connected to any
-            :class:`.Edge` objects.
+        :class:`_CageVertexData`
+            The clone.
 
         """
 
         clone = super().clone(clear_edges)
-        if self.aligner_edge is None:
-            clone.aligner_edge = None
-        else:
-            clone.aligner_edge = self.aligner_edge.clone(
-                add_to_vertices=False
-            )
+        clone.aligner_edge = self.aligner_edge
         return clone
 
-    def apply_scale(self, scale):
+    def get_vertex(self):
+        return _MetalComplexVertex(self)
+
+
+class _MetalComplexVertex(Vertex):
+    """
+    Represents a vertex of a :class:`.MetalComplex`.
+
+    Attributes
+    ----------
+    id : :class:`int`
+        The id of the vertex. This should be its index in
+        :attr:`TopologyGraph.vertices`.
+
+    """
+
+    def __init__(self, data):
+        self._aligner_edge = data.aligner_edge
+        super().__init__(data)
+
+    def clone(self, clear_edges=False):
         """
-        Scale the position by `scale`.
+        Return a clone.
 
         Parameters
         ----------
-        scale : :class:`float` or :class:`list`of :class:`float`
-            The value by which the position of the :class:`Vertex` is
-            scaled. Can be a single number if all axes are scaled by
-            the same amount or a :class:`list` of three numbers if
-            each axis is scaled by a different value.
+        clear_edges : :class:`bool`, optional
+            ``True`` if the clone should not be connected to any edges.
 
         Returns
         -------
         :class:`Vertex`
-            The vertex is returned.
+            The clone.
 
         """
 
-        self._position *= scale
-        self.aligner_edge.apply_scale(scale)
-        return self
+        clone = super().clone(clear_edges)
+        clone._aligner_edge = self._aligner_edge
+        return clone
 
-    def place_building_block(self, building_block):
+    def get_aligner_edge(self):
+        return self._aligner_edge
+
+    def place_building_block(self, building_block, vertices, edges):
         """
         Place `building_block` on the :class:`.Vertex`.
 
@@ -138,6 +138,14 @@ class _MetalComplexVertex(Vertex):
         building_block : :class:`.BuildingBlock`
             The building block molecule which is to be placed on the
             vertex.
+
+        vertices : :class:`tuple` of :class:`.Vertex`
+            All vertices in the topology graph. The index of each
+            vertex must match its :class:`~.Vertex.id`.
+
+        edges : :class:`tuple` of :class:`.Edge`
+            All edges in the topology graph. The index of each
+            edge must match its :class:`~.Edge.id`.
 
         Returns
         -------
@@ -151,15 +159,36 @@ class _MetalComplexVertex(Vertex):
             i.fg_type.name for i in building_block.func_groups
         )))
 
-        if bb_fg_names[0] == 'metal':
-            return self._place_metal_atom(building_block)
+        if 'metal' in bb_fg_names:
+            return self._place_metal_atom(
+                building_block=building_block,
+                vertices=vertices,
+                edges=edges
+            )
         elif len(building_block.func_groups) == 1:
-            return self._place_cap_building_block(building_block)
+            return self._place_cap_building_block(
+                building_block=building_block,
+                vertices=vertices,
+                edges=edges
+            )
         elif len(building_block.func_groups) == 2:
-            return self._place_linear_building_block(building_block)
-        return self._place_nonlinear_building_block(building_block)
+            return self._place_linear_building_block(
+                building_block=building_block,
+                vertices=vertices,
+                edges=edges
+            )
+        return self._place_nonlinear_building_block(
+            building_block=building_block,
+            vertices=vertices,
+            edges=edges
+        )
 
-    def _place_metal_atom(self, building_block):
+    def _place_metal_atom(
+        self,
+        building_block,
+        vertices,
+        edges
+    ):
         """
         Place `building_block` on the :class:`.Vertex`.
 
@@ -168,6 +197,14 @@ class _MetalComplexVertex(Vertex):
         building_block : :class:`.BuildingBlock`
             The building block molecule which is to be placed on the
             vertex.
+
+        vertices : :class:`tuple` of :class:`.Vertex`
+            All vertices in the topology graph. The index of each
+            vertex must match its :class:`~.Vertex.id`.
+
+        edges : :class:`tuple` of :class:`.Edge`
+            All edges in the topology graph. The index of each
+            edge must match its :class:`~.Edge.id`.
 
         Returns
         -------
@@ -179,7 +216,12 @@ class _MetalComplexVertex(Vertex):
         building_block.set_centroid(position=self._position)
         return building_block.get_position_matrix()
 
-    def _place_cap_building_block(self, building_block):
+    def _place_cap_building_block(
+        self,
+        building_block,
+        vertices,
+        edges
+    ):
         """
         Place `building_block` on the :class:`.Vertex`.
 
@@ -188,6 +230,14 @@ class _MetalComplexVertex(Vertex):
         building_block : :class:`.BuildingBlock`
             The building block molecule which is to be placed on the
             vertex.
+
+        vertices : :class:`tuple` of :class:`.Vertex`
+            All vertices in the topology graph. The index of each
+            vertex must match its :class:`~.Vertex.id`.
+
+        edges : :class:`tuple` of :class:`.Edge`
+            All edges in the topology graph. The index of each
+            edge must match its :class:`~.Edge.id`.
 
         Returns
         -------
@@ -201,7 +251,8 @@ class _MetalComplexVertex(Vertex):
             atom_ids=building_block.func_groups[0].get_bonder_ids()
         )
         start = fg_centroid - self._position
-        edge_coord = self.aligner_edge.get_position()
+        aligner_edge = edges[self._edge_ids[self._aligner_edge]]
+        edge_coord = aligner_edge.get_position()
         target = edge_coord - self._position
         building_block.apply_rotation_between_vectors(
             start=start,
@@ -211,7 +262,12 @@ class _MetalComplexVertex(Vertex):
 
         return building_block.get_position_matrix()
 
-    def _place_linear_building_block(self, building_block):
+    def _place_linear_building_block(
+        self,
+        building_block,
+        vertices,
+        edges
+    ):
         """
         Place `building_block` on the :class:`.Vertex`.
 
@@ -220,6 +276,14 @@ class _MetalComplexVertex(Vertex):
         building_block : :class:`.BuildingBlock`
             The building block molecule which is to be placed on the
             vertex.
+
+        vertices : :class:`tuple` of :class:`.Vertex`
+            All vertices in the topology graph. The index of each
+            vertex must match its :class:`~.Vertex.id`.
+
+        edges : :class:`tuple` of :class:`.Edge`
+            All edges in the topology graph. The index of each
+            edge must match its :class:`~.Edge.id`.
 
         Returns
         -------
@@ -237,16 +301,21 @@ class _MetalComplexVertex(Vertex):
             atom_ids=building_block.func_groups[0].get_bonder_ids()
         )
         start = fg_centroid - self._position
-        edge_coord = self.aligner_edge.get_position()
-        target = edge_coord - self._get_edge_centroid()
+        aligner_edge = edges[self._edge_ids[self._aligner_edge]]
+        edge_coord = aligner_edge.get_position()
+        connected_edges = tuple(edges[id_] for id_ in self._edge_ids)
+        target = edge_coord - self._get_edge_centroid(
+            centroid_edges=connected_edges,
+            vertices=vertices
+        )
         building_block.apply_rotation_between_vectors(
             start=start,
             target=target,
             origin=self._position
         )
         start = building_block.get_centroid_centroid_direction_vector()
-        e0_coord = self.edges[0].get_position()
-        e1_coord = self.edges[1].get_position()
+        e0_coord = edges[self._edge_ids[0]].get_position()
+        e1_coord = edges[self._edge_ids[1]].get_position()
         building_block.apply_rotation_to_minimize_angle(
             start=start,
             target=self._position,
@@ -255,7 +324,12 @@ class _MetalComplexVertex(Vertex):
         )
         return building_block.get_position_matrix()
 
-    def _place_nonlinear_building_block(self, building_block):
+    def _place_nonlinear_building_block(
+        self,
+        building_block,
+        vertices,
+        edges
+    ):
         """
         Place `building_block` on the :class:`.Vertex`.
 
@@ -264,6 +338,14 @@ class _MetalComplexVertex(Vertex):
         building_block : :class:`.BuildingBlock`
             The building block molecule which is to be placed on the
             vertex.
+
+        vertices : :class:`tuple` of :class:`.Vertex`
+            All vertices in the topology graph. The index of each
+            vertex must match its :class:`~.Vertex.id`.
+
+        edges : :class:`tuple` of :class:`.Edge`
+            All edges in the topology graph. The index of each
+            edge must match its :class:`~.Edge.id`.
 
         Returns
         -------
@@ -277,8 +359,14 @@ class _MetalComplexVertex(Vertex):
             position=self._position,
             atom_ids=building_block.get_bonder_ids()
         )
+        connected_edges = tuple(edges[id_] for id_ in self._edge_ids)
         edge_normal = self._get_edge_plane_normal(
-            reference=self._get_edge_centroid()
+            reference=self._get_edge_centroid(
+                centroid_edges=connected_edges,
+                vertices=vertices
+            ),
+            plane_edges=connected_edges,
+            vertices=vertices
         )
         building_block.apply_rotation_between_vectors(
             start=building_block.get_bonder_plane_normal(),
@@ -289,8 +377,12 @@ class _MetalComplexVertex(Vertex):
             atom_ids=building_block.func_groups[0].get_bonder_ids()
         )
         start = fg_bonder_centroid - self._position
-        edge_coord = self.aligner_edge.get_position()
-        target = edge_coord - self._get_edge_centroid()
+        aligner_edge = edges[self._edge_ids[self._aligner_edge]]
+        edge_coord = aligner_edge.get_position()
+        target = edge_coord - self._get_edge_centroid(
+            centroid_edges=connected_edges,
+            vertices=vertices
+        )
         building_block.apply_rotation_to_minimize_angle(
             start=start,
             target=target,
@@ -299,7 +391,12 @@ class _MetalComplexVertex(Vertex):
         )
         return building_block.get_position_matrix()
 
-    def assign_func_groups_to_edges(self, building_block):
+    def assign_func_groups_to_edges(
+        self,
+        building_block,
+        vertices,
+        edges
+    ):
         """
         Assign functional groups to edges.
 
@@ -313,6 +410,14 @@ class _MetalComplexVertex(Vertex):
             The building block molecule which is needs to have
             functional groups assigned to edges.
 
+        vertices : :class:`tuple` of :class:`.Vertex`
+            All vertices in the topology graph. The index of each
+            vertex must match its :class:`~.Vertex.id`.
+
+        edges : :class:`tuple` of :class:`.Edge`
+            All edges in the topology graph. The index of each
+            edge must match its :class:`~.Edge.id`.
+
         Returns
         -------
         :class:`dict`
@@ -321,29 +426,40 @@ class _MetalComplexVertex(Vertex):
             is assigned to.
 
         """
+
         bb_fg_names = list(set((
             i.fg_type.name for i in building_block.func_groups
         )))
-        if bb_fg_names[0] == 'metal':
+        if 'metal' in bb_fg_names:
             return self._assign_func_groups_to_metal_atom(
-                building_block=building_block
+                building_block=building_block,
+                vertices=vertices,
+                edges=edges
             )
         elif len(building_block.func_groups) == 1:
             return self._assign_func_groups_to_cap_edges(
-                building_block=building_block
+                building_block=building_block,
+                vertices=vertices,
+                edges=edges
             )
         elif len(building_block.func_groups) == 2:
             return self._assign_func_groups_to_linear_edges(
-                building_block=building_block
+                building_block=building_block,
+                vertices=vertices,
+                edges=edges
             )
         return self._assign_func_groups_to_nonlinear_edges(
-            building_block=building_block
+            building_block=building_block,
+            vertices=vertices,
+            edges=edges
         )
 
     def after_assign_func_groups_to_edges(
         self,
         building_block,
-        func_groups
+        func_groups,
+        vertices,
+        edges
     ):
         """
         Perform operations after functional groups have been assigned.
@@ -362,62 +478,92 @@ class _MetalComplexVertex(Vertex):
             The functional group clones added to the constructed
             molecule.
 
+        vertices : :class:`tuple` of :class:`.Vertex`
+            All vertices in the topology graph. The index of each
+            vertex must match its :class:`~.Vertex.id`.
+
+        edges : :class:`tuple` of :class:`.Edge`
+            All edges in the topology graph. The index of each
+            edge must match its :class:`~.Edge.id`.
+
         Returns
         -------
         None : :class:`NoneType`
 
         """
         bb_fgs = set(func_groups)
-        for edge in self.edges:
-            for func_group in edge.get_func_groups():
+        for edge_id in self._edge_ids:
+            for func_group in edges[edge_id].get_func_groups():
                 if func_group not in bb_fgs:
                     continue
 
-                for vertex in edge.vertices:
-                    if vertex is self:
+                for vertex_id in edges[edge_id].get_vertex_ids():
+                    if vertex_id == self.id:
                         continue
 
         return super().after_assign_func_groups_to_edges(
             building_block=building_block,
-            func_groups=func_groups
+            func_groups=func_groups,
+            vertices=vertices,
+            edges=edges
         )
 
-    def _assign_func_groups_to_metal_atom(self, building_block):
+    def _assign_func_groups_to_metal_atom(
+        self,
+        building_block,
+        vertices,
+        edges
+    ):
         return {
-            fg_id: e.id for fg_id, e in enumerate(sorted(
-                self.edges,
-                key=self._get_fg0_distance(building_block)
+            fg_id: edge_id for fg_id, edge_id in enumerate(sorted(
+                self._edge_ids,
+                key=self._get_fg0_distance(building_block, edges)
             ))
         }
 
-    def _assign_func_groups_to_cap_edges(self, building_block):
+    def _assign_func_groups_to_cap_edges(
+        self,
+        building_block,
+        vertices,
+        edges
+    ):
         return {
-            fg_id: e.id for fg_id, e in enumerate(sorted(
-                self.edges,
-                key=self._get_fg0_distance(building_block)
+            fg_id: edge_id for fg_id, edge_id in enumerate(sorted(
+                self._edge_ids,
+                key=self._get_fg0_distance(building_block, edges)
             ))
         }
 
-    def _assign_func_groups_to_linear_edges(self, building_block):
+    def _assign_func_groups_to_linear_edges(
+        self,
+        building_block,
+        vertices,
+        edges
+    ):
         return {
-            fg_id: e.id for fg_id, e in enumerate(sorted(
-                self.edges,
-                key=self._get_fg0_distance(building_block)
+            fg_id: edge_id for fg_id, edge_id in enumerate(sorted(
+                self._edge_ids,
+                key=self._get_fg0_distance(building_block, edges)
             ))
         }
 
-    def _get_fg0_distance(self, building_block):
+    def _get_fg0_distance(self, building_block, edges):
         fg_coord = building_block.get_centroid(
             atom_ids=building_block.func_groups[0].get_bonder_ids()
         )
 
-        def distance(edge):
-            displacement = edge.get_position() - fg_coord
+        def distance(edge_id):
+            displacement = edges[edge_id].get_position() - fg_coord
             return np.linalg.norm(displacement)
 
         return distance
 
-    def _assign_func_groups_to_nonlinear_edges(self, building_block):
+    def _assign_func_groups_to_nonlinear_edges(
+        self,
+        building_block,
+        vertices,
+        edges
+    ):
         # The idea is to order the functional groups in building_block
         # by their angle from func_groups[0] and the bonder centroid,
         #  going in the clockwise direction.
@@ -448,9 +594,12 @@ class _MetalComplexVertex(Vertex):
             )
         )
         assignments = {}
-        edges = sorted(self.edges, key=self._get_edge_angle(axis))
-        for edge, fg_id in zip(edges, func_groups):
-            assignments[fg_id] = edge.id
+        edge_ids = sorted(
+            self._edge_ids,
+            key=self._get_edge_angle(axis, vertices, edges)
+        )
+        for edge_id, fg_id in zip(edge_ids, func_groups):
+            assignments[fg_id] = edge_id
         return assignments
 
     @staticmethod
@@ -476,15 +625,19 @@ class _MetalComplexVertex(Vertex):
 
         return angle
 
-    def _get_edge_angle(self, axis):
-
-        aligner_edge_coord = self.aligner_edge.get_position()
-        edge_centroid = self._get_edge_centroid()
+    def _get_edge_angle(self, axis, vertices, edges):
+        aligner_edge = edges[self._edge_ids[self._aligner_edge]]
+        aligner_edge_coord = aligner_edge.get_position()
+        connected_edges = tuple(edges[id_] for id_ in self._edge_ids)
+        edge_centroid = self._get_edge_centroid(
+            centroid_edges=connected_edges,
+            vertices=vertices
+        )
         # This axis is used to figure out the clockwise direction.
         aligner_edge_direction = aligner_edge_coord - edge_centroid
 
-        def angle(edge):
-            coord = edge.get_position()
+        def angle(edge_id):
+            coord = edges[edge_id].get_position()
             edge_direction = coord - edge_centroid
             theta = vector_angle(
                 vector1=edge_direction,
@@ -498,19 +651,34 @@ class _MetalComplexVertex(Vertex):
 
         return angle
 
+    def __str__(self):
+        return (
+            f'Vertex(id={self.id}, '
+            f'position={self._position.tolist()}, '
+            f'aligner_edge={self._aligner_edge})'
+        )
+
 
 class MetalComplex(TopologyGraph):
     """
     Represents single-molecule metal complex topology graphs.
 
     MetalComplex topologies are added by creating a subclass which
-    defines the :attr:`vertices` and :attr:`edges` of the topology
-    as class attributes.
+    defines the :attr:`vertex_data` and :attr:`edge_data` class
+    attributes.
 
     This class is modelled after :class:`Cage` and its subclasses.
 
     Attributes
     ----------
+    vertex_data : :class:`tuple` of :class:`.VertexData`
+        A class attribute. Holds the data of the vertices which make up
+        the topology graph.
+
+    edge_data : :class:`tuple` of :class:`.EdgeData`
+        A class attribute. Holds the data of the edges which make up
+        the topology graph.
+
     vertices : :class:`tuple` of :class:`.Vertex`
         The vertices which make up the topology graph.
 
@@ -520,35 +688,171 @@ class MetalComplex(TopologyGraph):
     Examples
     --------
 
+    Construction of topologies that contain metals requires some extra
+    manipulation compared ot purely organic systems because SMILES and
+    RDKit are not properly defined to handle metal chemistry. To define
+    a :class:`.BuildingBlock` containing metal atoms and functional
+    groups in stk requires something like below to avoid RDKit
+    problems upon initialization. Note that here the functional groups
+    do not define the metal centre coordination geometry, but does
+    define the number of coordination sites per metal.
+
+    .. code-block:: python
+
+        import stk
+        from rdkit.Chem import AllChem as rdkit
+        import numpy as np
+
+        # Define an stk BuildingBlock with no functional groups and a
+        # single metal (Pd with 2+ charge) atom.
+        m = rdkit.MolFromSmiles('[Pd+2]')
+        m.AddConformer(rdkit.Conformer(m.GetNumAtoms()))
+        metal = stk.BuildingBlock.init_from_rdkit_mol(
+            m,
+            functional_groups=None,
+        )
+
+        # Manually set atom position if required. RDKit will default
+        # to [0, 0, 0].
+        metal.set_position_matrix(np.array([[0.0, 0.0, 0.0]]))
+
+        # Manually set functional group information for the metal
+        # centre. The key of this dictionary is the fg.id.
+        # Pd2+ is 4 coordinate, so we write 4 metal functiongal groups.
+        metal_coord_info = {
+            0: {
+                'atom_ids': [0],
+                'bonder_ids': [0],
+                'deleter_ids': [None]
+            },
+            1: {
+                'atom_ids': [0],
+                'bonder_ids': [0],
+                'deleter_ids': [None]
+            },
+            2: {
+                'atom_ids': [0],
+                'bonder_ids': [0],
+                'deleter_ids': [None]
+            },
+            3: {
+                'atom_ids': [0],
+                'bonder_ids': [0],
+                'deleter_ids': [None]
+            },
+        }
+        metal = stk.assign_metal_fgs(
+            building_block=metal,
+            coordination_info=metal_coord_info
+        )
+
+    The metal centre coordination geometry is defined by the topology
+    graph used for construction. Pd 2+ is square planar, but we can
+    also have mono or bidentate coordination to the Pd. Therefore,
+    there are multiple topology graphs available. Ligands that bind to
+    metal centres are given functional groups that are designated for
+    metal interaction with 'metal' in their name. In the below example,
+    we explicitly assign one of the multiple metal bonding functional
+    groups for interaction with the metal complex. As these metal
+    complexes are expected to be building blocks of future molecules,
+    we also allow for the construction of undercoordinated metal
+    centres. This is handled, by removing the unsaturated vertices
+    from the topology graph prior to construction. These need to be
+    manually defined:
+
+    .. code-block:: python
+
+        ligand = stk.BuildingBlock(
+            'c1cc(-c2ccc(-c3ccncc3)cc2)ccn1',
+            functional_groups=['pyridine_N_metal']
+        )
+        # Handle multiple functional groups on the ligand to ensure
+        # only one functional group is bound to the metal.
+        ligand.func_groups = tuple(i for i in [ligand.func_groups[0]])
+
+        # Construct four-coordinated Pd 2+ square planar complex.
+        sqpl = stk.metal_complex.SquarePlanarMonodentate()
+        pdl2_sqpl_complex = stk.ConstructedMolecule(
+            building_blocks=[metal, ligand],
+            topology_graph=sqpl,
+            # Assign the metal to vertex 0, although this is not a
+            # requirement.
+            building_block_vertices={
+                metal: tuple([sqpl.vertices[0]]),
+                ligand: sqpl.vertices[1:]
+            }
+        )
+
+        # Construct two-coordinated Pd2+ square planar complex with
+        # two unsaturated sites.
+        sqpl = stk.metal_complex.SquarePlanarMonodentate(
+            unsaturated_vertices=[3, 4]
+        )
+        pdl2_sqpl_complex = stk.ConstructedMolecule(
+            building_blocks=[metal, ligand],
+            topology_graph=sqpl,
+            building_block_vertices={
+                metal: tuple([sqpl.vertices[0]]),
+                # We do not need to specify anything extra here,
+                # because vertices 3 and 4 will be removed from the
+                # topology graph upon construction.
+                ligand: sqpl.vertices[1:]
+            }
+        )
+
+        # Construct an unsaturated Pd2+ atom.
+        sqpl = stk.metal_complex.SquarePlanarMonodentate(
+            unsaturated_vertices=[1, 2, 3, 4]
+        )
+        pdl2_sqpl_complex = stk.ConstructedMolecule(
+            building_blocks=[metal],
+            topology_graph=sqpl,
+            building_block_vertices={
+                metal: tuple([sqpl.vertices[0]])
+            }
+        )
+
+    Finally, it is crucial to save metal-containing molecules using the
+    :meth:`.dump` option to a :class:`dict` because RDKit may fail to
+    load the molecule back from a .mol file. Note that the metal
+    functional groups assigned to the building blocks will be lost.
+
+    .. code-block:: python
+
+        # Dump ConstructedMolecule.
+        pdl2_sqpl_complex.dump('metal_complex.json')
+        # Load in ConstructedMolecule.
+        loaded = stk.ConstructedMolecule.load('metal_complex.json')
 
     """
 
     def __init_subclass__(cls, **kwargs):
-        for i, vertex in enumerate(cls.vertices):
+        for i, vertex in enumerate(cls.vertex_data):
             vertex.id = i
+        for i, edge in enumerate(cls.edge_data):
+            edge.id = i
         return super().__init_subclass__(**kwargs)
 
     def __init__(self, vertex_alignments=None,
-                 unsatured_vertices=None, num_processes=1):
+                 unsaturated_vertices=None, num_processes=1):
         """
         Initialize a :class:`.MetalComplex`.
 
         Parameters
         ----------
         vertex_alignments : :class:`dict`, optional
-            A mapping from a :class:`.Vertex` in :attr:`vertices`
-            to an :class:`.Edge` connected to it. The :class:`.Edge` is
-            used to align the first :class:`.FunctionalGroup` of a
-            :class:`.BuildingBlock` placed on that vertex. Only
-            vertices which need to have their default edge changed need
-            to be present in the :class:`dict`. If ``None`` then the
-            first :class:`.Edge` in :class:`.Vertex.edges` is for each
-            vertex is used. Changing which :class:`.Edge` is used will
+            A mapping from the :attr:`.Vertex.id` of a :class:`.Vertex`
+            :attr:`vertices` to an :class:`.Edge` connected to it.
+            The :class:`.Edge` is used to align the first
+            :class:`.FunctionalGroup` of a :class:`.BuildingBlock`
+            placed on that vertex. Only vertices which need to have
+            their default edge changed need to be present in the
+            :class:`dict`. If ``None`` then the default edge is used
+            for each vertex. Changing which :class:`.Edge` is used will
             mean that the topology graph represents different
-            structural isomers.
-
-            The vertices and edges can also be referred to by their
-            indices.
+            structural isomers. The edge is refered to by a number
+            between ``0`` (inclusive) and the number of edges the
+            vertex is connected to (exclusive).
 
         unsaturated_vertices : :class:`list` of :class:`int`, optional
             A list of the unsaturated sites on the metal complexes to
@@ -559,61 +863,49 @@ class MetalComplex(TopologyGraph):
             :meth:`construct`.
 
         """
+
         # Metal complexes can have unsaturated sites.
         # Need to remove information about the sites that will not
         # react from stage, self.vertices and self.edges.
-
-        if unsatured_vertices is not None:
-            self.old_vertices = self.vertices
-            self.old_edges = self.edges
-            self.vertices = tuple(
-                i for i in self.old_vertices
-                if i.id not in unsatured_vertices
+        if unsaturated_vertices is not None:
+            self.old_vertex_data = self.vertex_data
+            self.old_edge_data = self.edge_data
+            self.vertex_data = tuple(
+                i for i in self.old_vertex_data
+                if i.id not in unsaturated_vertices
             )
             used_edges = [
-                i for i in self.edges
-                if set(i.vertices).issubset(set(self.vertices))
+                i for i in self.old_edge_data
+                if set(i.vertices).issubset(set(self.vertex_data))
             ]
+<<<<<<< HEAD
             self.edges = tuple(i for i in used_edges)
+=======
+            self.edge_data = tuple(i for i in used_edges)
+>>>>>>> 8114567c458bc8f5125323769dd3d179ec2513d1
 
         if vertex_alignments is None:
             vertex_alignments = {}
 
-        # Convert ints to Vertex and Edge instances.
-        _vertex_alignments = {}
-        for v, e in vertex_alignments.items():
-            v = self.vertices[v] if isinstance(v, int) else v
-            e = v.edges[e] if isinstance(e, int) else e
-            _vertex_alignments[v] = e
-        vertex_alignments = _vertex_alignments
-
-        vertex_clones = {}
-        for vertex in self.vertices:
-            clone = vertex.clone(clear_edges=True)
-            clone.aligner_edge = vertex_alignments.get(
-                vertex,
-                vertex.edges[0]
-            )
-            vertex_clones[vertex] = clone
-
-        edge_clones = {}
-        for edge in self.edges:
-            edge_clones[edge] = edge.clone(vertex_clones)
-
-        vertices = tuple(vertex_clones.values())
-        for vertex in vertices:
-            vertex.aligner_edge = edge_clones[vertex.aligner_edge]
-
+        vertex_data = {
+            data: data.clone(True) for data in self.vertex_data
+        }
+        for vertex in vertex_data.values():
+            vertex.aligner_edge = vertex_alignments.get(vertex.id, 0)
+        edge_data = tuple(
+            edge.clone(vertex_data)
+            for edge in self.edge_data
+        )
         vertex_types = sorted(
-            set(len(v.edges) for v in self.vertices),
+            {len(v.edges) for v in vertex_data},
             reverse=True
         )
         super().__init__(
-            vertices=vertices,
-            edges=tuple(edge_clones.values()),
+            vertex_data=vertex_data.values(),
+            edge_data=edge_data,
             construction_stages=tuple(
                 lambda vertex, vertex_type=vt:
-                    len(vertex.edges) == vertex_type
+                    vertex.get_num_edges() == vertex_type
                 for vt in vertex_types
             ),
             num_processes=num_processes
@@ -637,7 +929,7 @@ class MetalComplex(TopologyGraph):
 
         scale = self._get_scale(mol)
         vertices = tuple(self._get_vertex_clones(mol, scale))
-        edges = tuple(self._get_edge_clones(vertices, scale))
+        edges = tuple(self._get_edge_clones(scale))
 
         self._prepare(mol)
         self._place_building_blocks(mol, vertices, edges)
@@ -651,9 +943,20 @@ class MetalComplex(TopologyGraph):
             )
         reactor.finalize()
 
+        # Assign the information of Edge and Vertex classes and their
+        # assignments.
         self.vertex_edge_assignments = {}
         for vertex in vertices:
+            v_id = vertex.id
+            vertex_edges = []
+            for edge in edges:
+                if edge in vertex_edges:
+                    continue
+                if v_id in edge._vertex_ids:
+                    vertex_edges.append(edge)
+            vertex.edges = vertex_edges
             self.vertex_edge_assignments[vertex.id] = vertex
+
         self._clean_up(mol)
 
     def _get_scale(self, mol):
@@ -674,19 +977,25 @@ class MetalComplex(TopologyGraph):
             each axis is scaled by a different value.
 
         """
-
-        return max(
-            bb.get_maximum_diameter()
-            for bb in mol.building_block_vertices
-        )
+        organic_bbs = [
+            i for i in mol.building_block_vertices
+            if 'metal' not in list(set((
+                j.fg_type.name for j in i.func_groups
+            )))
+        ]
+        if organic_bbs:
+            return max(bb.get_maximum_diameter() for bb in organic_bbs)
+        else:
+            # No organic building blocks.
+            return 1
 
     def __repr__(self):
         vertex_alignments = ', '.join(
-            f'{v.id}: {v.edges.index(v.aligner_edge)}'
+            f'{v.id}: {v.get_aligner_edge()}'
             for v in self.vertices
         )
         return (
-            f'MetalComplex.{self.__class__.__name__}('
+            f'metal_complex.{self.__class__.__name__}('
             f'vertex_alignments={{{vertex_alignments}}})'
         )
 
@@ -699,6 +1008,14 @@ class SquarePlanarMonodentate(MetalComplex):
 
     Attributes
     ----------
+    vertex_data : :class:`tuple` of :class:`.VertexData`
+        A class attribute. Holds the data of the vertices which make up
+        the topology graph.
+
+    edge_data : :class:`tuple` of :class:`.EdgeData`
+        A class attribute. Holds the data of the edges which make up
+        the topology graph.
+
     vertices : :class:`tuple` of :class:`.Vertex`
         The vertices which make up the topology graph.
 
@@ -707,19 +1024,35 @@ class SquarePlanarMonodentate(MetalComplex):
 
     """
 
-    vertices = (
-        _MetalComplexVertex(0, 0, 0),
-        _MetalComplexVertex(0, 1, 0),
-        _MetalComplexVertex(0, 0, 1),
-        _MetalComplexVertex(0, -1, 0),
-        _MetalComplexVertex(0, 0, -1),
+    vertex_data = (
+        _MetalComplexVertexData(0, 0, 0),
+        _MetalComplexVertexData(0, 1, 0),
+        _MetalComplexVertexData(0, 0, 1),
+        _MetalComplexVertexData(0, -1, 0),
+        _MetalComplexVertexData(0, 0, -1),
     )
 
-    edges = (
-        Edge(vertices[0], vertices[1], position=[0, 0.2, 0]),
-        Edge(vertices[0], vertices[2], position=[0, 0, 0.2]),
-        Edge(vertices[0], vertices[3], position=[0, -0.2, 0]),
-        Edge(vertices[0], vertices[4], position=[0, 0, -0.2]),
+    edge_data = (
+        EdgeData(
+            vertex_data[0],
+            vertex_data[1],
+            position=[0, 0.2, 0]
+        ),
+        EdgeData(
+            vertex_data[0],
+            vertex_data[2],
+            position=[0, 0, 0.2]
+        ),
+        EdgeData(
+            vertex_data[0],
+            vertex_data[3],
+            position=[0, -0.2, 0]
+        ),
+        EdgeData(
+            vertex_data[0],
+            vertex_data[4],
+            position=[0, 0, 0.2]
+        ),
     )
 
 
@@ -731,6 +1064,14 @@ class SquarePlanarBidentate(MetalComplex):
 
     Attributes
     ----------
+    vertex_data : :class:`tuple` of :class:`.VertexData`
+        A class attribute. Holds the data of the vertices which make up
+        the topology graph.
+
+    edge_data : :class:`tuple` of :class:`.EdgeData`
+        A class attribute. Holds the data of the edges which make up
+        the topology graph.
+
     vertices : :class:`tuple` of :class:`.Vertex`
         The vertices which make up the topology graph.
 
@@ -739,15 +1080,31 @@ class SquarePlanarBidentate(MetalComplex):
 
     """
 
-    vertices = (
-        _MetalComplexVertex(0, 0, 0),
-        _MetalComplexVertex(0, 1, 0),
-        _MetalComplexVertex(0, -1, 0)
+    vertex_data = (
+        _MetalComplexVertexData(0, 0, 0),
+        _MetalComplexVertexData(0, 1, 0),
+        _MetalComplexVertexData(0, -1, 0)
     )
 
-    edges = (
-        Edge(vertices[0], vertices[1], position=[0.2, 0.2, 0]),
-        Edge(vertices[0], vertices[1], position=[-0.2, 0.2, 0]),
-        Edge(vertices[0], vertices[2], position=[0.2, -0.2, 0]),
-        Edge(vertices[0], vertices[2], position=[-0.2, -0.2, 0])
+    edge_data = (
+        EdgeData(
+            vertex_data[0],
+            vertex_data[1],
+            position=[0.2, 0.2, 0]
+        ),
+        EdgeData(
+            vertex_data[0],
+            vertex_data[1],
+            position=[-0.2, 0.2, 0]
+        ),
+        EdgeData(
+            vertex_data[0],
+            vertex_data[2],
+            position=[0.2, -0.2, 0]
+        ),
+        EdgeData(
+            vertex_data[0],
+            vertex_data[2],
+            position=[-0.2, -0.2, 0]
+        )
     )
