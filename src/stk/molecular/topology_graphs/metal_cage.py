@@ -658,7 +658,7 @@ class _MetalCageVertex(Vertex):
 
 class MetalCage(TopologyGraph):
     """
-    Represents metal organic cage topology graphs.
+    Represents metal cage topology graphs.
 
     MetalCage topologies are added by creating a subclass which
     defines the :attr:`vertex_data` and :attr:`edge_data` class
@@ -685,7 +685,122 @@ class MetalCage(TopologyGraph):
     Examples
     --------
 
-    FILL IN
+    Construction of topologies that contain metals requires some extra
+    manipulation compared to purely organic systems because SMILES and
+    RDKit are not properly defined to handle metal chemistry. To define
+    a :class:`.BuildingBlock` containing metal atoms and functional
+    groups in stk requires something like below to avoid RDKit
+    problems upon initialization. Note that here the functional groups
+    do not define the metal centre coordination geometry, but does
+    define the number of coordination sites per metal.
+
+    .. code-block:: python
+
+        import stk
+        from rdkit.Chem import AllChem as rdkit
+        import numpy as np
+
+        # Define an stk BuildingBlock with no functional groups and a
+        # single metal (Pd with 2+ charge) atom.
+        m = rdkit.MolFromSmiles('[Pd+2]')
+        m.AddConformer(rdkit.Conformer(m.GetNumAtoms()))
+        metal = stk.BuildingBlock.init_from_rdkit_mol(
+            m,
+            functional_groups=None,
+        )
+
+        # Manually set atom position if required. RDKit will default
+        # to [0, 0, 0].
+        metal.set_position_matrix(np.array([[0.0, 0.0, 0.0]]))
+
+        # Manually set functional group information for the metal
+        # centre. The key of this dictionary is the fg.id.
+        # Pd2+ is 4 coordinate, so we write 4 metal functiongal groups.
+        metal_coord_info = {
+            0: {
+                'atom_ids': [0],
+                'bonder_ids': [0],
+                'deleter_ids': [None]
+            },
+            1: {
+                'atom_ids': [0],
+                'bonder_ids': [0],
+                'deleter_ids': [None]
+            },
+            2: {
+                'atom_ids': [0],
+                'bonder_ids': [0],
+                'deleter_ids': [None]
+            },
+            3: {
+                'atom_ids': [0],
+                'bonder_ids': [0],
+                'deleter_ids': [None]
+            },
+        }
+        metal = stk.assign_metal_fgs(
+            building_block=metal,
+            coordination_info=metal_coord_info
+        )
+
+    The metal centre coordination geometry is defined by the topology
+    graph used for construction; in this case the metal centre geometry
+    is defined by the cage topology used. Ligands that bind to
+    metal centres are given functional groups that are designated for
+    metal interaction with 'metal' in their name.
+
+    .. code-block:: python
+
+        ligand = stk.BuildingBlock(
+            'C(#Cc1cccc(C#Cc2cccnc2)c1)c1cccnc1',
+            functional_groups=['pyridine_N_metal']
+        )
+
+        m2l4_lantern = stk.metal_cage.M2L4_Lantern()
+        lantern = stk.ConstructedMolecule(
+            building_blocks=[metal, ligand],
+            topology_graph=m2l4_lantern,
+            building_block_vertices={
+                metal: m2l4_lantern.vertices[0:2],
+                ligand: m2l4_lantern.vertices[2:]
+            }
+        )
+
+    It is crucial to save metal-containing molecules using the
+    :meth:`.dump` option to a :class:`dict` because RDKit may fail to
+    load the molecule back from a .mol file. Note that the metal
+    functional groups assigned to the building blocks will be lost.
+
+    .. code-block:: python
+
+        # Dump ConstructedMolecule.
+        lantern.dump('m2l4_lantern.json')
+        # Load in ConstructedMolecule.
+        loaded = stk.ConstructedMolecule.load('m2l4_lantern.json')
+
+    As with other cage toplogies, different mixtures of ligands can be
+    used in any topology using the `building_block_vertices` variable.
+
+    .. code-block:: python
+
+        ligand1 = stk.BuildingBlock(
+            'C(#Cc1cccc(C#Cc2cccnc2)c1)c1cccnc1',
+            functional_groups=['pyridine_N_metal']
+        )
+        ligand2 = stk.BuildingBlock(
+            'COc1c(OC)c2ccc(-c3ccncc3)cc2c2cc(-c3ccncc3)ccc12',
+            functional_groups=['pyridine_N_metal']
+        )
+        m2l4_lantern = stk.metal_cage.M2L4_Lantern()
+        hetero_lantern = stk.ConstructedMolecule(
+            building_blocks=[metal, ligand1, ligand2],
+            topology_graph=m2l4_lantern,
+            building_block_vertices={
+                metal: m2l4_lantern.vertices[0:2],
+                ligand1: m2l4_lantern.vertices[2:4],
+                ligand2: m2l4_lantern.vertices[4:]
+            }
+        )
 
     """
 

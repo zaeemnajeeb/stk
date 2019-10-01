@@ -689,7 +689,7 @@ class MetalComplex(TopologyGraph):
     --------
 
     Construction of topologies that contain metals requires some extra
-    manipulation compared ot purely organic systems because SMILES and
+    manipulation compared to purely organic systems because SMILES and
     RDKit are not properly defined to handle metal chemistry. To define
     a :class:`.BuildingBlock` containing metal atoms and functional
     groups in stk requires something like below to avoid RDKit
