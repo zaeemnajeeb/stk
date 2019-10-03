@@ -25,10 +25,37 @@ class MetalOptimizer(Optimizer):
     replaced by noninteracting H atoms, and constraints are applied
     to maintain the metal centre geometry.
 
+    Restrictions are applied to the ligand with respect to its input
+    structure. So if that is poorly optimised, then the output will be
+    also.
+
     Attributes
     ----------
     _scale : :class:`float`
         Distance to place ligand binder atoms from metal.
+
+    _force_constant : :class:`float`
+        Force constant to use for restricted metal-ligand bonds.
+        All other force constants are hard-coded/standard values.
+
+    _rel_distance : :class:`float`
+        Set the relative distance to optimise the metal-ligand
+        bonds to in each optimisation step.
+
+    _res_steps : :class:`int`
+        Number of optimisation steps to run. Each optimisation step
+        is very short to ensure the structure does not over-react
+        to the extreme forces on it.
+
+    _prearrange : :class:`bool`
+        `True` to prearrange functional groups around metal centre.
+
+    _restrict_all_bonds : :class:`bool`
+        `True` to restrict all bonds except for ligand-FG bonds.
+
+    _restrict_orientation : :class:`bool`
+        `True` to restrict metal complex FG angles relative to
+        topology centre of mass.
 
     _metal_a_no : :class:`list` of :class:`int`
         Atomic numbers of metals based on the periodic table.
@@ -105,25 +132,55 @@ class MetalOptimizer(Optimizer):
             }
         )
 
-        # Define an optimizer, with ligand bonder atoms placed 2
-        # Angstrom from the metal centres.
-        optimizer = stk.MetalOptimizer(scale=2)
-
-        SHOW FULL OPT HERE
+        # Define an optimizer, with ligand bonder atoms placed 1.9
+        # Angstrom from the metal centres. A weak force_constant is
+        # used here to not overshadow all other forces. A slow
+        # optimisation of the ligand - bonder bonds is done over
+        # res_steps, where each step is a very short RDKit UFF
+        # optimisation with constraints.
+        # All ligand bonds and angles have restricitons applied based
+        # on the input structure.
+        optimizer = stk.MetalOptimizer(
+            scale=1.9,
+            force_constant=1.0e2,
+            rel_distance=0.9,
+            res_steps=50,
+            restrict_all_bonds=True,
+            restrict_orientation=True,
+            prearrange=True,
+        )
 
         # Optimize.
         optimizer.optimize(mol=pdl2_sqpl_complex)
 
-        BUILD CAGE
+    The optimisation also works for metal cages, although for some
+    structures you may want to modify the number of steps or scale.
 
-        SHOW OT PROCEDURE
+    .. code-block:: python
+        m2l4_lantern = stk.metal_cage.M2L4_Lantern()
+
+        ligand = stk.BuildingBlock(
+            'C(#Cc1cccc(C#Cc2cccnc2)c1)c1cccnc1',
+            functional_groups=['pyridine_N_metal']
+        )
+
+        lantern = stk.ConstructedMolecule(
+            building_blocks=[metal, ligand],
+            topology_graph=m2l4_lantern,
+            building_block_vertices={
+                metal: m2l4_lantern.vertices[0:2],
+                ligand: m2l4_lantern.vertices[2:]
+            }
+        )
+
+        optimizer.optimize(mol=lantern)
 
     """
 
     def __init__(self, scale, force_constant, rel_distance,
-                 prearrange=True, restrict_all_bonds=False,
+                 res_steps, prearrange=True, restrict_all_bonds=False,
                  restrict_orientation=False,
-                 res_steps=False, use_cache=False):
+                 use_cache=False):
         """
         Initialize a :class:`MetalOptimizer` instance.
 
@@ -133,11 +190,17 @@ class MetalOptimizer(Optimizer):
             Distance to place ligand binder atoms from metal.
 
         force_constant : :class:`float`
-            Force_constant to use for restricted bonds.
+            Force constant to use for restricted metal-ligand bonds.
+            All other force constants are hard-coded/standard values.
 
         rel_distance : :class:`float`
             Set the relative distance to optimise the metal-ligand
             bonds to.
+
+        res_steps : :class:`int`
+            Number of optimisation steps to run. Each optimisation step
+            is very short to ensure the structure does not over-react
+            to the extreme forces on it.
 
         prearrange : :class:`bool`, optional
             `True` to prearrange functional groups around metal centre.
@@ -148,9 +211,6 @@ class MetalOptimizer(Optimizer):
         restrict_orientation : :class:`bool`, optional
             `True` to restrict metal complex FG angles relative to
             topology centre of mass.
-
-        res_steps : :class:`bool`, optional
-
 
         use_cache : :class:`bool`, optional
             If ``True`` :meth:`optimize` will not run twice on the same
@@ -182,6 +242,14 @@ class MetalOptimizer(Optimizer):
         Returns
         -------
         None : :class:`NoneType`
+
+        Raises
+        ------
+        :class:`ValueError`
+            If the metal functional group has two bonder atoms, this
+            code will fail and raise this error. This assumption
+            implies that each metal-interacting functional group makes
+            a single metal-ligand bond.
 
         """
         bbs = [i for i in mol.get_building_blocks()]
@@ -322,7 +390,7 @@ class MetalOptimizer(Optimizer):
 
         """
         constraints = {}
-        # Bond constraints.
+        # Bond constraints. Set to have a force constant of 1E2.
         for bond in mol.bonds:
             idx1 = bond.atom1.id
             idx2 = bond.atom2.id
@@ -342,6 +410,8 @@ class MetalOptimizer(Optimizer):
 
         # Angle constraints
         # Add angle constraints to angles containing H atoms.
+        # Set to have a force constant of 1E1, unless the angle
+        # includes H atoms, then it has a force constant of 1E2.
         for bonds in combinations(mol.bonds, r=2):
             bond1, bond2 = bonds
             bond1_atoms = [bond1.atom1, bond1.atom2]
@@ -507,8 +577,9 @@ class MetalOptimizer(Optimizer):
                         forceConstant=constraint['fc']
                     )
 
-        # For bonds (2), a weak force constant is applied to minimize
-        # to rel_distance.
+        # For bonds between ligand bonders and the rest of the liagnd,
+        # a weak force constant is applied to minimize to rel_distance.
+        # This is the slow relaxation of the high-force bonds.
         if self._rel_distance is not None:
             for bond in mol.bonds:
                 idx1 = bond.atom1.id
@@ -583,14 +654,12 @@ class MetalOptimizer(Optimizer):
         # only optimises non metal atoms that are not bonded to the
         # metal.
 
-        # Optimisation can be attempted with MacroModel or with UFF in
-        # RDKit. Either method uses constraints on the metal centre
-        # to attempt to enforce the metal geometry described by
-        # the metal complex topology.
+        # Optimisation with UFF in RDKit. This method uses constraints
+        # on the metal centre to attempt to enforce the metal geometry
+        # described by the metal topology.
         # For RDKit, the optimisation is done in loops, where the
-        # metal-ligand and adjacent bonds slowly relaxed to normal
-        # values. For MacroModel, the metal-ligand bonds are
-        # constrained and the other ligand bonds are allowed to relax.
+        # metal-ligand and adjacent bonds are slowly relaxed to normal
+        # values.
         # The rest of the ligands are constrained to the input value.
         for i in range(self._res_steps):
             self._restricted_optimization(
@@ -606,11 +675,32 @@ class MetalOptimizer(Optimizer):
         """
         Applies UFF metal centre constraints.
 
+        Parameters
+        ----------
+        ff : :class:`rdkit.ForceField`
+            Forcefield to apply constraints to. Generally use UFF.
+
+        mol : :class:`.Molecule`
+            The molecule to be optimized.
+
+        metal_bonds : :class:`.list` of :class:`stk.Bond`
+            List of bonds including metal atoms.
+
+        metal_atoms : :class:`.list` of :class:`stk.Atom`
+            List of metal atoms.
+
+        Returns
+        -------
+        None : :class:`NoneType`
+
         """
+        # Add a very weak force constraint on all metal-metal
+        # distances.
         metal_dist = max(
             bb.get_maximum_diameter()
             for bb in mol.building_block_vertices
         )
+
         for atoms in combinations(metal_atoms, r=2):
             ff.UFFAddDistanceConstraint(
                 idx1=atoms[0].id,
@@ -626,6 +716,7 @@ class MetalOptimizer(Optimizer):
             idx1 = bond.atom1.id
             idx2 = bond.atom2.id
             # Add distance constraints in place of metal bonds.
+            # Target distance set to _scale.
             ff.UFFAddDistanceConstraint(
                 idx1=idx1,
                 idx2=idx2,
@@ -635,7 +726,8 @@ class MetalOptimizer(Optimizer):
                 forceConstant=self._force_constant
             )
 
-        # Also implement angular constraints.
+        # Also implement angular constraints to all atoms in the
+        # metal complex.
         for bonds in combinations(metal_bonds, r=2):
             bond1, bond2 = bonds
             bond1_atoms = [bond1.atom1, bond1.atom2]
@@ -679,6 +771,24 @@ class MetalOptimizer(Optimizer):
         """
         Applies UFF relative orientation restrcitions.
 
+        Parameters
+        ----------
+        ff : :class:`rdkit.ForceField`
+            Forcefield to apply constraints to. Generally use UFF.
+
+        mol : :class:`.Molecule`
+            The molecule to be optimized.
+
+        metal_bonds : :class:`.list` of :class:`stk.Bond`
+            List of bonds including metal atoms.
+
+        metal_atoms : :class:`.list` of :class:`stk.Atom`
+            List of metal atoms.
+
+        Returns
+        -------
+        None : :class:`NoneType`
+
         """
         # Add a fixed point.
         COM = mol.get_center_of_mass()
@@ -720,6 +830,15 @@ class MetalOptimizer(Optimizer):
         """
         Check if a bond has a H atom.
 
+        Parameters
+        ----------
+        bond : :class:`stk.Bond`
+            Bond to test if it has a H atom.
+
+        Returns
+        -------
+        :class:`bool`
+            Returns `True` if bond has H atom.
         """
         if bond.atom1.atomic_number == 1:
             return True
@@ -730,6 +849,19 @@ class MetalOptimizer(Optimizer):
     def has_M(self, bond, metal_atoms):
         """
         Check if a bond has a metal atom.
+
+        Parameters
+        ----------
+        bond : :class:`stk.Bond`
+            Bond to test if it has a metal atom.
+
+        metal_atoms : :class:`.list` of :class:`stk.Atom`
+            List of metal atoms.
+
+        Returns
+        -------
+        :class:`bool`
+            Returns `True` if bond has metal atom.
 
         """
         if bond.atom1 in metal_atoms:
