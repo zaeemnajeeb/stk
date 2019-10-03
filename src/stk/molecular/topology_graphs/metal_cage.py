@@ -1029,6 +1029,9 @@ class M2L4_Lantern(MetalCage):
         ),
     )
 
+    num_windows = 4
+    num_window_types = 1
+
 
 class M4L8_sqpl(MetalCage):
     """
@@ -1151,3 +1154,165 @@ class M4L8_sqpl(MetalCage):
             position=[0.2, -1, -0.2]
         ),
     )
+
+    num_windows = 6
+    num_window_types = 2
+
+
+class M12L24_sqpl(MetalCage):
+    """
+    Represents a M12L24 topology graph with square planar metal.
+
+    See :class:`.MetalCage` for more details and examples.
+
+    Attributes
+    ----------
+    vertex_data : :class:`tuple` of :class:`.VertexData`
+        A class attribute. Holds the data of the vertices which make up
+        the topology graph.
+
+    edge_data : :class:`tuple` of :class:`.EdgeData`
+        A class attribute. Holds the data of the edges which make up
+        the topology graph.
+
+    vertices : :class:`tuple` of :class:`.Vertex`
+        The vertices which make up the topology graph.
+
+    edges : :class:`tuple` of :class:`.Edge`
+        The edges which make up the topology graph.
+
+    """
+
+    vertex_data = (
+        _MetalCageVertexData(0, 1, 0),
+        _MetalCageVertexData(0, 1, 0),
+        _MetalCageVertexData(0, 1, 0),
+        _MetalCageVertexData(0, 1, 0),
+        _MetalCageVertexData(0, 1, 0),
+        _MetalCageVertexData(0, 1, 0),
+        _MetalCageVertexData(0, 1, 0),
+        _MetalCageVertexData(0, 1, 0),
+        _MetalCageVertexData(0, 1, 0),
+        _MetalCageVertexData(0, 1, 0),
+        _MetalCageVertexData(0, 1, 0),
+        _MetalCageVertexData(0, 1, 0),
+    )
+
+    edge_data = (
+        EdgeData(
+            vertex_data[0],
+            vertex_data[2],
+            position=[0.2, 1, 0]
+        ),
+    )
+
+    num_windows = 14
+    num_window_types = 2
+
+
+class M6L12_cube(MetalCage):
+    """
+    Represents a M6L12 cube topology graph with square planar metal.
+
+    See :class:`.MetalCage` for more details and examples.
+
+    Attributes
+    ----------
+    vertex_data : :class:`tuple` of :class:`.VertexData`
+        A class attribute. Holds the data of the vertices which make up
+        the topology graph.
+
+    edge_data : :class:`tuple` of :class:`.EdgeData`
+        A class attribute. Holds the data of the edges which make up
+        the topology graph.
+
+    vertices : :class:`tuple` of :class:`.Vertex`
+        The vertices which make up the topology graph.
+
+    edges : :class:`tuple` of :class:`.Edge`
+        The edges which make up the topology graph.
+
+    """
+
+    vertex_data = (
+        _MetalCageVertexData(1, 0, 0),
+        _MetalCageVertexData(0, 1, 0),
+        _MetalCageVertexData(-1, 0, 0),
+        _MetalCageVertexData(0, -1, 0),
+        _MetalCageVertexData(0, 0, 1),
+        _MetalCageVertexData(0, 0, -1),
+    )
+
+    edge_data = (
+        EdgeData(
+            vertex_data[0],
+            vertex_data[2],
+            position=[0.2, 1, 0]
+        ),
+    )
+
+    num_windows = 8
+    num_window_types = 1
+
+
+class M24L48_sqpl(MetalCage):
+    """
+    Represents a M24L48 topology graph with square planar metal.
+
+    See :class:`.MetalCage` for more details and examples.
+
+    Attributes
+    ----------
+    vertex_data : :class:`tuple` of :class:`.VertexData`
+        A class attribute. Holds the data of the vertices which make up
+        the topology graph.
+
+    edge_data : :class:`tuple` of :class:`.EdgeData`
+        A class attribute. Holds the data of the edges which make up
+        the topology graph.
+
+    vertices : :class:`tuple` of :class:`.Vertex`
+        The vertices which make up the topology graph.
+
+    edges : :class:`tuple` of :class:`.Edge`
+        The edges which make up the topology graph.
+
+    """
+
+    vertex_data = (
+        _MetalCageVertexData(0.7071, 0.7071, 0.0),
+        _MetalCageVertexData(0.7071, 0.7071, 1.0),
+        _MetalCageVertexData(0.2929, 0.7071, 0.0),
+        _MetalCageVertexData(0.2929, 0.7071, 1.0),
+        _MetalCageVertexData(0.2929, 0.2929, 0.0),
+        _MetalCageVertexData(0.2929, 0.2929, 1.0),
+        _MetalCageVertexData(0.7071, 0.2929, 0.0),
+        _MetalCageVertexData(0.7071, 0.2929, 1.0),
+        _MetalCageVertexData(0.0, 0.7071, 0.7071),
+        _MetalCageVertexData(1.0, 0.7071, 0.7071),
+        _MetalCageVertexData(0.2929, 0.0, 0.7071),
+        _MetalCageVertexData(0.2929, 1.0, 0.7071),
+        _MetalCageVertexData(0.0, 0.2929, 0.7071),
+        _MetalCageVertexData(1.0, 0.2929, 0.7071),
+        _MetalCageVertexData(0.7071, 0.0, 0.7071),
+        _MetalCageVertexData(0.7071, 1.0, 0.7071),
+        _MetalCageVertexData(0.0, 0.2929, 0.2929),
+        _MetalCageVertexData(1.0, 0.2929, 0.2929),
+        _MetalCageVertexData(0.7071, 0.0, 0.2929),
+        _MetalCageVertexData(0.7071, 1.0, 0.2929),
+        _MetalCageVertexData(0.0, 0.7071, 0.2929),
+        _MetalCageVertexData(1.0, 0.7071, 0.2929),
+        _MetalCageVertexData(0.2929, 0.0, 0.2929),
+        _MetalCageVertexData(0.2929, 1.0, 0.2929),
+    )
+
+    edge_data = (
+        EdgeData(
+            vertex_data[0],
+            vertex_data[2],
+            position=[0.2, 1, 0]
+        ),
+    )
+
+    num_windows = 26
+    num_window_types = 2
