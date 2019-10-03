@@ -45,55 +45,31 @@ def main():
         'C(#Cc1cccc(C#Cc2cccnc2)c1)c1cccnc1',
         functional_groups=['pyridine_N_metal']
     )
-    ligand2 = stk.BuildingBlock(
-        'COc1c(OC)c2ccc(-c3ccncc3)cc2c2cc(-c3ccncc3)ccc12',
-        functional_groups=['pyridine_N_metal']
-    )
-    m2l4_lantern = stk.metal_cage.M2L4_Lantern()
-    print(m2l4_lantern)
-    print('--------------------------------------------------------')
-    hetero_lantern = stk.ConstructedMolecule(
-        building_blocks=[metal, ligand1, ligand2],
-        topology_graph=m2l4_lantern,
-        building_block_vertices={
-            metal: m2l4_lantern.vertices[0:2],
-            ligand1: m2l4_lantern.vertices[2:4],
-            ligand2: m2l4_lantern.vertices[4:]
-        }
-    )
-    print('--------------------------------------------------------')
-    print(hetero_lantern)
-    hetero_lantern.write('hetero_lantern.mol')
-    hetero_lantern.write('hetero_lantern.pdb')
-    print('--------------------------------------------------------')
 
-    ligand = stk.BuildingBlock(
-        'C(#Cc1cccc(C#Cc2cccnc2)c1)c1cccnc1',
-        functional_groups=['pyridine_N_metal']
-    )
-    m2l4_lantern = stk.metal_cage.M2L4_Lantern()
-    print(m2l4_lantern)
+    n_metals = [2, 4, 6, 12, 24]
+    topologies = [
+        stk.metal_cage.M2L4_Lantern(),
+        stk.metal_cage.M4L8_sqpl(),
+        stk.metal_cage.M6L12_cube(),
+        stk.metal_cage.M12L24_sqpl(),
+        stk.metal_cage.M24L48_sqpl()
+    ]
     print('--------------------------------------------------------')
-    lantern = stk.ConstructedMolecule(
-        building_blocks=[metal, ligand],
-        topology_graph=m2l4_lantern,
-        building_block_vertices={
-            metal: m2l4_lantern.vertices[0:2],
-            ligand: m2l4_lantern.vertices[2:]
-        }
-    )
-    print('--------------------------------------------------------')
-    print(lantern)
-    lantern.write('lantern.mol')
-    lantern.write('lantern.pdb')
-    print('--------------------------------------------------------')
-
-    ligand = stk.BuildingBlock(
-        'NCCN',
-        functional_groups=['amine_metal']
-    )
-    ligand.write('lig.pdb')
-    print('testing script done')
+    for i, top in enumerate(topologies):
+        print(top)
+        cage = stk.ConstructedMolecule(
+            building_blocks=[metal, ligand1],
+            topology_graph=top,
+            building_block_vertices={
+                metal: top.vertices[0: n_metals[i]],
+                ligand1: top.vertices[n_metals[i]:],
+            }
+        )
+        print('-----------------------------------------------------')
+        cage.write(f'cage_{i}.mol')
+        cage.write(f'cage_{i}.pdb')
+        cage.dump(f'cage_{i}.json')
+        print('-----------------------------------------------------')
 
 
 if __name__ == "__main__":
