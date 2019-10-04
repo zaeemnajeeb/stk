@@ -1196,6 +1196,35 @@ class M12L24_sqpl(MetalCage):
         _MetalCageVertexData(0.5, -0.5, -0.707),
         _MetalCageVertexData(-0.5, 0.5, -0.707),
         _MetalCageVertexData(-0.5, -0.5, -0.707),
+
+        _MetalCageVertexData(1, 0.35, 0.35),
+        _MetalCageVertexData(1, 0.35, -0.35),
+        _MetalCageVertexData(1, -0.35, 0.35),
+        _MetalCageVertexData(1, -0.35, -0.35),
+
+        _MetalCageVertexData(-1, 0.35, 0.35),
+        _MetalCageVertexData(-1, 0.35, -0.35),
+        _MetalCageVertexData(-1, -0.35, 0.35),
+        _MetalCageVertexData(-1, -0.35, -0.35),
+
+        _MetalCageVertexData(0.35, 1, 0.35),
+        _MetalCageVertexData(0.35, 1, -0.35),
+        _MetalCageVertexData(-0.35, 1, 0.35),
+        _MetalCageVertexData(-0.35, 1, -0.35),
+
+        _MetalCageVertexData(0.35, -1, 0.35),
+        _MetalCageVertexData(0.35, -1, -0.35),
+        _MetalCageVertexData(-0.35, -1, 0.35),
+        _MetalCageVertexData(-0.35, -1, -0.35),
+
+        _MetalCageVertexData(0.5, 0, 0.707),
+        _MetalCageVertexData(-0.5, 0, 0.707),
+        _MetalCageVertexData(0, 0.5, 0.707),
+        _MetalCageVertexData(0, -0.5, 0.707),
+        _MetalCageVertexData(0.5, 0, -0.707),
+        _MetalCageVertexData(-0.5, 0, -0.707),
+        _MetalCageVertexData(0, 0.5, -0.707),
+        _MetalCageVertexData(0, -0.5, -0.707),
     )
 
     edge_data = (
@@ -1414,31 +1443,92 @@ class M24L48_sqpl(MetalCage):
 
     """
 
+    coord1 = 0.414
+    coord2 = -0.414
+    coord3 = coord1 - (coord1-coord2)/2
+    coord4 = -1
+    coord5 = 1
+    coord6 = coord5 - (coord5-coord1)/2
+
     vertex_data = (
-        _MetalCageVertexData(0.7071, 0.7071, 0.0),
-        _MetalCageVertexData(0.7071, 0.7071, 1.0),
-        _MetalCageVertexData(0.2929, 0.7071, 0.0),
-        _MetalCageVertexData(0.2929, 0.7071, 1.0),
-        _MetalCageVertexData(0.2929, 0.2929, 0.0),
-        _MetalCageVertexData(0.2929, 0.2929, 1.0),
-        _MetalCageVertexData(0.7071, 0.2929, 0.0),
-        _MetalCageVertexData(0.7071, 0.2929, 1.0),
-        _MetalCageVertexData(0.0, 0.7071, 0.7071),
-        _MetalCageVertexData(1.0, 0.7071, 0.7071),
-        _MetalCageVertexData(0.2929, 0.0, 0.7071),
-        _MetalCageVertexData(0.2929, 1.0, 0.7071),
-        _MetalCageVertexData(0.0, 0.2929, 0.7071),
-        _MetalCageVertexData(1.0, 0.2929, 0.7071),
-        _MetalCageVertexData(0.7071, 0.0, 0.7071),
-        _MetalCageVertexData(0.7071, 1.0, 0.7071),
-        _MetalCageVertexData(0.0, 0.2929, 0.2929),
-        _MetalCageVertexData(1.0, 0.2929, 0.2929),
-        _MetalCageVertexData(0.7071, 0.0, 0.2929),
-        _MetalCageVertexData(0.7071, 1.0, 0.2929),
-        _MetalCageVertexData(0.0, 0.7071, 0.2929),
-        _MetalCageVertexData(1.0, 0.7071, 0.2929),
-        _MetalCageVertexData(0.2929, 0.0, 0.2929),
-        _MetalCageVertexData(0.2929, 1.0, 0.2929),
+        _MetalCageVertexData(coord1, coord1, coord4),
+        _MetalCageVertexData(coord1, coord1, coord5),
+        _MetalCageVertexData(coord1, coord4, coord2),
+        _MetalCageVertexData(coord1, coord5, coord2),
+        _MetalCageVertexData(coord1, coord2, coord4),
+        _MetalCageVertexData(coord1, coord2, coord5),
+        _MetalCageVertexData(coord1, coord4, coord1),
+        _MetalCageVertexData(coord1, coord5, coord1),
+        _MetalCageVertexData(coord2, coord1, coord4),
+        _MetalCageVertexData(coord2, coord1, coord5),
+        _MetalCageVertexData(coord2, coord2, coord4),
+        _MetalCageVertexData(coord2, coord2, coord5),
+        _MetalCageVertexData(coord2, coord4, coord1),
+        _MetalCageVertexData(coord2, coord5, coord1),
+        _MetalCageVertexData(coord2, coord4, coord2),
+        _MetalCageVertexData(coord2, coord5, coord2),
+        _MetalCageVertexData(coord4, coord1, coord1),
+        _MetalCageVertexData(coord4, coord2, coord1),
+        _MetalCageVertexData(coord4, coord2, coord2),
+        _MetalCageVertexData(coord4, coord1, coord2),
+        _MetalCageVertexData(coord5, coord1, coord1),
+        _MetalCageVertexData(coord5, coord2, coord1),
+        _MetalCageVertexData(coord5, coord2, coord2),
+        _MetalCageVertexData(coord5, coord1, coord2),
+
+        _MetalCageVertexData(coord1, coord3, coord4),
+        _MetalCageVertexData(coord1, coord4, coord3),
+        _MetalCageVertexData(coord1, coord3, coord5),
+        _MetalCageVertexData(coord1, coord5, coord3),
+        _MetalCageVertexData(coord2, coord3, coord4),
+        _MetalCageVertexData(coord2, coord4, coord3),
+        _MetalCageVertexData(coord2, coord3, coord5),
+        _MetalCageVertexData(coord2, coord5, coord3),
+
+        _MetalCageVertexData(coord3, coord1, coord4),
+        _MetalCageVertexData(coord4, coord1, coord3),
+        _MetalCageVertexData(coord3, coord1, coord5),
+        _MetalCageVertexData(coord5, coord1, coord3),
+        _MetalCageVertexData(coord3, coord2, coord4),
+        _MetalCageVertexData(coord4, coord2, coord3),
+        _MetalCageVertexData(coord3, coord2, coord5),
+        _MetalCageVertexData(coord5, coord2, coord3),
+
+        _MetalCageVertexData(coord3, coord4, coord1),
+        _MetalCageVertexData(coord4, coord3, coord1),
+        _MetalCageVertexData(coord3, coord5, coord1),
+        _MetalCageVertexData(coord5, coord3, coord1),
+        _MetalCageVertexData(coord3, coord4, coord2),
+        _MetalCageVertexData(coord4, coord3, coord2),
+        _MetalCageVertexData(coord3, coord5, coord2),
+        _MetalCageVertexData(coord5, coord3, coord2),
+
+        _MetalCageVertexData(coord1, coord6, coord6),
+        _MetalCageVertexData(coord1, coord6, -coord6),
+        _MetalCageVertexData(coord1, -coord6, coord6),
+        _MetalCageVertexData(coord1, -coord6, -coord6),
+        _MetalCageVertexData(coord2, coord6, coord6),
+        _MetalCageVertexData(coord2, coord6, -coord6),
+        _MetalCageVertexData(coord2, -coord6, coord6),
+        _MetalCageVertexData(coord2, -coord6, -coord6),
+
+        _MetalCageVertexData(coord6, coord1, coord6),
+        _MetalCageVertexData(coord6, coord1, -coord6),
+        _MetalCageVertexData(-coord6, coord1, coord6),
+        _MetalCageVertexData(-coord6, coord1, -coord6),
+        _MetalCageVertexData(coord6, coord2, coord6),
+        _MetalCageVertexData(coord6, coord2, -coord6),
+        _MetalCageVertexData(-coord6, coord2, coord6),
+        _MetalCageVertexData(-coord6, coord2, -coord6),
+
+        _MetalCageVertexData(coord6, coord6, coord1),
+        _MetalCageVertexData(coord6, -coord6, coord1),
+        _MetalCageVertexData(-coord6, coord6, coord1),
+        _MetalCageVertexData(-coord6, -coord6, coord1),
+        _MetalCageVertexData(coord6, coord6, coord2),
+        _MetalCageVertexData(coord6, -coord6, coord2),
+        _MetalCageVertexData(-coord6, coord6, coord2),
+        _MetalCageVertexData(-coord6, -coord6, coord2),
     )
 
     edge_data = (
