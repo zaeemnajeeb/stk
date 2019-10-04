@@ -1188,7 +1188,6 @@ class M12L24_sqpl(MetalCage):
         _MetalCageVertexData(0, 1, 0),
         _MetalCageVertexData(-1, 0, 0),
         _MetalCageVertexData(0, -1, 0),
-
         _MetalCageVertexData(0.5, 0.5, 0.707),
         _MetalCageVertexData(0.5, -0.5, 0.707),
         _MetalCageVertexData(-0.5, 0.5, 0.707),
@@ -1243,15 +1242,15 @@ class M6L12_cube(MetalCage):
         _MetalCageVertexData(0, 0, 1),
         _MetalCageVertexData(0, 0, -1),
 
-        _MetalCageVertexData(1, 1, 0), # 6
+        _MetalCageVertexData(1, 1, 0),
         _MetalCageVertexData(1, -1, 0),
         _MetalCageVertexData(1, 0, 1),
         _MetalCageVertexData(1, 0, -1),
-        _MetalCageVertexData(-1, 1, 0), # 10
+        _MetalCageVertexData(-1, 1, 0),
         _MetalCageVertexData(-1, -1, 0),
         _MetalCageVertexData(-1, 0, 1),
         _MetalCageVertexData(-1, 0, -1),
-        _MetalCageVertexData(0, 1, 1), #14
+        _MetalCageVertexData(0, 1, 1),
         _MetalCageVertexData(0, 1, -1),
         _MetalCageVertexData(0, -1, 1),
         _MetalCageVertexData(0, -1, -1),
