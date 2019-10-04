@@ -980,6 +980,7 @@ class M2L4_Lantern(MetalCage):
     vertex_data = (
         _MetalCageVertexData(0, 1, 0),
         _MetalCageVertexData(0, -1, 0),
+
         _MetalCageVertexData(1, 0, 0),
         _MetalCageVertexData(0, 0, 1),
         _MetalCageVertexData(-1, 0, 0),
@@ -1156,86 +1157,6 @@ class M4L8_sqpl(MetalCage):
     )
 
     num_windows = 6
-    num_window_types = 2
-
-
-class M12L24_sqpl(MetalCage):
-    """
-    Represents a M12L24 topology graph with square planar metal.
-
-    See :class:`.MetalCage` for more details and examples.
-
-    Attributes
-    ----------
-    vertex_data : :class:`tuple` of :class:`.VertexData`
-        A class attribute. Holds the data of the vertices which make up
-        the topology graph.
-
-    edge_data : :class:`tuple` of :class:`.EdgeData`
-        A class attribute. Holds the data of the edges which make up
-        the topology graph.
-
-    vertices : :class:`tuple` of :class:`.Vertex`
-        The vertices which make up the topology graph.
-
-    edges : :class:`tuple` of :class:`.Edge`
-        The edges which make up the topology graph.
-
-    """
-
-    vertex_data = (
-        _MetalCageVertexData(1, 0, 0),
-        _MetalCageVertexData(0, 1, 0),
-        _MetalCageVertexData(-1, 0, 0),
-        _MetalCageVertexData(0, -1, 0),
-        _MetalCageVertexData(0.5, 0.5, 0.707),
-        _MetalCageVertexData(0.5, -0.5, 0.707),
-        _MetalCageVertexData(-0.5, 0.5, 0.707),
-        _MetalCageVertexData(-0.5, -0.5, 0.707),
-        _MetalCageVertexData(0.5, 0.5, -0.707),
-        _MetalCageVertexData(0.5, -0.5, -0.707),
-        _MetalCageVertexData(-0.5, 0.5, -0.707),
-        _MetalCageVertexData(-0.5, -0.5, -0.707),
-
-        _MetalCageVertexData(1, 0.35, 0.35),
-        _MetalCageVertexData(1, 0.35, -0.35),
-        _MetalCageVertexData(1, -0.35, 0.35),
-        _MetalCageVertexData(1, -0.35, -0.35),
-
-        _MetalCageVertexData(-1, 0.35, 0.35),
-        _MetalCageVertexData(-1, 0.35, -0.35),
-        _MetalCageVertexData(-1, -0.35, 0.35),
-        _MetalCageVertexData(-1, -0.35, -0.35),
-
-        _MetalCageVertexData(0.35, 1, 0.35),
-        _MetalCageVertexData(0.35, 1, -0.35),
-        _MetalCageVertexData(-0.35, 1, 0.35),
-        _MetalCageVertexData(-0.35, 1, -0.35),
-
-        _MetalCageVertexData(0.35, -1, 0.35),
-        _MetalCageVertexData(0.35, -1, -0.35),
-        _MetalCageVertexData(-0.35, -1, 0.35),
-        _MetalCageVertexData(-0.35, -1, -0.35),
-
-        _MetalCageVertexData(0.5, 0, 0.707),
-        _MetalCageVertexData(-0.5, 0, 0.707),
-        _MetalCageVertexData(0, 0.5, 0.707),
-        _MetalCageVertexData(0, -0.5, 0.707),
-        _MetalCageVertexData(0.5, 0, -0.707),
-        _MetalCageVertexData(-0.5, 0, -0.707),
-        _MetalCageVertexData(0, 0.5, -0.707),
-        _MetalCageVertexData(0, -0.5, -0.707),
-    )
-
-    edge_data = (
-        EdgeData(
-            vertex_data[0],
-            vertex_data[2],
-            position=[0.2, 1, 0]
-        ),
-    )
-
-    num_windows = 14
     num_window_types = 2
 
 
@@ -1419,6 +1340,501 @@ class M6L12_cube(MetalCage):
     num_window_types = 1
 
 
+class M12L24_sqpl(MetalCage):
+    """
+    Represents a M12L24 topology graph with square planar metal.
+
+    See :class:`.MetalCage` for more details and examples.
+
+    Attributes
+    ----------
+    vertex_data : :class:`tuple` of :class:`.VertexData`
+        A class attribute. Holds the data of the vertices which make up
+        the topology graph.
+
+    edge_data : :class:`tuple` of :class:`.EdgeData`
+        A class attribute. Holds the data of the edges which make up
+        the topology graph.
+
+    vertices : :class:`tuple` of :class:`.Vertex`
+        The vertices which make up the topology graph.
+
+    edges : :class:`tuple` of :class:`.Edge`
+        The edges which make up the topology graph.
+
+    """
+
+    def metal_bonder_vector(metal_v, lig_v):
+        """
+        Define metal bonding vector from vertex positions.
+
+        Parameters
+        ----------
+        metal_v : :class:`._MetalCageVertexData`
+            A metal vertex.
+
+        lig_v : :class:`._MetalCageVertexData`
+            A ligand vertex bonded to the metal.
+
+        Returns
+        -------
+        bv : :class:`float`
+            The position of the edge between the metal and ligand
+            vertex, defined to be 0.2 angstrom from metal_v in the
+            direction of the ligand vertex.
+
+        """
+        vector = lig_v.position - metal_v.position
+        bv = (vector / np.linalg.norm(vector)) * 0.2
+        bv = bv + metal_v.position
+        return bv
+
+    vertex_data = (
+        _MetalCageVertexData(1, 0, 0),
+        _MetalCageVertexData(-1, 0, 0),
+        _MetalCageVertexData(0, 1, 0),
+        _MetalCageVertexData(0, -1, 0),
+        _MetalCageVertexData(0.5, 0.5, 0.707),
+        _MetalCageVertexData(0.5, -0.5, 0.707),
+        _MetalCageVertexData(-0.5, 0.5, 0.707),
+        _MetalCageVertexData(-0.5, -0.5, 0.707),
+        _MetalCageVertexData(0.5, 0.5, -0.707),
+        _MetalCageVertexData(0.5, -0.5, -0.707),
+        _MetalCageVertexData(-0.5, 0.5, -0.707),
+        _MetalCageVertexData(-0.5, -0.5, -0.707),
+
+        _MetalCageVertexData(1, 0.35, 0.35),
+        _MetalCageVertexData(1, 0.35, -0.35),
+        _MetalCageVertexData(1, -0.35, 0.35),
+        _MetalCageVertexData(1, -0.35, -0.35),
+
+        _MetalCageVertexData(-1, 0.35, 0.35),
+        _MetalCageVertexData(-1, 0.35, -0.35),
+        _MetalCageVertexData(-1, -0.35, 0.35),
+        _MetalCageVertexData(-1, -0.35, -0.35),
+
+        _MetalCageVertexData(0.35, 1, 0.35),
+        _MetalCageVertexData(0.35, 1, -0.35),
+        _MetalCageVertexData(-0.35, 1, 0.35),
+        _MetalCageVertexData(-0.35, 1, -0.35),
+
+        _MetalCageVertexData(0.35, -1, 0.35),
+        _MetalCageVertexData(0.35, -1, -0.35),
+        _MetalCageVertexData(-0.35, -1, 0.35),
+        _MetalCageVertexData(-0.35, -1, -0.35),
+
+        _MetalCageVertexData(0.5, 0, 0.707),
+        _MetalCageVertexData(-0.5, 0, 0.707),
+        _MetalCageVertexData(0, 0.5, 0.707),
+        _MetalCageVertexData(0, -0.5, 0.707),
+        _MetalCageVertexData(0.5, 0, -0.707),
+        _MetalCageVertexData(-0.5, 0, -0.707),
+        _MetalCageVertexData(0, 0.5, -0.707),
+        _MetalCageVertexData(0, -0.5, -0.707),
+    )
+
+    edge_data = (
+        EdgeData(
+            vertex_data[0],
+            vertex_data[12],
+            position=metal_bonder_vector(
+                vertex_data[0],
+                vertex_data[12]
+            )
+        ),
+        EdgeData(
+            vertex_data[0],
+            vertex_data[13],
+            position=metal_bonder_vector(
+                vertex_data[0],
+                vertex_data[13]
+            )
+        ),
+        EdgeData(
+            vertex_data[0],
+            vertex_data[14],
+            position=metal_bonder_vector(
+                vertex_data[0],
+                vertex_data[14]
+            )
+        ),
+        EdgeData(
+            vertex_data[0],
+            vertex_data[15],
+            position=metal_bonder_vector(
+                vertex_data[0],
+                vertex_data[15]
+            )
+        ),
+
+        EdgeData(
+            vertex_data[1],
+            vertex_data[16],
+            position=metal_bonder_vector(
+                vertex_data[1],
+                vertex_data[16]
+            )
+        ),
+        EdgeData(
+            vertex_data[1],
+            vertex_data[17],
+            position=metal_bonder_vector(
+                vertex_data[1],
+                vertex_data[17]
+            )
+        ),
+        EdgeData(
+            vertex_data[1],
+            vertex_data[18],
+            position=metal_bonder_vector(
+                vertex_data[1],
+                vertex_data[18]
+            )
+        ),
+        EdgeData(
+            vertex_data[1],
+            vertex_data[19],
+            position=metal_bonder_vector(
+                vertex_data[1],
+                vertex_data[19]
+            )
+        ),
+
+        EdgeData(
+            vertex_data[2],
+            vertex_data[20],
+            position=metal_bonder_vector(
+                vertex_data[2],
+                vertex_data[20]
+            )
+        ),
+        EdgeData(
+            vertex_data[2],
+            vertex_data[21],
+            position=metal_bonder_vector(
+                vertex_data[2],
+                vertex_data[21]
+            )
+        ),
+        EdgeData(
+            vertex_data[2],
+            vertex_data[22],
+            position=metal_bonder_vector(
+                vertex_data[2],
+                vertex_data[22]
+            )
+        ),
+        EdgeData(
+            vertex_data[2],
+            vertex_data[23],
+            position=metal_bonder_vector(
+                vertex_data[2],
+                vertex_data[23]
+            )
+        ),
+
+        EdgeData(
+            vertex_data[3],
+            vertex_data[24],
+            position=metal_bonder_vector(
+                vertex_data[3],
+                vertex_data[24]
+            )
+        ),
+        EdgeData(
+            vertex_data[3],
+            vertex_data[25],
+            position=metal_bonder_vector(
+                vertex_data[3],
+                vertex_data[25]
+            )
+        ),
+        EdgeData(
+            vertex_data[3],
+            vertex_data[26],
+            position=metal_bonder_vector(
+                vertex_data[3],
+                vertex_data[26]
+            )
+        ),
+        EdgeData(
+            vertex_data[3],
+            vertex_data[27],
+            position=metal_bonder_vector(
+                vertex_data[3],
+                vertex_data[27]
+            )
+        ),
+
+        EdgeData(
+            vertex_data[4],
+            vertex_data[28],
+            position=metal_bonder_vector(
+                vertex_data[4],
+                vertex_data[28]
+            )
+        ),
+        EdgeData(
+            vertex_data[4],
+            vertex_data[30],
+            position=metal_bonder_vector(
+                vertex_data[4],
+                vertex_data[30]
+            )
+        ),
+        EdgeData(
+            vertex_data[4],
+            vertex_data[12],
+            position=metal_bonder_vector(
+                vertex_data[4],
+                vertex_data[12]
+            )
+        ),
+        EdgeData(
+            vertex_data[4],
+            vertex_data[20],
+            position=metal_bonder_vector(
+                vertex_data[4],
+                vertex_data[20]
+            )
+        ),
+
+        EdgeData(
+            vertex_data[5],
+            vertex_data[14],
+            position=metal_bonder_vector(
+                vertex_data[5],
+                vertex_data[14]
+            )
+        ),
+        EdgeData(
+            vertex_data[5],
+            vertex_data[24],
+            position=metal_bonder_vector(
+                vertex_data[5],
+                vertex_data[24]
+            )
+        ),
+        EdgeData(
+            vertex_data[5],
+            vertex_data[28],
+            position=metal_bonder_vector(
+                vertex_data[5],
+                vertex_data[28]
+            )
+        ),
+        EdgeData(
+            vertex_data[5],
+            vertex_data[31],
+            position=metal_bonder_vector(
+                vertex_data[5],
+                vertex_data[31]
+            )
+        ),
+
+        EdgeData(
+            vertex_data[6],
+            vertex_data[16],
+            position=metal_bonder_vector(
+                vertex_data[6],
+                vertex_data[16]
+            )
+        ),
+        EdgeData(
+            vertex_data[6],
+            vertex_data[29],
+            position=metal_bonder_vector(
+                vertex_data[6],
+                vertex_data[29]
+            )
+        ),
+        EdgeData(
+            vertex_data[6],
+            vertex_data[30],
+            position=metal_bonder_vector(
+                vertex_data[6],
+                vertex_data[30]
+            )
+        ),
+        EdgeData(
+            vertex_data[6],
+            vertex_data[22],
+            position=metal_bonder_vector(
+                vertex_data[6],
+                vertex_data[22]
+            )
+        ),
+
+        EdgeData(
+            vertex_data[7],
+            vertex_data[18],
+            position=metal_bonder_vector(
+                vertex_data[7],
+                vertex_data[18]
+            )
+        ),
+        EdgeData(
+            vertex_data[7],
+            vertex_data[26],
+            position=metal_bonder_vector(
+                vertex_data[7],
+                vertex_data[26]
+            )
+        ),
+        EdgeData(
+            vertex_data[7],
+            vertex_data[31],
+            position=metal_bonder_vector(
+                vertex_data[7],
+                vertex_data[31]
+            )
+        ),
+        EdgeData(
+            vertex_data[7],
+            vertex_data[29],
+            position=metal_bonder_vector(
+                vertex_data[7],
+                vertex_data[29]
+            )
+        ),
+
+        EdgeData(
+            vertex_data[8],
+            vertex_data[13],
+            position=metal_bonder_vector(
+                vertex_data[8],
+                vertex_data[13]
+            )
+        ),
+        EdgeData(
+            vertex_data[8],
+            vertex_data[32],
+            position=metal_bonder_vector(
+                vertex_data[8],
+                vertex_data[32]
+            )
+        ),
+        EdgeData(
+            vertex_data[8],
+            vertex_data[34],
+            position=metal_bonder_vector(
+                vertex_data[8],
+                vertex_data[34]
+            )
+        ),
+        EdgeData(
+            vertex_data[8],
+            vertex_data[21],
+            position=metal_bonder_vector(
+                vertex_data[8],
+                vertex_data[21]
+            )
+        ),
+
+        EdgeData(
+            vertex_data[9],
+            vertex_data[15],
+            position=metal_bonder_vector(
+                vertex_data[9],
+                vertex_data[15]
+            )
+        ),
+        EdgeData(
+            vertex_data[9],
+            vertex_data[32],
+            position=metal_bonder_vector(
+                vertex_data[9],
+                vertex_data[32]
+            )
+        ),
+        EdgeData(
+            vertex_data[9],
+            vertex_data[35],
+            position=metal_bonder_vector(
+                vertex_data[9],
+                vertex_data[35]
+            )
+        ),
+        EdgeData(
+            vertex_data[9],
+            vertex_data[25],
+            position=metal_bonder_vector(
+                vertex_data[9],
+                vertex_data[25]
+            )
+        ),
+
+        EdgeData(
+            vertex_data[10],
+            vertex_data[17],
+            position=metal_bonder_vector(
+                vertex_data[10],
+                vertex_data[17]
+            )
+        ),
+        EdgeData(
+            vertex_data[10],
+            vertex_data[23],
+            position=metal_bonder_vector(
+                vertex_data[10],
+                vertex_data[23]
+            )
+        ),
+        EdgeData(
+            vertex_data[10],
+            vertex_data[34],
+            position=metal_bonder_vector(
+                vertex_data[10],
+                vertex_data[34]
+            )
+        ),
+        EdgeData(
+            vertex_data[10],
+            vertex_data[33],
+            position=metal_bonder_vector(
+                vertex_data[10],
+                vertex_data[33]
+            )
+        ),
+
+        EdgeData(
+            vertex_data[11],
+            vertex_data[19],
+            position=metal_bonder_vector(
+                vertex_data[11],
+                vertex_data[19]
+            )
+        ),
+        EdgeData(
+            vertex_data[11],
+            vertex_data[33],
+            position=metal_bonder_vector(
+                vertex_data[11],
+                vertex_data[33]
+            )
+        ),
+        EdgeData(
+            vertex_data[11],
+            vertex_data[27],
+            position=metal_bonder_vector(
+                vertex_data[11],
+                vertex_data[27]
+            )
+        ),
+        EdgeData(
+            vertex_data[11],
+            vertex_data[35],
+            position=metal_bonder_vector(
+                vertex_data[11],
+                vertex_data[35]
+            )
+        ),
+    )
+
+    num_windows = 14
+    num_window_types = 2
+
+
 class M24L48_sqpl(MetalCage):
     """
     Represents a M24L48 topology graph with square planar metal.
@@ -1442,6 +1858,31 @@ class M24L48_sqpl(MetalCage):
         The edges which make up the topology graph.
 
     """
+
+    def metal_bonder_vector(metal_v, lig_v):
+        """
+        Define metal bonding vector from vertex positions.
+
+        Parameters
+        ----------
+        metal_v : :class:`._MetalCageVertexData`
+            A metal vertex.
+
+        lig_v : :class:`._MetalCageVertexData`
+            A ligand vertex bonded to the metal.
+
+        Returns
+        -------
+        bv : :class:`float`
+            The position of the edge between the metal and ligand
+            vertex, defined to be 0.2 angstrom from metal_v in the
+            direction of the ligand vertex.
+
+        """
+        vector = lig_v.position - metal_v.position
+        bv = (vector / np.linalg.norm(vector)) * 0.2
+        bv = bv + metal_v.position
+        return bv
 
     coord1 = 0.414
     coord2 = -0.414
@@ -1531,12 +1972,6 @@ class M24L48_sqpl(MetalCage):
         _MetalCageVertexData(-coord6, -coord6, coord2),
     )
 
-    edge_data = (
-        EdgeData(
-            vertex_data[0],
-            vertex_data[2],
-            position=[0.2, 1, 0]
-        ),
     )
 
     num_windows = 26
