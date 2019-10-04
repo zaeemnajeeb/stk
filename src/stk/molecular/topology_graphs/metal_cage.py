@@ -1242,13 +1242,148 @@ class M6L12_cube(MetalCage):
         _MetalCageVertexData(0, -1, 0),
         _MetalCageVertexData(0, 0, 1),
         _MetalCageVertexData(0, 0, -1),
+
+        _MetalCageVertexData(1, 1, 0), # 6
+        _MetalCageVertexData(1, -1, 0),
+        _MetalCageVertexData(1, 0, 1),
+        _MetalCageVertexData(1, 0, -1),
+        _MetalCageVertexData(-1, 1, 0), # 10
+        _MetalCageVertexData(-1, -1, 0),
+        _MetalCageVertexData(-1, 0, 1),
+        _MetalCageVertexData(-1, 0, -1),
+        _MetalCageVertexData(0, 1, 1), #14
+        _MetalCageVertexData(0, 1, -1),
+        _MetalCageVertexData(0, -1, 1),
+        _MetalCageVertexData(0, -1, -1),
+
+
     )
 
     edge_data = (
         EdgeData(
             vertex_data[0],
-            vertex_data[2],
+            vertex_data[6],
+            position=[1, 0.2, 0]
+        ),
+        EdgeData(
+            vertex_data[0],
+            vertex_data[7],
+            position=[1, -0.2, 0]
+        ),
+        EdgeData(
+            vertex_data[0],
+            vertex_data[8],
+            position=[1, 0, 0.2]
+        ),
+        EdgeData(
+            vertex_data[0],
+            vertex_data[9],
+            position=[1, 0, -0.2]
+        ),
+
+        EdgeData(
+            vertex_data[1],
+            vertex_data[6],
             position=[0.2, 1, 0]
+        ),
+        EdgeData(
+            vertex_data[1],
+            vertex_data[10],
+            position=[-0.2, 1, 0]
+        ),
+        EdgeData(
+            vertex_data[1],
+            vertex_data[14],
+            position=[0, 1, 0.2]
+        ),
+        EdgeData(
+            vertex_data[1],
+            vertex_data[15],
+            position=[0, 1, -0.2]
+        ),
+
+        EdgeData(
+            vertex_data[2],
+            vertex_data[10],
+            position=[-1, 0.2, 0]
+        ),
+        EdgeData(
+            vertex_data[2],
+            vertex_data[11],
+            position=[-1, -0.2, 0]
+        ),
+        EdgeData(
+            vertex_data[2],
+            vertex_data[12],
+            position=[-1, 0, 0.2]
+        ),
+        EdgeData(
+            vertex_data[2],
+            vertex_data[13],
+            position=[-1, 0, -0.2]
+        ),
+
+        EdgeData(
+            vertex_data[3],
+            vertex_data[7],
+            position=[0.2, -1, 0]
+        ),
+        EdgeData(
+            vertex_data[3],
+            vertex_data[11],
+            position=[-0.2, -1, 0]
+        ),
+        EdgeData(
+            vertex_data[3],
+            vertex_data[16],
+            position=[0, -1, 0.2]
+        ),
+        EdgeData(
+            vertex_data[3],
+            vertex_data[17],
+            position=[0, -1, -0.2]
+        ),
+
+        EdgeData(
+            vertex_data[4],
+            vertex_data[8],
+            position=[0.2, 0, 1]
+        ),
+        EdgeData(
+            vertex_data[4],
+            vertex_data[12],
+            position=[-0.2, 0, 1]
+        ),
+        EdgeData(
+            vertex_data[4],
+            vertex_data[14],
+            position=[0, 0.2, 1]
+        ),
+        EdgeData(
+            vertex_data[4],
+            vertex_data[16],
+            position=[0, -0.2, 1]
+        ),
+
+        EdgeData(
+            vertex_data[5],
+            vertex_data[9],
+            position=[0.2, 0, -1]
+        ),
+        EdgeData(
+            vertex_data[5],
+            vertex_data[13],
+            position=[-0.2, 0, -1]
+        ),
+        EdgeData(
+            vertex_data[5],
+            vertex_data[15],
+            position=[0, 0.2, -1]
+        ),
+        EdgeData(
+            vertex_data[5],
+            vertex_data[17],
+            position=[0, -0.2, -1]
         ),
     )
 
