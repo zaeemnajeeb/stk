@@ -1184,18 +1184,19 @@ class M12L24_sqpl(MetalCage):
     """
 
     vertex_data = (
+        _MetalCageVertexData(1, 0, 0),
         _MetalCageVertexData(0, 1, 0),
-        _MetalCageVertexData(0, 1, 0),
-        _MetalCageVertexData(0, 1, 0),
-        _MetalCageVertexData(0, 1, 0),
-        _MetalCageVertexData(0, 1, 0),
-        _MetalCageVertexData(0, 1, 0),
-        _MetalCageVertexData(0, 1, 0),
-        _MetalCageVertexData(0, 1, 0),
-        _MetalCageVertexData(0, 1, 0),
-        _MetalCageVertexData(0, 1, 0),
-        _MetalCageVertexData(0, 1, 0),
-        _MetalCageVertexData(0, 1, 0),
+        _MetalCageVertexData(-1, 0, 0),
+        _MetalCageVertexData(0, -1, 0),
+
+        _MetalCageVertexData(0.5, 0.5, 0.707),
+        _MetalCageVertexData(0.5, -0.5, 0.707),
+        _MetalCageVertexData(-0.5, 0.5, 0.707),
+        _MetalCageVertexData(-0.5, -0.5, 0.707),
+        _MetalCageVertexData(0.5, 0.5, -0.707),
+        _MetalCageVertexData(0.5, -0.5, -0.707),
+        _MetalCageVertexData(-0.5, 0.5, -0.707),
+        _MetalCageVertexData(-0.5, -0.5, -0.707),
     )
 
     edge_data = (
