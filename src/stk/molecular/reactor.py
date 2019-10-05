@@ -210,8 +210,13 @@ class Reactor:
                 self._react_diol_with_dihalogen,
 
             _ReactionKey('ring_amine', 'ring_amine'):
-                self._react_ring_amine_with_ring_amine
+                self._react_ring_amine_with_ring_amine,
 
+            _ReactionKey('metal_bound_N', 'amine_metal'):
+                self._react_metal,
+
+            _ReactionKey('metal_bound_N', 'pyridine_N_metal'):
+                self._react_metal
         }
 
     def add_reaction(self, func_groups, periodicity):
@@ -338,6 +343,54 @@ class Reactor:
         )
         self._mol.bonds.append(bond)
         self._mol.construction_bonds.append(bond)
+
+    def _react_metal(self, reaction_key, func_groups, periodicity):
+        """
+        Create bonds between functional groups.
+
+        Parameters
+        ----------
+        reaction_key : :class:`._ReactionKey`
+            The key for the reaction.
+
+        func_groups : :class:`list` of :class:`.FunctionalGroup`
+            The functional groups from which deleter atoms should be
+            removed.
+
+        periodicity : :class:`tuple` of :class:`int`
+            Specifies the periodicity of the bonds added by the
+            reaction, which bridge the `func_groups`. See
+            :attr:`.Bond.periodicity`.
+
+        Returns
+        -------
+        None : :class:`NoneType`
+
+        """
+
+        # Delete deleters.
+        self._remove_deleters(func_groups)
+
+        # Make as many bonds as necessary for bonders.
+        # Differs from _react_any because there are multiple
+        # bonders.
+        fg1, fg2 = func_groups
+        if 'metal_bound' not in fg1.fg_type.name:
+            non_metal_fg = fg1
+            metal_fg = fg2
+        else:
+            non_metal_fg = fg2
+            metal_fg = fg1
+        for bonder in non_metal_fg.bonders:
+            bond_order = self._bond_orders.get(reaction_key, 1)
+            bond = Bond(
+                atom1=metal_fg.bonders[0],
+                atom2=bonder,
+                order=bond_order,
+                periodicity=periodicity
+            )
+            self._mol.bonds.append(bond)
+            self._mol.construction_bonds.append(bond)
 
     def _react_diol_with_dihalogen(
         self,
