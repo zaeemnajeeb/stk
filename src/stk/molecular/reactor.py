@@ -247,6 +247,8 @@ class Reactor:
 
         names = (fg.fg_type.name for fg in func_groups)
         reaction_key = _ReactionKey(*names)
+        # print(reaction_key)
+        # input()
         reaction = self._custom_reactions.get(
             reaction_key,
             self._react_any
