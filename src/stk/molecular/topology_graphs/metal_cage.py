@@ -937,7 +937,9 @@ class MetalCage(TopologyGraph):
             ))
         ]
         if organic_bbs:
-            return max(bb.get_maximum_diameter() for bb in organic_bbs)
+            return 2*max(
+                bb.get_maximum_diameter() for bb in organic_bbs
+            )
         else:
             # No organic building blocks.
             return 1
