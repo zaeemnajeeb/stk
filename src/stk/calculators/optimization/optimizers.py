@@ -167,6 +167,23 @@ class Optimizer:
         cls.optimize = _add_cache_use(cls.optimize)
         return super().__init_subclass__(**kwargs)
 
+    def set_cache_use(self, use_cache):
+        """
+        Set cache use on or off.
+
+        Parameters
+        ----------
+        use_cache : :class:`bool`
+            ``True`` if the cache is to be used.
+
+        Returns
+        -------
+        None : :class:`NoneType`
+
+        """
+
+        self._use_cache = use_cache
+
     def is_caching(self):
         """
         ``True`` if the optimizer has caching turned on.
@@ -196,6 +213,24 @@ class Optimizer:
         """
 
         self._cache.add(mol)
+
+    def is_in_cache(self, mol):
+        """
+        Return ``True`` if `mol` is cached.
+
+        Parameters
+        ----------
+        mol : :class:`.Molecule`
+            The molecule being checked.
+
+        Returns
+        -------
+        :class:`bool`
+            ``True`` if `mol` is cached.
+
+        """
+
+        return mol in self._cache
 
     def optimize(self, mol):
         """
@@ -379,6 +414,8 @@ class NullOptimizer(Optimizer):
 
         """
 
+        logger.debug('Message 1.')
+        logger.debug('Message 2.')
         return
 
 
@@ -434,7 +471,7 @@ class TryCatchOptimizer(Optimizer):
             :class:`.Molecule`.
 
         catch_optimizer : :class:`Optimizer`
-            If :attr:`try_optimizer` raises an error, this optimizer is
+            If `try_optimizer` raises an error, this optimizer is
             run on the :class:`.Molecule` instead.
 
         use_cache : :class:`bool`, optional
