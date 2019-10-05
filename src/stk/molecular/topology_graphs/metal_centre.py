@@ -158,10 +158,7 @@ class _MetalCentreVertex(Vertex):
             i.fg_type.name for i in building_block.func_groups
         )))
 
-        print(building_block)
-
         if 'metal' in bb_fg_names:
-            print('1')
             return self._place_metal_atom(
                 building_block=building_block,
                 vertices=vertices,

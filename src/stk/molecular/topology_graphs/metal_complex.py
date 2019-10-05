@@ -334,14 +334,20 @@ class _MetalComplexVertex(Vertex):
             atom_ids=building_block.get_bonder_ids()
         )
         connected_edges = tuple(edges[id_] for id_ in self._edge_ids)
-        edge_normal = self._get_edge_plane_normal(
-            reference=self._get_edge_centroid(
+
+        if self.is_metal_centre(building_block):
+            reference = np.array([1, 0, 0])
+        else:
+            reference = self._get_edge_centroid(
                 centroid_edges=connected_edges,
                 vertices=vertices
-            ),
+            )
+        edge_normal = self._get_edge_plane_normal(
+            reference=reference,
             plane_edges=connected_edges,
             vertices=vertices
         )
+
         building_block.apply_rotation_between_vectors(
             start=building_block.get_bonder_plane_normal(),
             target=edge_normal,
