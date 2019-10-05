@@ -853,8 +853,7 @@ class MetalComplex(TopologyGraph):
             edge.id = i
         return super().__init_subclass__(**kwargs)
 
-    def __init__(self, vertex_alignments=None,
-                 unsaturated_vertices=None, num_processes=1):
+    def __init__(self, vertex_alignments=None, num_processes=1):
         """
         Initialize a :class:`.MetalComplex`.
 
@@ -874,31 +873,11 @@ class MetalComplex(TopologyGraph):
             between ``0`` (inclusive) and the number of edges the
             vertex is connected to (exclusive).
 
-        unsaturated_vertices : :class:`list` of :class:`int`, optional
-            A list of the unsaturated sites on the metal complexes to
-            be built. The integers correspond to vertex ids.
-
         num_processes : :class:`int`, optional
             The number of parallel processes to create during
             :meth:`construct`.
 
         """
-
-        # Metal complexes can have unsaturated sites.
-        # Need to remove information about the sites that will not
-        # react from stage, self.vertices and self.edges.
-        if unsaturated_vertices is not None:
-            self.old_vertex_data = self.vertex_data
-            self.old_edge_data = self.edge_data
-            self.vertex_data = tuple(
-                i for i in self.old_vertex_data
-                if i.id not in unsaturated_vertices
-            )
-            used_edges = [
-                i for i in self.old_edge_data
-                if set(i.vertices).issubset(set(self.vertex_data))
-            ]
-            self.edge_data = tuple(i for i in used_edges)
 
         if vertex_alignments is None:
             vertex_alignments = {}
@@ -993,17 +972,10 @@ class MetalComplex(TopologyGraph):
             each axis is scaled by a different value.
 
         """
-        organic_bbs = [
-            i for i in mol.building_block_vertices
-            if 'metal' not in list(set((
-                j.fg_type.name for j in i.func_groups
-            )))
-        ]
-        if organic_bbs:
-            return max(bb.get_maximum_diameter() for bb in organic_bbs)
-        else:
-            # No organic building blocks.
-            return 1
+        return max(
+            bb.get_maximum_diameter()
+            for bb in mol.building_block_vertices
+        )
 
     def __repr__(self):
         vertex_alignments = ', '.join(
@@ -1049,26 +1021,10 @@ class SquarePlanarMonodentate(MetalComplex):
     )
 
     edge_data = (
-        EdgeData(
-            vertex_data[0],
-            vertex_data[1],
-            position=[0, 0.2, 0]
-        ),
-        EdgeData(
-            vertex_data[0],
-            vertex_data[2],
-            position=[0, 0, 0.2]
-        ),
-        EdgeData(
-            vertex_data[0],
-            vertex_data[3],
-            position=[0, -0.2, 0]
-        ),
-        EdgeData(
-            vertex_data[0],
-            vertex_data[4],
-            position=[0, 0, 0.2]
-        ),
+        EdgeData(vertex_data[0], vertex_data[1]),
+        EdgeData(vertex_data[0], vertex_data[2]),
+        EdgeData(vertex_data[0], vertex_data[3]),
+        EdgeData(vertex_data[0], vertex_data[4]),
     )
 
 
