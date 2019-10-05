@@ -172,22 +172,22 @@ class _MetalCageVertex(Vertex):
             placed.
 
         """
-        print(building_block)
+        # print(building_block)
         if len(building_block.func_groups) == 1:
-            print('hey1')
+            # print('hey1')
             return self._place_cap_building_block(
                 building_block=building_block,
                 vertices=vertices,
                 edges=edges
             )
         elif len(building_block.func_groups) == 2:
-            print('hey2')
+            # print('hey2')
             return self._place_linear_building_block(
                 building_block=building_block,
                 vertices=vertices,
                 edges=edges
             )
-        print('hey3')
+        # print('hey3')
         return self._place_nonlinear_building_block(
             building_block=building_block,
             vertices=vertices,
@@ -338,7 +338,7 @@ class _MetalCageVertex(Vertex):
             atom_ids=building_block.get_bonder_ids()
         )
         connected_edges = tuple(edges[id_] for id_ in self._edge_ids)
-        print(connected_edges)
+        # print(connected_edges)
 
         if self.is_metal_centre(building_block):
             reference = np.array([1, 0, 0])
