@@ -644,12 +644,10 @@ class MetalCage(TopologyGraph):
 
     Construction of topologies that contain metals requires some extra
     manipulation compared to purely organic systems because SMILES and
-    RDKit are not properly defined to handle metal chemistry. To define
-    a :class:`.BuildingBlock` containing metal atoms and functional
-    groups in stk requires something like below to avoid RDKit
-    problems upon initialization. Note that here the functional groups
-    do not define the metal centre coordination geometry, but does
-    define the number of coordination sites per metal.
+    RDKit are not properly defined to handle metal chemistry.
+    Therefore, we have implemented the :class:`.MetalCentre` topology
+    to prepare building blocks for metal architectures. The following
+    code shows the preparation of a metal centre building block.
 
     .. code-block:: python
 
@@ -666,13 +664,9 @@ class MetalCage(TopologyGraph):
             functional_groups=None,
         )
 
-        # Manually set atom position if required. RDKit will default
-        # to [0, 0, 0].
-        metal.set_position_matrix(np.array([[0.0, 0.0, 0.0]]))
-
         # Manually set functional group information for the metal
         # centre. The key of this dictionary is the fg.id.
-        # Pd2+ is 4 coordinate, so we write 4 metal functiongal groups.
+        # Pd2+ is 4 coordinate, so we write 4 metal functional groups.
         metal_coord_info = {
             0: {
                 'atom_ids': [0],
@@ -700,7 +694,32 @@ class MetalCage(TopologyGraph):
             coordination_info=metal_coord_info
         )
 
-    The metal centre coordination geometry is defined by the topology
+        # Define singular N atoms.
+        m = rdkit.MolFromSmiles('N')
+        m.AddConformer(rdkit.Conformer(m.GetNumAtoms()))
+        n_atom = stk.BuildingBlock.init_from_rdkit_mol(
+            m,
+            functional_groups=['metal_bound_N'],
+        )
+
+        # Build the metal centre.
+        sqpl = stk.metal_centre.SquarePlanar()
+        sqpl_complex = stk.ConstructedMolecule(
+            building_blocks=[metal, n_atom],
+            topology_graph=sqpl,
+            building_block_vertices={
+                metal: tuple([sqpl.vertices[0]]),
+                n_atom: sqpl.vertices[1:]
+            }
+        )
+
+        metal_centre = stk.BuildingBlock.init_from_molecule(
+            sqpl_complex,
+            functional_groups=['metal_bound_N']
+        )
+
+    The metal centre coordination geometry is defined by the
+    :class:`MetalCentre` topology
     graph used for construction. Pd 2+ is square planar, but we can
     also have mono or bidentate coordination to the Pd. Therefore,
     there are multiple topology graphs available. Ligands that bind to
@@ -725,28 +744,28 @@ class MetalCage(TopologyGraph):
         ligand.func_groups = tuple(i for i in [ligand.func_groups[0]])
 
         # Construct four-coordinated Pd 2+ square planar complex.
-        sqpl = stk.metal_complex.SquarePlanarMonodentate()
+        sqpl = stk.cage.SquarePlanarMonodentate()
         pdl2_sqpl_complex = stk.ConstructedMolecule(
-            building_blocks=[metal, ligand],
+            building_blocks=[metal_centre, ligand],
             topology_graph=sqpl,
             # Assign the metal to vertex 0, although this is not a
             # requirement.
             building_block_vertices={
-                metal: tuple([sqpl.vertices[0]]),
+                metal_centre: tuple([sqpl.vertices[0]]),
                 ligand: sqpl.vertices[1:]
             }
         )
 
         # Construct two-coordinated Pd2+ square planar complex with
         # two unsaturated sites.
-        sqpl = stk.metal_complex.SquarePlanarMonodentate(
+        sqpl = stk.cage.SquarePlanarMonodentate(
             unsaturated_vertices=[3, 4]
         )
         pdl2_sqpl_complex = stk.ConstructedMolecule(
-            building_blocks=[metal, ligand],
+            building_blocks=[metal_centre, ligand],
             topology_graph=sqpl,
             building_block_vertices={
-                metal: tuple([sqpl.vertices[0]]),
+                metal_centre: tuple([sqpl.vertices[0]]),
                 # We do not need to specify anything extra here,
                 # because vertices 3 and 4 will be removed from the
                 # topology graph upon construction.
@@ -754,23 +773,8 @@ class MetalCage(TopologyGraph):
             }
         )
 
-        # Construct an unsaturated Pd2+ atom.
-        sqpl = stk.metal_complex.SquarePlanarMonodentate(
-            unsaturated_vertices=[1, 2, 3, 4]
-        )
-        pdl2_sqpl_complex = stk.ConstructedMolecule(
-            building_blocks=[metal],
-            topology_graph=sqpl,
-            building_block_vertices={
-                metal: tuple([sqpl.vertices[0]])
-            }
-        )
-
-    The metal centre coordination geometry is defined by the topology
-    graph used for construction; in this case the metal centre geometry
-    is defined by the cage topology used. Ligands that bind to
-    metal centres are given functional groups that are designated for
-    metal interaction with 'metal' in their name.
+    We have implemented metal-organic cage topologies also. These
+    behave much the same as :class:`.Cage` topologies.
 
     .. code-block:: python
 
@@ -779,12 +783,12 @@ class MetalCage(TopologyGraph):
             functional_groups=['pyridine_N_metal']
         )
 
-        m2l4_lantern = stk.metal_cage.M2L4_Lantern()
+        m2l4_lantern = stk.cage.M2L4_Lantern()
         lantern = stk.ConstructedMolecule(
-            building_blocks=[metal, ligand],
+            building_blocks=[metal_centre, ligand],
             topology_graph=m2l4_lantern,
             building_block_vertices={
-                metal: m2l4_lantern.vertices[0:2],
+                metal_centre: m2l4_lantern.vertices[0:2],
                 ligand: m2l4_lantern.vertices[2:]
             }
         )
@@ -814,12 +818,12 @@ class MetalCage(TopologyGraph):
             'COc1c(OC)c2ccc(-c3ccncc3)cc2c2cc(-c3ccncc3)ccc12',
             functional_groups=['pyridine_N_metal']
         )
-        m2l4_lantern = stk.metal_cage.M2L4_Lantern()
+        m2l4_lantern = stk.cage.M2L4_Lantern()
         hetero_lantern = stk.ConstructedMolecule(
-            building_blocks=[metal, ligand1, ligand2],
+            building_blocks=[metal_centre, ligand1, ligand2],
             topology_graph=m2l4_lantern,
             building_block_vertices={
-                metal: m2l4_lantern.vertices[0:2],
+                metal_centre: m2l4_lantern.vertices[0:2],
                 ligand1: m2l4_lantern.vertices[2:4],
                 ligand2: m2l4_lantern.vertices[4:]
             }
@@ -829,7 +833,27 @@ class MetalCage(TopologyGraph):
     Below we show an example that builds all possible isomers for a
     given ligand, such that a comparison of them can be performed.
 
-    FILL IN
+    .. code-block:: python
+
+        n_metals = [2, 4, 6, 12, 24]
+        topologies = {
+            'm2l4': stk.cage.M2L4_Lantern(),
+            'm4l8': stk.cage.M4L8_sqpl(),
+            'm6l12': stk.cage.M6L12_cube(),
+            'm12l24': stk.cage.M12L24_sqpl(),
+            'm24l48': stk.cage.M24L48_sqpl()
+        }
+
+        for n_metal, topo in zip(n_metals, topologies):
+            top = topologies[topo]
+            cage = stk.ConstructedMolecule(
+                building_blocks=[metal_centre, ligand],
+                topology_graph=top,
+                building_block_vertices={
+                    metal_centre: top.vertices[:n_metal],
+                    ligand: top.vertices[n_metal:]
+                }
+            )
 
     """
 
@@ -991,6 +1015,6 @@ class MetalCage(TopologyGraph):
             for v in self.vertices
         )
         return (
-            f'metal_cage.{self.__class__.__name__}('
+            f'cage.{self.__class__.__name__}('
             f'vertex_alignments={{{vertex_alignments}}})'
         )
