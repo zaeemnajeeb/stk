@@ -13,6 +13,7 @@ import numpy as np
 
 from .topology_graph import TopologyGraph, VertexData, Vertex, EdgeData
 from ..reactor import Reactor
+from ..functional_groups import fg_types
 from ...utilities import vector_angle
 
 logger = logging.getLogger(__name__)
@@ -129,6 +130,18 @@ class _MetalComplexVertex(Vertex):
     def get_aligner_edge(self):
         return self._aligner_edge
 
+    def is_metal_centre(self, building_block):
+        bb_fg_names = list(set((
+            i.fg_type.name for i in building_block.func_groups
+        )))
+        metal_bound_fgs = [
+            i for i in fg_types if 'metal_bound' in i
+        ]
+        if any([i in bb_fg_names for i in metal_bound_fgs]):
+            return True
+        else:
+            return False
+
     def place_building_block(self, building_block, vertices, edges):
         """
         Place `building_block` on the :class:`.Vertex`.
@@ -155,35 +168,35 @@ class _MetalComplexVertex(Vertex):
 
         """
 
-        bb_fg_names = list(set((
-            i.fg_type.name for i in building_block.func_groups
-        )))
-
-        if 'metal' in bb_fg_names:
-            return self._place_metal_atom(
-                building_block=building_block,
-                vertices=vertices,
-                edges=edges
-            )
-        elif len(building_block.func_groups) == 1:
+        # if self.is_metal_centre(building_block):
+        #     print('1')
+        #     return self._place_metal_centre(
+        #         building_block=building_block,
+        #         vertices=vertices,
+        #         edges=edges
+        #     )
+        if len(building_block.func_groups) == 1:
+            print('2')
             return self._place_cap_building_block(
                 building_block=building_block,
                 vertices=vertices,
                 edges=edges
             )
         elif len(building_block.func_groups) == 2:
+            print('3')
             return self._place_linear_building_block(
                 building_block=building_block,
                 vertices=vertices,
                 edges=edges
             )
+        print('4')
         return self._place_nonlinear_building_block(
             building_block=building_block,
             vertices=vertices,
             edges=edges
         )
 
-    def _place_metal_atom(
+    def _place_metal_centre(
         self,
         building_block,
         vertices,
@@ -292,22 +305,29 @@ class _MetalComplexVertex(Vertex):
             placed.
 
         """
-
+        print(building_block)
         building_block.set_centroid(
             position=self._position,
             atom_ids=building_block.get_bonder_ids()
         )
+        print(self._position, building_block.get_bonder_ids())
         fg_centroid = building_block.get_centroid(
             atom_ids=building_block.func_groups[0].get_bonder_ids()
         )
+        print(fg_centroid)
         start = fg_centroid - self._position
+        print('s', start)
         aligner_edge = edges[self._edge_ids[self._aligner_edge]]
+        print(aligner_edge)
         edge_coord = aligner_edge.get_position()
+        print(edge_coord)
         connected_edges = tuple(edges[id_] for id_ in self._edge_ids)
+        print('c', connected_edges)
         target = edge_coord - self._get_edge_centroid(
             centroid_edges=connected_edges,
             vertices=vertices
         )
+        print('t', target)
         building_block.apply_rotation_between_vectors(
             start=start,
             target=target,
@@ -316,12 +336,15 @@ class _MetalComplexVertex(Vertex):
         start = building_block.get_centroid_centroid_direction_vector()
         e0_coord = edges[self._edge_ids[0]].get_position()
         e1_coord = edges[self._edge_ids[1]].get_position()
+        print(e0_coord, e1_coord)
         building_block.apply_rotation_to_minimize_angle(
             start=start,
             target=self._position,
             axis=e0_coord-e1_coord,
             origin=self._position,
         )
+        print(building_block.get_position_matrix())
+        input()
         return building_block.get_position_matrix()
 
     def _place_nonlinear_building_block(
@@ -427,11 +450,8 @@ class _MetalComplexVertex(Vertex):
 
         """
 
-        bb_fg_names = list(set((
-            i.fg_type.name for i in building_block.func_groups
-        )))
-        if 'metal' in bb_fg_names:
-            return self._assign_func_groups_to_metal_atom(
+        if self.is_metal_centre(building_block):
+            return self._assign_func_groups_to_metal_centre(
                 building_block=building_block,
                 vertices=vertices,
                 edges=edges
@@ -508,7 +528,7 @@ class _MetalComplexVertex(Vertex):
             edges=edges
         )
 
-    def _assign_func_groups_to_metal_atom(
+    def _assign_func_groups_to_metal_centre(
         self,
         building_block,
         vertices,
