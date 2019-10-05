@@ -54,9 +54,18 @@ def main():
     )
 
     ligand1 = stk.BuildingBlock(
-        'C(#Cc1cccc(C#Cc2cccnc2)c1)c1cccnc1',
+        'c1cc(-c2ccncc2)cc(-c2ccncc2)c1',
         functional_groups=['pyridine_N_metal']
     )
+    ligand2 = stk.BuildingBlock(
+        'c1cc(-c2ccc(-c3ccncc3)s2)ccn1',
+        functional_groups=['pyridine_N_metal']
+    )
+    ligand3 = stk.BuildingBlock(
+        'C(#Cc1ccc2oc3ccc(C#Cc4ccncc4)cc3c2c1)c1ccncc1',
+        functional_groups=['pyridine_N_metal']
+    )
+    ligands = [ligand1, ligand2, ligand3]
 
     n_metals = [2, 4, 6, 12, 24]
     topologies = [
@@ -67,22 +76,23 @@ def main():
         stk.metal_cage.M24L48_sqpl()
     ]
     print('--------------------------------------------------------')
-    for i, top in enumerate(topologies):
-        print(top)
-        cage = stk.ConstructedMolecule(
-            building_blocks=[metal, ligand1],
-            topology_graph=top,
-            building_block_vertices={
-                metal: top.vertices[0: n_metals[i]],
-                ligand1: top.vertices[n_metals[i]:],
-                # metal2: top.vertices[n_metals[i]:],
-            }
-        )
-        print('-----------------------------------------------------')
-        cage.write(f'cage_{i}.mol')
-        cage.write(f'cage_{i}.pdb')
-        cage.dump(f'cage_{i}.json')
-        print('-----------------------------------------------------')
+    for j, l in enumerate(ligands):
+        for i, top in enumerate(topologies):
+            print(top)
+            cage = stk.ConstructedMolecule(
+                building_blocks=[metal, l],
+                topology_graph=top,
+                building_block_vertices={
+                    metal: top.vertices[0: n_metals[i]],
+                    l: top.vertices[n_metals[i]:],
+                    # metal2: top.vertices[n_metals[i]:],
+                }
+            )
+            print('-------------------------------------------------')
+            cage.write(f'cage_{j}_{i}.mol')
+            cage.write(f'cage_{j}_{i}.pdb')
+            cage.dump(f'cage_{j}_{i}.json')
+            print('-------------------------------------------------')
 
 
 if __name__ == "__main__":
