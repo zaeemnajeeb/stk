@@ -12,7 +12,6 @@ import numpy as np
 
 from .topology_graph import TopologyGraph, VertexData, Vertex, EdgeData
 from ..reactor import Reactor
-from ...utilities import vector_angle
 
 logger = logging.getLogger(__name__)
 
@@ -327,15 +326,6 @@ class _MetalCentreVertex(Vertex):
         None : :class:`NoneType`
 
         """
-        bb_fgs = set(func_groups)
-        for edge_id in self._edge_ids:
-            for func_group in edges[edge_id].get_func_groups():
-                if func_group not in bb_fgs:
-                    continue
-
-                for vertex_id in edges[edge_id].get_vertex_ids():
-                    if vertex_id == self.id:
-                        continue
 
         return super().after_assign_func_groups_to_edges(
             building_block=building_block,
@@ -396,8 +386,6 @@ class MetalCentre(TopologyGraph):
     MetalCentre topologies are added by creating a subclass which
     defines the :attr:`vertex_data` and :attr:`edge_data` class
     attributes.
-
-    This class is modelled after :class:`Cage` and its subclasses.
 
     Attributes
     ----------
