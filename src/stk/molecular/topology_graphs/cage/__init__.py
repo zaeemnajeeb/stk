@@ -3,4 +3,4 @@ from .two_plus_four import *
 from .three_plus_three import *
 from .three_plus_four import *
 from .two_plus_five import *
-from .metal_architectures import *
+from .metal_graphs import *

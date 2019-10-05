@@ -2,6 +2,8 @@
 Metal Cage
 ==========
 
+#. :class:`.SquarePlanarMonodentate`
+#. :class:`.SquarePlanarBidentate`
 #. :class:`.M2L4_Lantern`
 #. :class:`.M4L8_sqpl`
 #. :class:`.M6L12_cube`
@@ -14,16 +16,17 @@ Metal Cage
 import logging
 import numpy as np
 
-from .topology_graph import TopologyGraph, Vertex, VertexData
-from ..reactor import Reactor
-from ...utilities import vector_angle
+from ..topology_graph import TopologyGraph, Vertex, VertexData
+from ...reactor import Reactor
+from ...functional_groups import fg_types
+from ....utilities import vector_angle
 
 logger = logging.getLogger(__name__)
 
 
-class _MetalCageVertexData(VertexData):
+class _MetalVertexData(VertexData):
     """
-    Holds the data of a metal cage vertex
+    Holds the data of a metal vertex
 
     Attributes
     ----------
@@ -51,7 +54,7 @@ class _MetalCageVertexData(VertexData):
 
     def __init__(self, x, y, z):
         """
-        Initialize a :class:`_MetalCageVertexData`.
+        Initialize a :class:`_MetalVertexData`.
 
         Parameters
         ----------
@@ -91,12 +94,6 @@ class _MetalCageVertexData(VertexData):
 
     def get_vertex(self):
         return _MetalCageVertex(self)
-
-    @classmethod
-    def init_at_center(cls, *vertex_data):
-        obj = super().init_at_center(*vertex_data)
-        obj.aligner_edge = None
-        return obj
 
 
 class _MetalCageVertex(Vertex):
@@ -138,6 +135,18 @@ class _MetalCageVertex(Vertex):
     def get_aligner_edge(self):
         return self._aligner_edge
 
+    def is_metal_centre(self, building_block):
+        bb_fg_names = list(set((
+            i.fg_type.name for i in building_block.func_groups
+        )))
+        metal_bound_fgs = [
+            i for i in fg_types if 'metal_bound' in i
+        ]
+        if any([i in bb_fg_names for i in metal_bound_fgs]):
+            return True
+        else:
+            return False
+
     def place_building_block(self, building_block, vertices, edges):
         """
         Place `building_block` on the :class:`.Vertex`.
@@ -163,19 +172,22 @@ class _MetalCageVertex(Vertex):
             placed.
 
         """
-
+        print(building_block)
         if len(building_block.func_groups) == 1:
+            print('hey1')
             return self._place_cap_building_block(
                 building_block=building_block,
                 vertices=vertices,
                 edges=edges
             )
         elif len(building_block.func_groups) == 2:
+            print('hey2')
             return self._place_linear_building_block(
                 building_block=building_block,
                 vertices=vertices,
                 edges=edges
             )
+        print('hey3')
         return self._place_nonlinear_building_block(
             building_block=building_block,
             vertices=vertices,
@@ -326,14 +338,21 @@ class _MetalCageVertex(Vertex):
             atom_ids=building_block.get_bonder_ids()
         )
         connected_edges = tuple(edges[id_] for id_ in self._edge_ids)
-        edge_normal = self._get_edge_plane_normal(
-            reference=self._get_edge_centroid(
+        print(connected_edges)
+
+        if self.is_metal_centre(building_block):
+            reference = np.array([1, 0, 0])
+        else:
+            reference = self._get_edge_centroid(
                 centroid_edges=connected_edges,
                 vertices=vertices
-            ),
+            )
+        edge_normal = self._get_edge_plane_normal(
+            reference=reference,
             plane_edges=connected_edges,
             vertices=vertices
         )
+
         building_block.apply_rotation_between_vectors(
             start=building_block.get_bonder_plane_normal(),
             target=edge_normal,
@@ -682,6 +701,72 @@ class MetalCage(TopologyGraph):
         )
 
     The metal centre coordination geometry is defined by the topology
+    graph used for construction. Pd 2+ is square planar, but we can
+    also have mono or bidentate coordination to the Pd. Therefore,
+    there are multiple topology graphs available. Ligands that bind to
+    metal centres are given functional groups that are designated for
+    metal interaction with 'metal' in their name. In the below example,
+    we explicitly assign one of the multiple metal bonding functional
+    groups for interaction with the metal complex. As these metal
+    complexes are expected to be building blocks of future molecules,
+    we also allow for the construction of undercoordinated metal
+    centres. This is handled, by removing the unsaturated vertices
+    from the topology graph prior to construction. These need to be
+    manually defined:
+
+    .. code-block:: python
+
+        ligand = stk.BuildingBlock(
+            'c1cc(-c2ccc(-c3ccncc3)cc2)ccn1',
+            functional_groups=['pyridine_N_metal']
+        )
+        # Handle multiple functional groups on the ligand to ensure
+        # only one functional group is bound to the metal.
+        ligand.func_groups = tuple(i for i in [ligand.func_groups[0]])
+
+        # Construct four-coordinated Pd 2+ square planar complex.
+        sqpl = stk.metal_complex.SquarePlanarMonodentate()
+        pdl2_sqpl_complex = stk.ConstructedMolecule(
+            building_blocks=[metal, ligand],
+            topology_graph=sqpl,
+            # Assign the metal to vertex 0, although this is not a
+            # requirement.
+            building_block_vertices={
+                metal: tuple([sqpl.vertices[0]]),
+                ligand: sqpl.vertices[1:]
+            }
+        )
+
+        # Construct two-coordinated Pd2+ square planar complex with
+        # two unsaturated sites.
+        sqpl = stk.metal_complex.SquarePlanarMonodentate(
+            unsaturated_vertices=[3, 4]
+        )
+        pdl2_sqpl_complex = stk.ConstructedMolecule(
+            building_blocks=[metal, ligand],
+            topology_graph=sqpl,
+            building_block_vertices={
+                metal: tuple([sqpl.vertices[0]]),
+                # We do not need to specify anything extra here,
+                # because vertices 3 and 4 will be removed from the
+                # topology graph upon construction.
+                ligand: sqpl.vertices[1:]
+            }
+        )
+
+        # Construct an unsaturated Pd2+ atom.
+        sqpl = stk.metal_complex.SquarePlanarMonodentate(
+            unsaturated_vertices=[1, 2, 3, 4]
+        )
+        pdl2_sqpl_complex = stk.ConstructedMolecule(
+            building_blocks=[metal],
+            topology_graph=sqpl,
+            building_block_vertices={
+                metal: tuple([sqpl.vertices[0]])
+            }
+        )
+
+    The metal centre coordination geometry is defined by the topology
     graph used for construction; in this case the metal centre geometry
     is defined by the cage topology used. Ligands that bind to
     metal centres are given functional groups that are designated for
@@ -755,7 +840,8 @@ class MetalCage(TopologyGraph):
             edge.id = i
         return super().__init_subclass__(**kwargs)
 
-    def __init__(self, vertex_alignments=None, num_processes=1):
+    def __init__(self, vertex_alignments=None,
+                 unsaturated_vertices=None, num_processes=1):
         """
         Initialize a :class:`.MetalCage`.
 
@@ -775,11 +861,31 @@ class MetalCage(TopologyGraph):
             between ``0`` (inclusive) and the number of edges the
             vertex is connected to (exclusive).
 
+        unsaturated_vertices : :class:`list` of :class:`int`, optional
+            A list of the unsaturated sites on the metal complexes to
+            be built. The integers correspond to vertex ids.
+
         num_processes : :class:`int`, optional
             The number of parallel processes to create during
             :meth:`construct`.
 
         """
+
+        # Metal complexes can have unsaturated sites.
+        # Need to remove information about the sites that will not
+        # react from stage, self.vertices and self.edges.
+        if unsaturated_vertices is not None:
+            self.old_vertex_data = self.vertex_data
+            self.old_edge_data = self.edge_data
+            self.vertex_data = tuple(
+                i for i in self.old_vertex_data
+                if i.id not in unsaturated_vertices
+            )
+            used_edges = [
+                i for i in self.old_edge_data
+                if set(i.vertices).issubset(set(self.vertex_data))
+            ]
+            self.edge_data = tuple(i for i in used_edges)
 
         if vertex_alignments is None:
             vertex_alignments = {}
@@ -874,19 +980,10 @@ class MetalCage(TopologyGraph):
             each axis is scaled by a different value.
 
         """
-        organic_bbs = [
-            i for i in mol.building_block_vertices
-            if 'metal' not in set((
-                j.fg_type.name for j in i.func_groups
-            ))
-        ]
-        if organic_bbs:
-            return 2*max(
-                bb.get_maximum_diameter() for bb in organic_bbs
-            )
-        else:
-            # No organic building blocks.
-            return 1
+        return 2*max(
+            bb.get_maximum_diameter()
+            for bb in mol.building_block_vertices
+        )
 
     def __repr__(self):
         vertex_alignments = ', '.join(

@@ -5,10 +5,7 @@ from .topology_graphs import (
     rotaxane,
     cage,
     host_guest,
-    metal_centre,
-    metal_complex,
-    metal_cage,
-    metal_cage_graphs
+    metal_centre
 )
 from .topology_graphs.topology_graph import *
 from .functional_groups import *
