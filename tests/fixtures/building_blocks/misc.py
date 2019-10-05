@@ -107,3 +107,61 @@ def tmp_metal():
         coordination_info=metal_coord_info
     )
     return metal
+
+
+@pytest.fixture(scope='session')
+def tmp_sqpl_metal_centre():
+    from rdkit.Chem import AllChem as rdkit
+    m = rdkit.MolFromSmiles('[Pd+2]')
+    m.AddConformer(rdkit.Conformer(m.GetNumAtoms()))
+    metal = stk.BuildingBlock.init_from_rdkit_mol(
+        m,
+        functional_groups=None,
+    )
+    metal_coord_info = {
+        0: {
+            'atom_ids': [0],
+            'bonder_ids': [0],
+            'deleter_ids': [None]
+        },
+        1: {
+            'atom_ids': [0],
+            'bonder_ids': [0],
+            'deleter_ids': [None]
+        },
+        2: {
+            'atom_ids': [0],
+            'bonder_ids': [0],
+            'deleter_ids': [None]
+        },
+        3: {
+            'atom_ids': [0],
+            'bonder_ids': [0],
+            'deleter_ids': [None]
+        },
+    }
+    metal = stk.assign_metal_fgs(
+        building_block=metal,
+        coordination_info=metal_coord_info
+    )
+
+    m = rdkit.MolFromSmiles('N')
+    m.AddConformer(rdkit.Conformer(m.GetNumAtoms()))
+    n_atom = stk.BuildingBlock.init_from_rdkit_mol(
+        m,
+        functional_groups=['metal_bound_N'],
+    )
+
+    sqpl = stk.metal_centre.SquarePlanar()
+    sqpl_complex = stk.ConstructedMolecule(
+        building_blocks=[metal, n_atom],
+        topology_graph=sqpl,
+        building_block_vertices={
+            metal: tuple([sqpl.vertices[0]]),
+            n_atom: sqpl.vertices[1:]
+        }
+    )
+    return stk.BuildingBlock.init_from_molecule(
+        sqpl_complex,
+        functional_groups=['metal_bound_N']
+    )

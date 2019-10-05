@@ -4,7 +4,7 @@ import numpy as np
 import stk
 from rdkit.Chem import AllChem as rdkit
 
-test_dir = 'metal_complex_topology_tests_output'
+test_dir = 'metal_topology_tests_output'
 if not os.path.exists(test_dir):
     os.mkdir(test_dir)
 
@@ -24,15 +24,6 @@ def _alignment(vertex, building_block, edges):
         return fg_vector @ stk.normalize_vector(edge_vector)
 
     return inner
-
-
-def _test_metal_placement(vertex, bb, vertices, edges):
-    vertex.place_building_block(bb, vertices, edges)
-    assert np.allclose(
-        a=bb.get_centroid(),
-        b=vertex.get_position(),
-        atol=1e-8,
-    )
 
 
 def _test_cap_placement(vertex, bb, vertices, edges):
@@ -71,6 +62,14 @@ def _test_assignment(vertex, bb, vertices, edges):
         vertices=vertices,
         edges=edges
     )
+    print('>----')
+    print(assignments, vertex._edge_ids[vertex.get_aligner_edge()])
+    print(
+        assignments[0] == vertex._edge_ids[vertex.get_aligner_edge()]
+    )
+    print(vertex)
+    print(bb)
+    print('^----')
     assert (
         assignments[0] == vertex._edge_ids[vertex.get_aligner_edge()]
     )
@@ -82,8 +81,13 @@ def test_vertex(
     tmp_metal
 ):
     topology_graphs = (
-        stk.metal_complex.SquarePlanarMonodentate(),
-        stk.metal_complex.SquarePlanarBidentate()
+        stk.cage.SquarePlanarMonodentate(),
+        stk.cage.SquarePlanarBidentate(),
+        stk.cage.M2L4_Lantern(),
+        stk.cage.M4L8_sqpl(),
+        stk.cage.M6L12_cube(),
+        stk.cage.M12L24_sqpl(),
+        stk.cage.M24L48_sqpl(),
     )
     building_blocks = {
         1: tmp_monodent,
@@ -96,9 +100,7 @@ def test_vertex(
         for vertex in topology_graph.vertices:
             num_edges = vertex.get_num_edges()
             bb = building_blocks[num_edges]
-            if num_edges == 4:
-                _test_metal_placement(vertex, bb, vertices, edges)
-            elif num_edges == 1:
+            if num_edges == 1:
                 _test_cap_placement(vertex, bb, vertices, edges)
             else:
                 _test_placement(vertex, bb, vertices, edges)
@@ -141,42 +143,32 @@ def _build_metal():
     return metal
 
 
-def test_metal_definition():
-    metal = _build_metal()
-    # Test metal position.
-    assert np.all(np.isclose(
-        metal.get_position_matrix()[0],
-        np.array([[0.0, 0.0, 0.0]]),
-        rtol=0
-    ))
-    metal.set_position_matrix(np.array([[1.0, 1.0, 1.0]]))
-    assert np.all(np.isclose(
-        metal.get_position_matrix()[0],
-        np.array([[1.0, 1.0, 1.0]]),
-        rtol=0
-    ))
-
-    # Test number of FGs and assignment.
-    target_fg = stk.FunctionalGroup(
-        atoms=tuple([metal.atoms[0]]),
-        bonders=tuple([metal.atoms[0]]),
-        deleters=(),
-        fg_type=stk.FGType(
-            name='metal',
-            func_group_smarts='',
-            bonder_smarts=[],
-            deleter_smarts=([])
-        ),
+def _build_N_atom():
+    m = rdkit.MolFromSmiles('N')
+    m.AddConformer(rdkit.Conformer(m.GetNumAtoms()))
+    n_atom = stk.BuildingBlock.init_from_rdkit_mol(
+        m,
+        functional_groups=['metal_bound_N'],
     )
+    return n_atom
 
-    for fg in metal.func_groups:
-        assert fg.atoms == target_fg.atoms
-        assert fg.bonders == target_fg.bonders
-        assert fg.deleters == target_fg.deleters
 
-    # Test metal element.
-    for atom in metal.atoms:
-        assert atom.atomic_number == 46
+def _build_sqpl_metal_centre():
+    metal = _build_metal()
+    n_atom = _build_N_atom()
+    sqpl = stk.metal_centre.SquarePlanar()
+    sqpl_complex = stk.ConstructedMolecule(
+        building_blocks=[metal, n_atom],
+        topology_graph=sqpl,
+        building_block_vertices={
+            metal: tuple([sqpl.vertices[0]]),
+            n_atom: sqpl.vertices[1:]
+        }
+    )
+    return stk.BuildingBlock.init_from_molecule(
+        sqpl_complex,
+        functional_groups=['metal_bound_N']
+    )
 
 
 def _test_construction(cycle, num_expected_bbs):
@@ -212,25 +204,181 @@ def _test_construction(cycle, num_expected_bbs):
     )
 
 
+def test_m2l4_lantern():
+    metal_centre = _build_sqpl_metal_centre()
+    ligand1 = stk.BuildingBlock(
+        'C(#Cc1cccc(C#Cc2cccnc2)c1)c1cccnc1',
+        functional_groups=['pyridine_N_metal']
+    )
+
+    # Do construction.
+    top = stk.cage.M2L4_Lantern()
+    cage = stk.ConstructedMolecule(
+        building_blocks=[metal_centre, ligand1],
+        topology_graph=top,
+        building_block_vertices={
+            metal_centre: top.vertices[0:2],
+            ligand1: top.vertices[2:]
+        }
+    )
+    num_expected_bbs = {
+        metal_centre: 2,
+        ligand1: 4,
+    }
+
+    _test_construction(cage, num_expected_bbs)
+
+
+def test_m4l8_sqpl():
+    metal_centre = _build_sqpl_metal_centre()
+    ligand1 = stk.BuildingBlock(
+        'C(#Cc1cccc(C#Cc2cccnc2)c1)c1cccnc1',
+        functional_groups=['pyridine_N_metal']
+    )
+
+    # Do construction.
+    top = stk.cage.M4L8_sqpl()
+    cage = stk.ConstructedMolecule(
+        building_blocks=[metal_centre, ligand1],
+        topology_graph=top,
+        building_block_vertices={
+            metal_centre: top.vertices[0:4],
+            ligand1: top.vertices[4:]
+        }
+    )
+    num_expected_bbs = {
+        metal_centre: 4,
+        ligand1: 8,
+    }
+
+    _test_construction(cage, num_expected_bbs)
+
+
+def test_m6l12_sqpl():
+    metal_centre = _build_sqpl_metal_centre()
+    ligand1 = stk.BuildingBlock(
+        'C(#Cc1cccc(C#Cc2cccnc2)c1)c1cccnc1',
+        functional_groups=['pyridine_N_metal']
+    )
+
+    # Do construction.
+    top = stk.cage.M6L12_cube()
+    cage = stk.ConstructedMolecule(
+        building_blocks=[metal_centre, ligand1],
+        topology_graph=top,
+        building_block_vertices={
+            metal_centre: top.vertices[0:6],
+            ligand1: top.vertices[6:]
+        }
+    )
+    num_expected_bbs = {
+        metal_centre: 6,
+        ligand1: 12,
+    }
+
+    _test_construction(cage, num_expected_bbs)
+
+
+def test_m12l24_sqpl():
+    metal_centre = _build_sqpl_metal_centre()
+    ligand1 = stk.BuildingBlock(
+        'C(#Cc1cccc(C#Cc2cccnc2)c1)c1cccnc1',
+        functional_groups=['pyridine_N_metal']
+    )
+
+    # Do construction.
+    top = stk.cage.M12L24_sqpl()
+    cage = stk.ConstructedMolecule(
+        building_blocks=[metal_centre, ligand1],
+        topology_graph=top,
+        building_block_vertices={
+            metal_centre: top.vertices[0:12],
+            ligand1: top.vertices[12:]
+        }
+    )
+    num_expected_bbs = {
+        metal_centre: 12,
+        ligand1: 24,
+    }
+
+    _test_construction(cage, num_expected_bbs)
+
+
+def test_m24l48_sqpl():
+    metal_centre = _build_sqpl_metal_centre()
+    ligand1 = stk.BuildingBlock(
+        'C(#Cc1cccc(C#Cc2cccnc2)c1)c1cccnc1',
+        functional_groups=['pyridine_N_metal']
+    )
+
+    # Do construction.
+    top = stk.cage.M24L48_sqpl()
+    cage = stk.ConstructedMolecule(
+        building_blocks=[metal_centre, ligand1],
+        topology_graph=top,
+        building_block_vertices={
+            metal_centre: top.vertices[0:24],
+            ligand1: top.vertices[24:]
+        }
+    )
+    num_expected_bbs = {
+        metal_centre: 24,
+        ligand1: 48,
+    }
+
+    _test_construction(cage, num_expected_bbs)
+
+
+def test_heter_m2l4_lantern():
+    metal_centre = _build_sqpl_metal_centre()
+    ligand1 = stk.BuildingBlock(
+        'C(#Cc1cccc(C#Cc2cccnc2)c1)c1cccnc1',
+        functional_groups=['pyridine_N_metal']
+    )
+    ligand2 = stk.BuildingBlock(
+        'COc1c(OC)c2ccc(-c3ccncc3)cc2c2cc(-c3ccncc3)ccc12',
+        functional_groups=['pyridine_N_metal']
+    )
+
+    # Do construction.
+    top = stk.cage.M2L4_Lantern()
+    cage = stk.ConstructedMolecule(
+        building_blocks=[metal_centre, ligand1, ligand2],
+        topology_graph=top,
+        building_block_vertices={
+            metal_centre: top.vertices[0:2],
+            ligand1: top.vertices[2:4],
+            ligand2: top.vertices[4:]
+        }
+    )
+    num_expected_bbs = {
+        metal_centre: 2,
+        ligand1: 2,
+        ligand2: 2,
+    }
+
+    _test_construction(cage, num_expected_bbs)
+
+
 def test_sqpl_bidentate_construction():
-    metal = _build_metal()
+    metal_centre = _build_sqpl_metal_centre()
     ligand1 = stk.BuildingBlock(
         'NCCN',
         functional_groups=['amine_metal']
     )
 
     # Do construction.
-    sqpl = stk.metal_complex.SquarePlanarBidentate()
+    sqpl = stk.cage.SquarePlanarBidentate()
     pdl2_sqpl_complex = stk.ConstructedMolecule(
-        building_blocks=[metal, ligand1],
+        building_blocks=[metal_centre, ligand1],
         topology_graph=sqpl,
         building_block_vertices={
-            metal: tuple([sqpl.vertices[0]]),
+            metal_centre: tuple([sqpl.vertices[0]]),
             ligand1: sqpl.vertices[1:]
         }
     )
     num_expected_bbs = {
-        metal: 1,
+        metal_centre: 1,
         ligand1: 2,
     }
 
@@ -238,7 +386,7 @@ def test_sqpl_bidentate_construction():
 
 
 def test_sqpl_monodentate_construction():
-    metal = _build_metal()
+    metal_centre = _build_sqpl_metal_centre()
     ligand1 = stk.BuildingBlock(
         'c1cc(-c2ccc(-c3ccncc3)cc2)ccn1',
         functional_groups=['pyridine_N_metal']
@@ -248,17 +396,17 @@ def test_sqpl_monodentate_construction():
     assert len(ligand1.func_groups) == 1
 
     # Do construction.
-    sqpl = stk.metal_complex.SquarePlanarMonodentate()
+    sqpl = stk.cage.SquarePlanarMonodentate()
     pdl2_sqpl_complex = stk.ConstructedMolecule(
-        building_blocks=[metal, ligand1],
+        building_blocks=[metal_centre, ligand1],
         topology_graph=sqpl,
         building_block_vertices={
-            metal: tuple([sqpl.vertices[0]]),
+            metal_centre: tuple([sqpl.vertices[0]]),
             ligand1: sqpl.vertices[1:]
         }
     )
     num_expected_bbs = {
-        metal: 1,
+        metal_centre: 1,
         ligand1: 4,
     }
 
@@ -266,7 +414,7 @@ def test_sqpl_monodentate_construction():
 
 
 def test_unsat_sqpl_monodentate_construction():
-    metal = _build_metal()
+    metal_centre = _build_sqpl_metal_centre()
     ligand1 = stk.BuildingBlock(
         'c1cc(-c2ccc(-c3ccncc3)cc2)ccn1',
         functional_groups=['pyridine_N_metal']
@@ -276,19 +424,19 @@ def test_unsat_sqpl_monodentate_construction():
     assert len(ligand1.func_groups) == 1
 
     # Do construction.
-    sqpl = stk.metal_complex.SquarePlanarMonodentate(
+    sqpl = stk.cage.SquarePlanarMonodentate(
         unsaturated_vertices=[3, 4]
     )
     pdl2_sqpl_complex = stk.ConstructedMolecule(
-        building_blocks=[metal, ligand1],
+        building_blocks=[metal_centre, ligand1],
         topology_graph=sqpl,
         building_block_vertices={
-            metal: tuple([sqpl.vertices[0]]),
+            metal_centre: tuple([sqpl.vertices[0]]),
             ligand1: sqpl.vertices[1:]
         }
     )
     num_expected_bbs = {
-        metal: 1,
+        metal_centre: 1,
         ligand1: 2,
     }
 
