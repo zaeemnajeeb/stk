@@ -164,17 +164,7 @@ class _MetalCageVertex(Vertex):
 
         """
 
-        bb_fg_names = set((
-            i.fg_type.name for i in building_block.func_groups
-        ))
-
-        if 'metal' in bb_fg_names:
-            return self._place_metal_atom(
-                building_block=building_block,
-                vertices=vertices,
-                edges=edges
-            )
-        elif len(building_block.func_groups) == 1:
+        if len(building_block.func_groups) == 1:
             return self._place_cap_building_block(
                 building_block=building_block,
                 vertices=vertices,
@@ -191,39 +181,6 @@ class _MetalCageVertex(Vertex):
             vertices=vertices,
             edges=edges
         )
-
-    def _place_metal_atom(
-        self,
-        building_block,
-        vertices,
-        edges
-    ):
-        """
-        Place `building_block` on the :class:`.Vertex`.
-
-        Parameters
-        ----------
-        building_block : :class:`.BuildingBlock`
-            The building block molecule which is to be placed on the
-            vertex.
-
-        vertices : :class:`tuple` of :class:`.Vertex`
-            All vertices in the topology graph. The index of each
-            vertex must match its :class:`~.Vertex.id`.
-
-        edges : :class:`tuple` of :class:`.Edge`
-            All edges in the topology graph. The index of each
-            edge must match its :class:`~.Edge.id`.
-
-        Returns
-        -------
-        :class:`numpy.nadarray`
-            The position matrix of `building_block` after being
-            placed.
-
-        """
-        building_block.set_centroid(position=self._position)
-        return building_block.get_position_matrix()
 
     def _place_cap_building_block(
         self,
@@ -436,17 +393,7 @@ class _MetalCageVertex(Vertex):
 
         """
 
-        bb_fg_names = set((
-            i.fg_type.name for i in building_block.func_groups
-        ))
-        if 'metal' in bb_fg_names:
-            print('metal')
-            return self._assign_func_groups_to_metal_atom(
-                building_block=building_block,
-                vertices=vertices,
-                edges=edges
-            )
-        elif len(building_block.func_groups) == 1:
+        if len(building_block.func_groups) == 1:
             return self._assign_func_groups_to_cap_edges(
                 building_block=building_block,
                 vertices=vertices,
@@ -508,29 +455,6 @@ class _MetalCageVertex(Vertex):
             vertices=vertices,
             edges=edges
         )
-
-    def _assign_func_groups_to_metal_atom(
-        self,
-        building_block,
-        vertices,
-        edges
-    ):
-        print('....')
-        print('hello')
-        print(self._edge_ids)
-        print(
-            'd', self._get_fg0_distance(building_block, edges)
-        )
-        for ei in self._edge_ids:
-            print(self._get_fg0_distance(building_block, edges)(ei))
-
-        print('^-')
-        return {
-            fg_id: edge_id for fg_id, edge_id in enumerate(sorted(
-                self._edge_ids,
-                key=self._get_fg0_distance(building_block, edges)
-            ))
-        }
 
     def _assign_func_groups_to_cap_edges(
         self,
