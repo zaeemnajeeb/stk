@@ -3,6 +3,7 @@
 # Distributed under the terms of the MIT License.
 import stk
 from rdkit.Chem import AllChem as Chem
+from collections import Counter
 
 
 def main():
@@ -41,6 +42,17 @@ def main():
         coordination_info=metal_coord_info
     )
 
+    m2 = Chem.MolFromSmiles('[Zn+2]')
+    m2.AddConformer(Chem.Conformer(m2.GetNumAtoms()))
+    metal2 = stk.BuildingBlock.init_from_rdkit_mol(
+        m2,
+        functional_groups=None,
+    )
+    metal2 = stk.assign_metal_fgs(
+        building_block=metal2,
+        coordination_info=metal_coord_info
+    )
+
     ligand1 = stk.BuildingBlock(
         'C(#Cc1cccc(C#Cc2cccnc2)c1)c1cccnc1',
         functional_groups=['pyridine_N_metal']
@@ -63,6 +75,7 @@ def main():
             building_block_vertices={
                 metal: top.vertices[0: n_metals[i]],
                 ligand1: top.vertices[n_metals[i]:],
+                # metal2: top.vertices[n_metals[i]:],
             }
         )
         print('-----------------------------------------------------')
