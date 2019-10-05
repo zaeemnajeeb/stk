@@ -71,6 +71,14 @@ def _test_assignment(vertex, bb, vertices, edges):
         vertices=vertices,
         edges=edges
     )
+    print('>----')
+    print(assignments, vertex._edge_ids[vertex.get_aligner_edge()])
+    print(
+        assignments[0] == vertex._edge_ids[vertex.get_aligner_edge()]
+    )
+    print(vertex)
+    print(bb)
+    print('^----')
     assert (
         assignments[0] == vertex._edge_ids[vertex.get_aligner_edge()]
     )
@@ -81,8 +89,11 @@ def test_vertex(
     tmp_metal
 ):
     topology_graphs = (
-        stk.metal_cage.M2L4_Lantern(),
-        stk.metal_cage.M4L8_sqpl()
+        stk.metal_cage_graphs.M2L4_Lantern(),
+        stk.metal_cage_graphs.M4L8_sqpl(),
+        stk.metal_cage_graphs.M6L12_cube(),
+        stk.metal_cage_graphs.M12L24_sqpl(),
+        stk.metal_cage_graphs.M24L48_sqpl(),
     )
     building_blocks = {
         2: tmp_bident,
@@ -216,21 +227,21 @@ def test_m2l4_lantern():
     )
 
     # Do construction.
-    m4l8 = stk.metal_cage.M4L8_sqpl()
-    lantern = stk.ConstructedMolecule(
+    top = stk.metal_cage_graphs.M2L4_Lantern()
+    cage = stk.ConstructedMolecule(
         building_blocks=[metal, ligand1],
-        topology_graph=m4l8,
+        topology_graph=top,
         building_block_vertices={
-            metal: m4l8.vertices[0:4],
-            ligand1: m4l8.vertices[4:]
+            metal: top.vertices[0:2],
+            ligand1: top.vertices[2:]
         }
     )
     num_expected_bbs = {
-        metal: 4,
-        ligand1: 8,
+        metal: 2,
+        ligand1: 4,
     }
 
-    _test_construction(lantern, num_expected_bbs)
+    _test_construction(cage, num_expected_bbs)
 
 
 def test_m4l8_sqpl():
@@ -241,21 +252,96 @@ def test_m4l8_sqpl():
     )
 
     # Do construction.
-    m2l4_lantern = stk.metal_cage.M2L4_Lantern()
-    lantern = stk.ConstructedMolecule(
+    top = stk.metal_cage_graphs.M4L8_sqpl()
+    cage = stk.ConstructedMolecule(
         building_blocks=[metal, ligand1],
-        topology_graph=m2l4_lantern,
+        topology_graph=top,
         building_block_vertices={
-            metal: m2l4_lantern.vertices[0:2],
-            ligand1: m2l4_lantern.vertices[2:]
+            metal: top.vertices[0:4],
+            ligand1: top.vertices[4:]
         }
     )
     num_expected_bbs = {
-        metal: 2,
-        ligand1: 4,
+        metal: 4,
+        ligand1: 8,
     }
 
-    _test_construction(lantern, num_expected_bbs)
+    _test_construction(cage, num_expected_bbs)
+
+
+def test_m6l12_sqpl():
+    metal = _build_metal()
+    ligand1 = stk.BuildingBlock(
+        'C(#Cc1cccc(C#Cc2cccnc2)c1)c1cccnc1',
+        functional_groups=['pyridine_N_metal']
+    )
+
+    # Do construction.
+    top = stk.metal_cage_graphs.M6L12_cube()
+    cage = stk.ConstructedMolecule(
+        building_blocks=[metal, ligand1],
+        topology_graph=top,
+        building_block_vertices={
+            metal: top.vertices[0:6],
+            ligand1: top.vertices[6:]
+        }
+    )
+    num_expected_bbs = {
+        metal: 6,
+        ligand1: 12,
+    }
+
+    _test_construction(cage, num_expected_bbs)
+
+
+def test_m12l24_sqpl():
+    metal = _build_metal()
+    ligand1 = stk.BuildingBlock(
+        'C(#Cc1cccc(C#Cc2cccnc2)c1)c1cccnc1',
+        functional_groups=['pyridine_N_metal']
+    )
+
+    # Do construction.
+    top = stk.metal_cage_graphs.M12L24_sqpl()
+    cage = stk.ConstructedMolecule(
+        building_blocks=[metal, ligand1],
+        topology_graph=top,
+        building_block_vertices={
+            metal: top.vertices[0:12],
+            ligand1: top.vertices[12:]
+        }
+    )
+    num_expected_bbs = {
+        metal: 12,
+        ligand1: 24,
+    }
+
+    _test_construction(cage, num_expected_bbs)
+
+
+def test_m24l48_sqpl():
+    metal = _build_metal()
+    ligand1 = stk.BuildingBlock(
+        'C(#Cc1cccc(C#Cc2cccnc2)c1)c1cccnc1',
+        functional_groups=['pyridine_N_metal']
+    )
+
+    # Do construction.
+    top = stk.metal_cage_graphs.M24L48_sqpl()
+    cage = stk.ConstructedMolecule(
+        building_blocks=[metal, ligand1],
+        topology_graph=top,
+        building_block_vertices={
+            metal: top.vertices[0:24],
+            ligand1: top.vertices[24:]
+        }
+    )
+    num_expected_bbs = {
+        metal: 24,
+        ligand1: 48,
+    }
+
+    _test_construction(cage, num_expected_bbs)
 
 
 def test_heter_m2l4_lantern():
@@ -270,14 +356,14 @@ def test_heter_m2l4_lantern():
     )
 
     # Do construction.
-    m2l4_lantern = stk.metal_cage.M2L4_Lantern()
-    hetero_lantern = stk.ConstructedMolecule(
+    top = stk.metal_cage_graphs.M2L4_Lantern()
+    cage = stk.ConstructedMolecule(
         building_blocks=[metal, ligand1, ligand2],
-        topology_graph=m2l4_lantern,
+        topology_graph=top,
         building_block_vertices={
-            metal: m2l4_lantern.vertices[0:2],
-            ligand1: m2l4_lantern.vertices[2:4],
-            ligand2: m2l4_lantern.vertices[4:]
+            metal: top.vertices[0:2],
+            ligand1: top.vertices[2:4],
+            ligand2: top.vertices[4:]
         }
     )
     num_expected_bbs = {
@@ -286,4 +372,4 @@ def test_heter_m2l4_lantern():
         ligand2: 2,
     }
 
-    _test_construction(hetero_lantern, num_expected_bbs)
+    _test_construction(cage, num_expected_bbs)

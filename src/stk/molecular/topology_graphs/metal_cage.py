@@ -440,6 +440,7 @@ class _MetalCageVertex(Vertex):
             i.fg_type.name for i in building_block.func_groups
         ))
         if 'metal' in bb_fg_names:
+            print('metal')
             return self._assign_func_groups_to_metal_atom(
                 building_block=building_block,
                 vertices=vertices,
@@ -514,6 +515,16 @@ class _MetalCageVertex(Vertex):
         vertices,
         edges
     ):
+        print('....')
+        print('hello')
+        print(self._edge_ids)
+        print(
+            'd', self._get_fg0_distance(building_block, edges)
+        )
+        for ei in self._edge_ids:
+            print(self._get_fg0_distance(building_block, edges)(ei))
+
+        print('^-')
         return {
             fg_id: edge_id for fg_id, edge_id in enumerate(sorted(
                 self._edge_ids,
@@ -804,6 +815,12 @@ class MetalCage(TopologyGraph):
                 ligand2: m2l4_lantern.vertices[4:]
             }
         )
+
+    It is possible that any ligand will form in any MnL2n topology.
+    Below we show an example that builds all possible isomers for a
+    given ligand, such that a comparison of them can be performed.
+
+    FILL IN
 
     """
 
