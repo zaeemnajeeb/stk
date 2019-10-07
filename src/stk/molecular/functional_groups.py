@@ -619,6 +619,13 @@ _fg_types = (
     ),
 
     FGType(
+        name="unsaturated_site",
+        func_group_smarts="[He]",
+        bonder_smarts=[],
+        deleter_smarts=["[$([He])]"]
+    ),
+
+    FGType(
         name='pyridine_N_metal',
         func_group_smarts='[#7X2]([#6])[#6]',
         bonder_smarts=[

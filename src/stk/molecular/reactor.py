@@ -212,6 +212,9 @@ class Reactor:
             _ReactionKey('ring_amine', 'ring_amine'):
                 self._react_ring_amine_with_ring_amine,
 
+            _ReactionKey('unsaturated_site', 'metal_bound_N'):
+                self._react_unsaturated_site,
+
             _ReactionKey('metal_bound_N', 'amine_metal'):
                 self._react_metal,
 
@@ -343,6 +346,34 @@ class Reactor:
         )
         self._mol.bonds.append(bond)
         self._mol.construction_bonds.append(bond)
+
+    def _react_unsaturated_site(self, reaction_key, func_groups,
+                                periodicity):
+        """
+        Cleans up unsaturated site on metal complex.
+
+        Parameters
+        ----------
+        reaction_key : :class:`._ReactionKey`
+            The key for the reaction.
+
+        func_groups : :class:`list` of :class:`.FunctionalGroup`
+            The functional groups from which deleter atoms should be
+            removed.
+
+        periodicity : :class:`tuple` of :class:`int`
+            Specifies the periodicity of the bonds added by the
+            reaction, which bridge the `func_groups`. See
+            :attr:`.Bond.periodicity`.
+
+        Returns
+        -------
+        None : :class:`NoneType`
+
+        """
+
+        # Delete deleters.
+        self._remove_deleters(func_groups)
 
     def _react_metal(self, reaction_key, func_groups, periodicity):
         """

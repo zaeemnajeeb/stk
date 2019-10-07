@@ -89,6 +89,7 @@ class _MetalVertexData(VertexData):
         """
 
         clone = super().clone(clear_edges)
+        clone.unsaturated = self.unsaturated
         clone.aligner_edge = self.aligner_edge
         return clone
 
@@ -110,6 +111,7 @@ class _MetalVertex(Vertex):
 
     def __init__(self, data):
         self._aligner_edge = data.aligner_edge
+        self._unsaturated = data.unsaturated
         super().__init__(data)
 
     def clone(self, clear_edges=False):
@@ -130,6 +132,7 @@ class _MetalVertex(Vertex):
 
         clone = super().clone(clear_edges)
         clone._aligner_edge = self._aligner_edge
+        clone._unsaturated = self._unsaturated
         return clone
 
     def get_aligner_edge(self):
@@ -172,27 +175,62 @@ class _MetalVertex(Vertex):
             placed.
 
         """
-        # print(building_block)
-        if len(building_block.func_groups) == 1:
-            # print('hey1')
+        if self._unsaturated:
+            return self._place_unsaturated_vertex(
+                building_block=building_block,
+                vertices=vertices,
+                edges=edges
+            )
+        elif len(building_block.func_groups) == 1:
             return self._place_cap_building_block(
                 building_block=building_block,
                 vertices=vertices,
                 edges=edges
             )
         elif len(building_block.func_groups) == 2:
-            # print('hey2')
             return self._place_linear_building_block(
                 building_block=building_block,
                 vertices=vertices,
                 edges=edges
             )
-        # print('hey3')
         return self._place_nonlinear_building_block(
             building_block=building_block,
             vertices=vertices,
             edges=edges
         )
+
+    def _place_unsaturated_vertex(
+        self,
+        building_block,
+        vertices,
+        edges
+    ):
+        """
+        Place `building_block` on the :class:`.Vertex`.
+
+        Parameters
+        ----------
+        building_block : :class:`.BuildingBlock`
+            The building block molecule which is to be placed on the
+            vertex.
+
+        vertices : :class:`tuple` of :class:`.Vertex`
+            All vertices in the topology graph. The index of each
+            vertex must match its :class:`~.Vertex.id`.
+
+        edges : :class:`tuple` of :class:`.Edge`
+            All edges in the topology graph. The index of each
+            edge must match its :class:`~.Edge.id`.
+
+        Returns
+        -------
+        :class:`numpy.nadarray`
+            The position matrix of `building_block` after being
+            placed.
+
+        """
+        building_block.set_centroid(position=self._position)
+        return building_block.get_position_matrix()
 
     def _place_cap_building_block(
         self,
@@ -338,17 +376,12 @@ class _MetalVertex(Vertex):
             atom_ids=building_block.get_bonder_ids()
         )
         connected_edges = tuple(edges[id_] for id_ in self._edge_ids)
-        # print(connected_edges)
 
-        if self.is_metal_centre(building_block):
-            reference = np.array([1, 0, 0])
-        else:
-            reference = self._get_edge_centroid(
+        edge_normal = self._get_edge_plane_normal(
+            reference=self._get_edge_centroid(
                 centroid_edges=connected_edges,
                 vertices=vertices
-            )
-        edge_normal = self._get_edge_plane_normal(
-            reference=reference,
+            ),
             plane_edges=connected_edges,
             vertices=vertices
         )
@@ -639,6 +672,10 @@ class MetalCage(TopologyGraph):
     edges : :class:`tuple` of :class:`.Edge`
         The edges which make up the topology graph.
 
+    unsaturated_vertices : :class:`list` of :class:`int`, optional
+        A list of the unsaturated sites on the metal complexes to
+        be built. The integers correspond to vertex ids.
+
     Examples
     --------
 
@@ -894,22 +931,15 @@ class MetalCage(TopologyGraph):
             :meth:`construct`.
 
         """
-
+        self.unsaturated_vertices = unsaturated_vertices
         # Metal complexes can have unsaturated sites.
         # Need to remove information about the sites that will not
         # react from stage, self.vertices and self.edges.
-        if unsaturated_vertices is not None:
-            self.old_vertex_data = self.vertex_data
-            self.old_edge_data = self.edge_data
-            self.vertex_data = tuple(
-                i for i in self.old_vertex_data
-                if i.id not in unsaturated_vertices
-            )
-            used_edges = [
-                i for i in self.old_edge_data
-                if set(i.vertices).issubset(set(self.vertex_data))
-            ]
-            self.edge_data = tuple(i for i in used_edges)
+        for v in self.vertex_data:
+            v.unsaturated = False
+            if self.unsaturated_vertices is not None:
+                if v.id in self.unsaturated_vertices:
+                    v.unsaturated = True
 
         if vertex_alignments is None:
             vertex_alignments = {}
