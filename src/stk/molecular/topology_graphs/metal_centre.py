@@ -665,7 +665,17 @@ class Paddlewheel(MetalCentre):
 
     """
 
-    raise NotImplementedError
+    vertex_data = (
+        _MetalCentreVertexData(0, 0, 0)
+    )
+
+    edge_data = (
+        EdgeData(
+            vertex_data[0],
+            vertex_data[1],
+            position=[0, 2.0, 0]
+        )
+    )
 
 
 class Octahedral(MetalCentre):
@@ -692,4 +702,14 @@ class Octahedral(MetalCentre):
 
     """
 
-    raise NotImplementedError
+    vertex_data = (
+        _MetalCentreVertexData(0, 0, 0)
+    )
+
+    edge_data = (
+        EdgeData(
+            vertex_data[0],
+            vertex_data[1],
+            position=[0, 2.0, 0]
+        )
+    )
