@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 class _MetalVertexData(VertexData):
     """
-    Holds the data of a metal vertex
+    Holds the data of a metal vertex.
 
     Attributes
     ----------
@@ -83,7 +83,7 @@ class _MetalVertexData(VertexData):
 
         Returns
         -------
-        :class:`_CageVertexData`
+        :class:`_MetalVertexData`
             The clone.
 
         """
@@ -93,10 +93,10 @@ class _MetalVertexData(VertexData):
         return clone
 
     def get_vertex(self):
-        return _MetalCageVertex(self)
+        return _MetalVertex(self)
 
 
-class _MetalCageVertex(Vertex):
+class _MetalVertex(Vertex):
     """
     Represents a vertex of a :class:`.MetalCage`.
 
