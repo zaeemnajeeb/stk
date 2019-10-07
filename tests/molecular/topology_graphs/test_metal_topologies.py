@@ -153,6 +153,16 @@ def _build_N_atom():
     return n_atom
 
 
+def _build_unsaturated_site():
+    m = rdkit.MolFromSmiles('[He]')
+    m.AddConformer(rdkit.Conformer(m.GetNumAtoms()))
+    he_atom = stk.BuildingBlock.init_from_rdkit_mol(
+        m,
+        functional_groups=['unsaturated_site'],
+    )
+    return he_atom
+
+
 def _build_sqpl_metal_centre():
     metal = _build_metal()
     n_atom = _build_N_atom()
@@ -419,6 +429,7 @@ def test_unsat_sqpl_monodentate_construction():
         'c1cc(-c2ccc(-c3ccncc3)cc2)ccn1',
         functional_groups=['pyridine_N_metal']
     )
+    unsaturated_site = _build_unsaturated_site()
     # Handle multiple functional groups.
     ligand1.func_groups = tuple(i for i in [ligand1.func_groups[0]])
     assert len(ligand1.func_groups) == 1
@@ -428,16 +439,18 @@ def test_unsat_sqpl_monodentate_construction():
         unsaturated_vertices=[3, 4]
     )
     pdl2_sqpl_complex = stk.ConstructedMolecule(
-        building_blocks=[metal_centre, ligand1],
+        building_blocks=[metal_centre, ligand1, unsaturated_site],
         topology_graph=sqpl,
         building_block_vertices={
             metal_centre: tuple([sqpl.vertices[0]]),
-            ligand1: sqpl.vertices[1:]
+            ligand1: sqpl.vertices[1:],
+            unsaturated_site: sqpl.vertices[3:]
         }
     )
     num_expected_bbs = {
         metal_centre: 1,
         ligand1: 2,
+        unsaturated_site: 2,
     }
 
     _test_construction(pdl2_sqpl_complex, num_expected_bbs)
