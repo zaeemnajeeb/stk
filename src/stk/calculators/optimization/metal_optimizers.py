@@ -694,22 +694,22 @@ class MetalOptimizer(Optimizer):
         None : :class:`NoneType`
 
         """
-        # Add a very weak force constraint on all metal-metal
-        # distances.
-        metal_dist = max(
-            bb.get_maximum_diameter()
-            for bb in mol.building_block_vertices
-        )
-
-        for atoms in combinations(metal_atoms, r=2):
-            ff.UFFAddDistanceConstraint(
-                idx1=atoms[0].id,
-                idx2=atoms[1].id,
-                relative=False,
-                minLen=metal_dist,
-                maxLen=metal_dist,
-                forceConstant=0.25e1
-            )
+        # # Add a very weak force constraint on all metal-metal
+        # # distances.
+        # metal_dist = max(
+        #     bb.get_maximum_diameter()
+        #     for bb in mol.building_block_vertices
+        # )
+        #
+        # for atoms in combinations(metal_atoms, r=2):
+        #     ff.UFFAddDistanceConstraint(
+        #         idx1=atoms[0].id,
+        #         idx2=atoms[1].id,
+        #         relative=False,
+        #         minLen=metal_dist,
+        #         maxLen=metal_dist,
+        #         forceConstant=0.25e1
+        #     )
 
         # Add constraints to UFF to hold metal geometry in place.
         for bond in metal_bonds:
@@ -761,9 +761,9 @@ class MetalOptimizer(Optimizer):
                 idx2=idx2,
                 idx3=idx3,
                 relative=False,
-                minAngleDeg=np.degrees(angle)-2,
-                maxAngleDeg=np.degrees(angle)+2,
-                forceConstant=1.0e4
+                minAngleDeg=np.degrees(angle),
+                maxAngleDeg=np.degrees(angle),
+                forceConstant=1.0e5
             )
 
     def apply_orientation_restriction(self, ff, mol, metal_bonds,
