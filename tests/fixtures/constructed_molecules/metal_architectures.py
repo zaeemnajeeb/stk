@@ -42,21 +42,49 @@ def _build_metal():
     return metal
 
 
+def _build_N_atom():
+    m = rdkit.MolFromSmiles('N')
+    m.AddConformer(rdkit.Conformer(m.GetNumAtoms()))
+    n_atom = stk.BuildingBlock.init_from_rdkit_mol(
+        m,
+        functional_groups=['metal_bound_N'],
+    )
+    return n_atom
+
+
+def _build_sqpl_metal_centre():
+    metal = _build_metal()
+    n_atom = _build_N_atom()
+    sqpl = stk.metal_centre.SquarePlanar()
+    sqpl_complex = stk.ConstructedMolecule(
+        building_blocks=[metal, n_atom],
+        topology_graph=sqpl,
+        building_block_vertices={
+            metal: tuple([sqpl.vertices[0]]),
+            n_atom: sqpl.vertices[1:]
+        }
+    )
+    return stk.BuildingBlock.init_from_molecule(
+        sqpl_complex,
+        functional_groups=['metal_bound_N']
+    )
+
+
 @pytest.fixture(scope='function')
 def tmp_bidentage_sqpl():
-    metal = _build_metal()
+    metal_centre = _build_sqpl_metal_centre()
     ligand1 = stk.BuildingBlock(
         'NCCN',
         functional_groups=['amine_metal']
     )
 
     # Do construction.
-    sqpl = stk.metal_complex.SquarePlanarBidentate()
+    sqpl = stk.cage.SquarePlanarBidentate()
     return stk.ConstructedMolecule(
-        building_blocks=[metal, ligand1],
+        building_blocks=[metal_centre, ligand1],
         topology_graph=sqpl,
         building_block_vertices={
-            metal: tuple([sqpl.vertices[0]]),
+            metal_centre: tuple([sqpl.vertices[0]]),
             ligand1: sqpl.vertices[1:]
         }
     )

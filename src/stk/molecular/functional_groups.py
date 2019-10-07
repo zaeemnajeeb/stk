@@ -602,16 +602,37 @@ _fg_types = (
 
     FGType(
         name="amine_metal",
-        func_group_smarts="[N]([H])[H]",
-        bonder_smarts=["[$([N]([H])[H])]"],
+        func_group_smarts="[#6][N]([H])[H]",
+        bonder_smarts=[
+            "[$([#6][N]([H])[H])]",
+            "[$([H][N]([#6])[H])]",
+            "[$([H][N]([#6])[H])]",
+        ],
+        deleter_smarts=["[$(N)]"]
+    ),
+
+    FGType(
+        name="metal_bound_N",
+        func_group_smarts="[N]",
+        bonder_smarts=["[$([N])]"],
         deleter_smarts=[]
     ),
 
     FGType(
+        name="unsaturated_site",
+        func_group_smarts="[He]",
+        bonder_smarts=[],
+        deleter_smarts=["[$([He])]"]
+    ),
+
+    FGType(
         name='pyridine_N_metal',
-        func_group_smarts='[#6]~[#7X2]~[#6]',
-        bonder_smarts=['[$([#7X2]~[#6])]'],
-        deleter_smarts=([])
+        func_group_smarts='[#7X2]([#6])[#6]',
+        bonder_smarts=[
+            '[$([#6]~[#7X2])]',
+            '[$([#6]~[#7X2])]'
+        ],
+        deleter_smarts=(["[#7X2]~[#6](~[#6])"])
     ),
 )
 
