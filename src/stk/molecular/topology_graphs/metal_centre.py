@@ -46,7 +46,7 @@ class _MetalCentreVertexData(VertexData):
 
     def __init__(self, x, y, z):
         """
-        Initialize a :class:`_CageVertexData` instance.
+        Initialize a :class:`_MetalCentreVertexData` instance.
 
         Parameters
         ----------
@@ -153,54 +153,11 @@ class _MetalCentreVertex(Vertex):
 
         """
 
-        bb_fg_names = list(set((
-            i.fg_type.name for i in building_block.func_groups
-        )))
-
-        if 'metal' in bb_fg_names:
-            return self._place_metal_atom(
-                building_block=building_block,
-                vertices=vertices,
-                edges=edges
-            )
         return self._place_single_atom(
             building_block=building_block,
             vertices=vertices,
             edges=edges
         )
-
-    def _place_metal_atom(
-        self,
-        building_block,
-        vertices,
-        edges
-    ):
-        """
-        Place `building_block` on the :class:`.Vertex`.
-
-        Parameters
-        ----------
-        building_block : :class:`.BuildingBlock`
-            The building block molecule which is to be placed on the
-            vertex.
-
-        vertices : :class:`tuple` of :class:`.Vertex`
-            All vertices in the topology graph. The index of each
-            vertex must match its :class:`~.Vertex.id`.
-
-        edges : :class:`tuple` of :class:`.Edge`
-            All edges in the topology graph. The index of each
-            edge must match its :class:`~.Edge.id`.
-
-        Returns
-        -------
-        :class:`numpy.nadarray`
-            The position matrix of `building_block` after being
-            placed.
-
-        """
-        building_block.set_centroid(position=self._position)
-        return building_block.get_position_matrix()
 
     def _place_single_atom(
         self,
@@ -274,15 +231,6 @@ class _MetalCentreVertex(Vertex):
 
         """
 
-        bb_fg_names = list(set((
-            i.fg_type.name for i in building_block.func_groups
-        )))
-        if 'metal' in bb_fg_names:
-            return self._assign_func_groups_to_metal_atom(
-                building_block=building_block,
-                vertices=vertices,
-                edges=edges
-            )
         return self._assign_func_groups_to_single_atoms(
             building_block=building_block,
             vertices=vertices,
@@ -333,19 +281,6 @@ class _MetalCentreVertex(Vertex):
             vertices=vertices,
             edges=edges
         )
-
-    def _assign_func_groups_to_metal_atom(
-        self,
-        building_block,
-        vertices,
-        edges
-    ):
-        return {
-            fg_id: edge_id for fg_id, edge_id in enumerate(sorted(
-                self._edge_ids,
-                key=self._get_fg0_distance(building_block, edges)
-            ))
-        }
 
     def _assign_func_groups_to_single_atoms(
         self,
@@ -704,3 +639,57 @@ class SquarePlanar(MetalCentre):
             position=[0, 0, -2.0]
         ),
     )
+
+
+class Paddlewheel(MetalCentre):
+    """
+    Represents a Paddlewheel metal complex topology graph.
+
+    See :class:`.MetalCentre` for more details and examples.
+
+    Attributes
+    ----------
+    vertex_data : :class:`tuple` of :class:`.VertexData`
+        A class attribute. Holds the data of the vertices which make up
+        the topology graph.
+
+    edge_data : :class:`tuple` of :class:`.EdgeData`
+        A class attribute. Holds the data of the edges which make up
+        the topology graph.
+
+    vertices : :class:`tuple` of :class:`.Vertex`
+        The vertices which make up the topology graph.
+
+    edges : :class:`tuple` of :class:`.Edge`
+        The edges which make up the topology graph.
+
+    """
+
+    raise NotImplementedError
+
+
+class Octahedral(MetalCentre):
+    """
+    Represents an octahedral metal complex topology graph.
+
+    See :class:`.MetalCentre` for more details and examples.
+
+    Attributes
+    ----------
+    vertex_data : :class:`tuple` of :class:`.VertexData`
+        A class attribute. Holds the data of the vertices which make up
+        the topology graph.
+
+    edge_data : :class:`tuple` of :class:`.EdgeData`
+        A class attribute. Holds the data of the edges which make up
+        the topology graph.
+
+    vertices : :class:`tuple` of :class:`.Vertex`
+        The vertices which make up the topology graph.
+
+    edges : :class:`tuple` of :class:`.Edge`
+        The edges which make up the topology graph.
+
+    """
+
+    raise NotImplementedError
