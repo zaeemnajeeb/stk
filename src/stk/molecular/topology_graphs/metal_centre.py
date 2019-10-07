@@ -666,7 +666,8 @@ class Paddlewheel(MetalCentre):
     """
 
     vertex_data = (
-        _MetalCentreVertexData(0, 0, 0)
+        _MetalCentreVertexData(0, 0, 0),
+        _MetalCentreVertexData(0, 1, 0),
     )
 
     edge_data = (
@@ -674,7 +675,7 @@ class Paddlewheel(MetalCentre):
             vertex_data[0],
             vertex_data[1],
             position=[0, 2.0, 0]
-        )
+        ),
     )
 
 
@@ -703,7 +704,8 @@ class Octahedral(MetalCentre):
     """
 
     vertex_data = (
-        _MetalCentreVertexData(0, 0, 0)
+        _MetalCentreVertexData(0, 0, 0),
+        _MetalCentreVertexData(0, 1, 0),
     )
 
     edge_data = (
@@ -711,5 +713,5 @@ class Octahedral(MetalCentre):
             vertex_data[0],
             vertex_data[1],
             position=[0, 2.0, 0]
-        )
+        ),
     )
