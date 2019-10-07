@@ -377,11 +377,17 @@ class _MetalVertex(Vertex):
         )
         connected_edges = tuple(edges[id_] for id_ in self._edge_ids)
 
-        edge_normal = self._get_edge_plane_normal(
-            reference=self._get_edge_centroid(
+        if self.is_metal_centre(building_block):
+            # Give small vector for reference to avoid numerical issues
+            # with metal centres at (0, 0, 0).
+            reference = np.array([.1, 0, 0])
+        else:
+            reference = self._get_edge_centroid(
                 centroid_edges=connected_edges,
                 vertices=vertices
-            ),
+            )
+        edge_normal = self._get_edge_plane_normal(
+            reference=reference,
             plane_edges=connected_edges,
             vertices=vertices
         )
@@ -535,9 +541,14 @@ class _MetalVertex(Vertex):
         }
 
     def _get_fg0_distance(self, building_block, edges):
-        fg_coord = building_block.get_centroid(
-            atom_ids=building_block.func_groups[0].get_bonder_ids()
-        )
+
+        if self._unsaturated:
+            a_ids = building_block.func_groups[0].get_deleter_ids()
+            fg_coord = building_block.get_centroid(atom_ids=a_ids)
+        else:
+            fg_coord = building_block.get_centroid(
+                atom_ids=building_block.func_groups[0].get_bonder_ids()
+            )
 
         def distance(edge_id):
             displacement = edges[edge_id].get_position() - fg_coord
@@ -793,20 +804,34 @@ class MetalCage(TopologyGraph):
             }
         )
 
+    Additionally, some metal complexes can be built as undercoordinated
+    to allow for a step-wise construction procedue. To achieve this, we
+    require the presence of a pseudo atom at the `unsaturated_vertices`
+    to maintain the appropriate orientation of the metal complex.
+
+    .. code-block:: python
+
+        # Define a pseudo atom to place at unsaturated vertices.
+        m = Chem.MolFromSmiles('[He]')
+        m.AddConformer(Chem.Conformer(m.GetNumAtoms()))
+        unsaturated_site = stk.BuildingBlock.init_from_rdkit_mol(
+            m,
+            functional_groups=['unsaturated_site'],
+        )
+
+
         # Construct two-coordinated Pd2+ square planar complex with
         # two unsaturated sites.
         sqpl = stk.cage.SquarePlanarMonodentate(
             unsaturated_vertices=[3, 4]
         )
         pdl2_sqpl_complex = stk.ConstructedMolecule(
-            building_blocks=[metal_centre, ligand],
+            building_blocks=[metal_centre, ligand, unsaturated_site],
             topology_graph=sqpl,
             building_block_vertices={
                 metal_centre: tuple([sqpl.vertices[0]]),
-                # We do not need to specify anything extra here,
-                # because vertices 3 and 4 will be removed from the
-                # topology graph upon construction.
-                ligand: sqpl.vertices[1:]
+                ligand: sqpl.vertices[1:3],
+                unsaturated_site: sqpl.vertices[3:]
             }
         )
 
