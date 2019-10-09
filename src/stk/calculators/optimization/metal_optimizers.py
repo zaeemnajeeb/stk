@@ -221,7 +221,8 @@ class MetalOptimizer(Optimizer):
         self._force_constant = force_constant
         self._rel_distance = rel_distance
         self._prearrange = prearrange
-        self._restrict_all_bonds = restrict_all_bonds
+        self._restrict_bonds = restrict_bonds
+        self._restrict_angles = restrict_angles
         self._restrict_orientation = restrict_orientation
         self._res_steps = res_steps
 
@@ -549,30 +550,30 @@ class MetalOptimizer(Optimizer):
         # except for:
         # (1) bonds including metals
         # (2) bonds including atoms bonded to metals
-        if self._restrict_all_bonds:
-            for const in input_constraints:
-                constraint = input_constraints[const]
-                if constraint['type'] == 'bond':
-                    # Add distance constraints in place of metal bonds.
-                    ff.UFFAddDistanceConstraint(
-                        idx1=constraint['idx1'],
-                        idx2=constraint['idx2'],
-                        relative=True,
-                        minLen=1.0,
-                        maxLen=1.0,
-                        forceConstant=constraint['fc']
-                    )
-                elif constraint['type'] == 'angle':
-                    ff.UFFAddAngleConstraint(
-                        idx1=constraint['idx1'],
-                        idx2=constraint['idx2'],
-                        idx3=constraint['idx3'],
-                        relative=False,
-                        minAngleDeg=constraint['angle'],
-                        maxAngleDeg=constraint['angle'],
-                        forceConstant=constraint['fc']
-                    )
-        # For bonds between ligand bonders and the rest of the liagnd,
+        for constraint in input_constraints:
+            const = input_constraints[constraint]
+            if const['type'] == 'bond' and self._restrict_bonds:
+                # Add distance constraints in place of metal bonds.
+                ff.UFFAddDistanceConstraint(
+                    idx1=const['idx1'],
+                    idx2=const['idx2'],
+                    relative=True,
+                    minLen=1.0,
+                    maxLen=1.0,
+                    forceConstant=const['fc']
+                )
+            elif const['type'] == 'angle' and self._restrict_angles:
+                ff.UFFAddAngleConstraint(
+                    idx1=const['idx1'],
+                    idx2=const['idx2'],
+                    idx3=const['idx3'],
+                    relative=False,
+                    minAngleDeg=const['angle'],
+                    maxAngleDeg=const['angle'],
+                    forceConstant=const['fc']
+                )
+
+        # For bonds between ligand bonders and the rest of the ligand,
         # a weak force constant is applied to minimize to rel_distance.
         # This is the slow relaxation of the high-force bonds.
         if self._rel_distance is not None:
