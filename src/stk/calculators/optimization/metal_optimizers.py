@@ -572,18 +572,6 @@ class MetalOptimizer(Optimizer):
                         maxAngleDeg=constraint['angle'],
                         forceConstant=constraint['fc']
                     )
-                elif constraint['type'] == 'torsion':
-                    ff.UFFAddTorsionConstraint(
-                        idx1=constraint['idx1'],
-                        idx2=constraint['idx2'],
-                        idx3=constraint['idx3'],
-                        idx4=constraint['idx4'],
-                        relative=False,
-                        minDihedralDeg=constraint['torsion'],
-                        maxDihedralDeg=constraint['torsion'],
-                        forceConstant=constraint['fc']
-                    )
-
         # For bonds between ligand bonders and the rest of the liagnd,
         # a weak force constant is applied to minimize to rel_distance.
         # This is the slow relaxation of the high-force bonds.
