@@ -31,8 +31,6 @@ class MetalOptimizer(Optimizer):
 
     Attributes
     ----------
-    _scale : :class:`float`
-        Distance to place ligand binder atoms from metal.
 
     _force_constant : :class:`float`
         Force constant to use for restricted metal-ligand bonds.
@@ -143,7 +141,6 @@ class MetalOptimizer(Optimizer):
             rel_distance=0.9,
             res_steps=50,
             restrict_all_bonds=True,
-            restrict_orientation=True,
             restrict_orientation=True
         )
 
@@ -183,8 +180,6 @@ class MetalOptimizer(Optimizer):
 
         Parameters
         ----------
-        scale : :class:`float`
-            Distance to place ligand binder atoms from metal.
 
         force_constant : :class:`float`
             Force constant to use for restricted metal-ligand bonds.
@@ -212,8 +207,9 @@ class MetalOptimizer(Optimizer):
             molecule.
 
         """
-        self._scale = scale
-        self._force_constant = force_constant
+        self._metal_binder_distance = metal_binder_distance
+        self._metal_binder_fc = metal_binder_fc
+        self._binder_ligand_fc = binder_ligand_fc
         self._rel_distance = rel_distance
         self._restrict_bonds = restrict_bonds
         self._restrict_angles = restrict_angles
@@ -526,10 +522,10 @@ class MetalOptimizer(Optimizer):
                     ff.UFFAddDistanceConstraint(
                         idx1=idx1,
                         idx2=idx2,
-                        relative=True,
-                        minLen=self._rel_distance,
-                        maxLen=self._rel_distance,
-                        forceConstant=self._force_constant
+                        relative=False,
+                        minLen=self._rel_distance*distance,
+                        maxLen=self._rel_distance*distance,
+                        forceConstant=self._binder_ligand_fc
                     )
 
         # Perform UFF optimization with rdkit.
@@ -645,14 +641,14 @@ class MetalOptimizer(Optimizer):
             idx1 = bond.atom1.id
             idx2 = bond.atom2.id
             # Add distance constraints in place of metal bonds.
-            # Target distance set to _scale.
+            # Target distance set to a given metal_binder_distance.
             ff.UFFAddDistanceConstraint(
                 idx1=idx1,
                 idx2=idx2,
                 relative=False,
-                minLen=self._scale,
-                maxLen=self._scale,
-                forceConstant=self._force_constant
+                minLen=self._metal_binder_distance,
+                maxLen=self._metal_binder_distance,
+                forceConstant=self._metal_binder_fc
             )
 
         # Also implement angular constraints to all atoms in the
