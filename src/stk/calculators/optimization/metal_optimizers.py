@@ -171,10 +171,19 @@ class MetalOptimizer(Optimizer):
 
     """
 
-    def __init__(self, scale, force_constant, rel_distance,
-                 res_steps, prearrange=True, restrict_all_bonds=False,
-                 restrict_orientation=False,
-                 use_cache=False):
+    def __init__(
+        self,
+        metal_binder_distance,
+        metal_binder_fc,
+        binder_ligand_fc,
+        rel_distance,
+        res_steps,
+        max_iterations,
+        restrict_bonds=False,
+        restrict_angles=False,
+        restrict_orientation=False,
+        use_cache=False
+    ):
         """
         Initialize a :class:`MetalOptimizer` instance.
 
@@ -194,7 +203,6 @@ class MetalOptimizer(Optimizer):
             is very short to ensure the structure does not over-react
             to the extreme forces on it.
 
-        prearrange : :class:`bool`, optional
         restrict_all_bonds : :class:`bool`, optional
             `True` to restrict all bonds except for ligand-FG bonds.
 
@@ -215,6 +223,7 @@ class MetalOptimizer(Optimizer):
         self._restrict_angles = restrict_angles
         self._restrict_orientation = restrict_orientation
         self._res_steps = res_steps
+        self._max_iterations = max_iterations
 
         self.metal_a_no = list(range(21, 31))
         self.metal_a_no += list(range(39, 49))+list(range(72, 81))
@@ -273,8 +282,13 @@ class MetalOptimizer(Optimizer):
 
         return edit_mol
 
-    def get_input_constraints(self, mol, ids_to_metals, metal_atoms,
-                              include_bonders=False):
+    def get_input_constraints(
+        self,
+        mol,
+        ids_to_metals,
+        metal_atoms,
+        include_bonders=False
+    ):
         """
         Get a series of constraint definitions based on mol.
 
@@ -411,10 +425,14 @@ class MetalOptimizer(Optimizer):
 
         return constraints
 
-    def _restricted_optimization(self, mol, metal_atoms,
-                                 metal_bonds,
-                                 ids_to_metals,
-                                 input_constraints=None):
+    def _restricted_optimization(
+        self,
+        mol,
+        metal_atoms,
+        metal_bonds,
+        ids_to_metals,
+        input_constraints=None
+    ):
         """
         Optimize `mol` with restrictions on metal-ligand bonds.
 
@@ -519,6 +537,7 @@ class MetalOptimizer(Optimizer):
                     if self.has_M(bond, metal_atoms):
                         continue
                     # Add distance constraints in place of metal bonds.
+                    distance = mol.get_atom_distance(idx1, idx2)
                     ff.UFFAddDistanceConstraint(
                         idx1=idx1,
                         idx2=idx2,
@@ -529,7 +548,7 @@ class MetalOptimizer(Optimizer):
                     )
 
         # Perform UFF optimization with rdkit.
-        ff.Minimize(maxIts=25)
+        ff.Minimize(maxIts=self._max_iterations)
 
         # Update stk molecule from optimized molecule. This should
         # only modify atom positions, which means metal atoms will be
@@ -573,8 +592,6 @@ class MetalOptimizer(Optimizer):
             include_bonders=False
         )
 
-        # First step is to pre-arrange the metal centre based on the
-        # MetalComplex topology.
         # Perform a forcefield optimisation that
         # only optimises non metal atoms that are not bonded to the
         # metal.
@@ -595,8 +612,13 @@ class MetalOptimizer(Optimizer):
                 input_constraints=input_constraints
             )
 
-    def apply_metal_centre_constraints(self, mol, ff, metal_bonds,
-                                       metal_atoms):
+    def apply_metal_centre_constraints(
+        self,
+        mol,
+        ff,
+        metal_bonds,
+        metal_atoms
+    ):
         """
         Applies UFF metal centre constraints.
 
@@ -691,8 +713,13 @@ class MetalOptimizer(Optimizer):
                 forceConstant=1.0e5
             )
 
-    def apply_orientation_restriction(self, ff, mol, metal_bonds,
-                                      metal_atoms):
+    def apply_orientation_restriction(
+        self,
+        ff,
+        mol,
+        metal_bonds,
+        metal_atoms
+    ):
         """
         Applies UFF relative orientation restrcitions.
 
