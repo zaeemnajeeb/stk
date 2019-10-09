@@ -515,11 +515,18 @@ class MetalOptimizer(Optimizer):
             metal_bonds=metal_bonds
         )
 
+        # Non-bonded interaction cutoffs need to be made very large
+        # because at the point of intialisation, the molecules that
+        # will eventually interact are very far apart.
+        rdkit.SanitizeMol(edit_mol)
+        ff = rdkit.UFFGetMoleculeForceField(
+            edit_mol,
+            vdwThresh=30,
+            ignoreInterfragInteractions=False
+        )
+
         # Constrain selected bonds, angles and dihedrals and metal
         # atoms.
-        rdkit.SanitizeMol(edit_mol)
-        ff = rdkit.UFFGetMoleculeForceField(edit_mol)
-
         # Constrain the metal centre.
         self.apply_metal_centre_constraints(
             mol,
