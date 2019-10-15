@@ -176,9 +176,11 @@ class MetalOptimizer(Optimizer):
         metal_binder_distance,
         metal_binder_fc,
         binder_ligand_fc,
+        ignore_vdw,
         rel_distance,
         res_steps,
         max_iterations,
+        do_long_opt,
         restrict_bonds=False,
         restrict_angles=False,
         restrict_orientation=False,
@@ -218,12 +220,14 @@ class MetalOptimizer(Optimizer):
         self._metal_binder_distance = metal_binder_distance
         self._metal_binder_fc = metal_binder_fc
         self._binder_ligand_fc = binder_ligand_fc
+        self._ignore_vdw = ignore_vdw
         self._rel_distance = rel_distance
         self._restrict_bonds = restrict_bonds
         self._restrict_angles = restrict_angles
         self._restrict_orientation = restrict_orientation
         self._res_steps = res_steps
         self._max_iterations = max_iterations
+        self._do_long_opt = do_long_opt
 
         self.metal_a_no = list(range(21, 31))
         self.metal_a_no += list(range(39, 49))+list(range(72, 81))
