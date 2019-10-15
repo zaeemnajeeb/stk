@@ -491,11 +491,13 @@ class MetalOptimizer(Optimizer):
 
         # Perform UFF optimization with rdkit.
         ff.Minimize(maxIts=self._max_iterations)
+        energy = ff.CalcEnergy()
 
         # Update stk molecule from optimized molecule. This should
         # only modify atom positions, which means metal atoms will be
         # reinstated.
         mol.update_from_rdkit_mol(edit_mol)
+        return energy
 
     def optimize(self, mol):
         """
@@ -609,14 +611,36 @@ class MetalOptimizer(Optimizer):
         # metal-ligand and adjacent bonds are slowly relaxed to normal
         # values.
         # The rest of the ligands are constrained to the input value.
-        for i in range(self._res_steps):
-            self._restricted_optimization(
-                mol=mol,
-                metal_atoms=metal_atoms,
-                metal_bonds=metal_bonds,
-                ids_to_metals=ids_to_metals,
-                input_constraints=input_constraints
-            )
+        with open('opt.ey', 'w') as f:
+            for i in range(self._res_steps):
+                e = self._restricted_optimization(
+                    mol=mol,
+                    edit_mol=edit_mol,
+                    ff=ff,
+                    metal_atoms=metal_atoms,
+                    metal_bonds=metal_bonds,
+                    ids_to_metals=ids_to_metals,
+                    input_constraints=input_constraints
+                )
+                mol.write(f'opt_{i}.xyz')
+                f.write(f'{i},{e}\n')
+                print(i)
+
+            # Finish with one long optimisation.
+            if self._do_long_opt:
+                self._max_iterations = 500
+                e = self._restricted_optimization(
+                    mol=mol,
+                    edit_mol=edit_mol,
+                    ff=ff,
+                    metal_atoms=metal_atoms,
+                    metal_bonds=metal_bonds,
+                    ids_to_metals=ids_to_metals,
+                    input_constraints=input_constraints
+                )
+                mol.write(f'opt_{i+1}.xyz')
+                f.write(f'long,{e}\n')
+                print(i)
 
     def apply_metal_centre_constraints(
         self,
