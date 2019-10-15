@@ -516,20 +516,11 @@ class MetalOptimizer(Optimizer):
 
         """
         # Find all metal atoms and atoms they are bonded to.
-        metal_atoms = []
-        for atom in mol.atoms:
-            if atom.atomic_number in self.metal_a_no:
-                metal_atoms.append(atom)
-
-        metal_bonds = []
-        ids_to_metals = []
-        for bond in mol.bonds:
-            if bond.atom1 in metal_atoms:
-                metal_bonds.append(bond)
-                ids_to_metals.append(bond.atom2.id)
-            elif bond.atom2 in metal_atoms:
-                metal_bonds.append(bond)
-                ids_to_metals.append(bond.atom1.id)
+        metal_atoms = self.get_metal_atoms(mol)
+        metal_bonds, ids_to_metals = self.get_metal_bonds(
+            mol,
+            metal_atoms
+        )
 
         input_constraints = self.get_input_constraints(
             mol,
@@ -851,6 +842,27 @@ class MetalOptimizer(Optimizer):
                 maxAngleDeg=np.degrees(angle),
                 forceConstant=1.0e4
             )
+
+    def get_metal_atoms(self, mol):
+        metal_atoms = []
+        for atom in mol.atoms:
+            if atom.atomic_number in self.metal_a_no:
+                metal_atoms.append(atom)
+
+        return metal_atoms
+
+    def get_metal_bonds(self, mol, metal_atoms):
+        metal_bonds = []
+        ids_to_metals = []
+        for bond in mol.bonds:
+            if bond.atom1 in metal_atoms:
+                metal_bonds.append(bond)
+                ids_to_metals.append(bond.atom2.id)
+            elif bond.atom2 in metal_atoms:
+                metal_bonds.append(bond)
+                ids_to_metals.append(bond.atom1.id)
+
+        return metal_bonds, ids_to_metals
 
     def has_h(self, bond):
         """
