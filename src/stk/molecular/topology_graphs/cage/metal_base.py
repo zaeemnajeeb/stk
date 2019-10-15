@@ -1059,7 +1059,7 @@ class MetalCage(TopologyGraph):
             each axis is scaled by a different value.
 
         """
-        return 2*max(
+        return 1.2*max(
             bb.get_maximum_diameter()
             for bb in mol.building_block_vertices
         )
