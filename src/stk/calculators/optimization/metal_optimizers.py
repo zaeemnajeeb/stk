@@ -348,10 +348,12 @@ class MetalOptimizer(Optimizer):
                 continue
             if self.has_M(bond, metal_atoms):
                 continue
+            length = mol.get_atom_distance(idx1, idx2)
             constraints[bond] = {
                 'idx1': idx1,
                 'idx2': idx2,
                 'type': 'bond',
+                'length': length,
                 'fc': 1.0e2
             }
 
