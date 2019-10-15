@@ -433,7 +433,9 @@ class MetalOptimizer(Optimizer):
 
     def _restricted_optimization(
         self,
+        ff,
         mol,
+        edit_mol,
         metal_atoms,
         metal_bonds,
         ids_to_metals,
@@ -801,6 +803,52 @@ class MetalOptimizer(Optimizer):
                 relative=False,
                 minAngleDeg=np.degrees(angle)-2,
                 maxAngleDeg=np.degrees(angle)+2,
+                forceConstant=1.0e4
+            )
+
+        # Apply an angular constraint on the binder-metal-metal atoms
+        # to maintain the metal centres relative orientation.
+        for bonds in combinations(metal_bonds, r=2):
+            bond1, bond2 = bonds
+            bond1_atoms = [bond1.atom1, bond1.atom2]
+            bond2_atoms = [bond2.atom1, bond2.atom2]
+            pres_atoms = list(set(bond1_atoms + bond2_atoms))
+            # If there are more than 3 atoms, implies two
+            # independant bonds.
+            if len(pres_atoms) < 4:
+                continue
+
+            if bond1.atom1 in metal_atoms:
+                idx1 = bond1.atom1.id
+                idx2 = bond1.atom2.id
+            else:
+                idx1 = bond1.atom2.id
+                idx2 = bond1.atom1.id
+
+            if bond2.atom1 in metal_atoms:
+                idx3 = bond2.atom1.id
+            else:
+                idx3 = bond2.atom2.id
+
+            pos1 = [
+                i for i in mol.get_atom_positions(atom_ids=[idx1])
+            ][0]
+            pos2 = [
+                i for i in mol.get_atom_positions(atom_ids=[idx2])
+            ][0]
+            pos3 = [
+                i for i in mol.get_atom_positions(atom_ids=[idx3])
+            ][0]
+            v1 = pos1 - pos2
+            v2 = pos3 - pos2
+            angle = vector_angle(v1, v2)
+            ff.UFFAddAngleConstraint(
+                idx1=idx1,
+                idx2=idx2,
+                idx3=idx3,
+                relative=False,
+                minAngleDeg=np.degrees(angle),
+                maxAngleDeg=np.degrees(angle),
                 forceConstant=1.0e4
             )
 
