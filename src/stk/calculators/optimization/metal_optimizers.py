@@ -641,20 +641,16 @@ class MetalOptimizer(Optimizer):
         None : :class:`NoneType`
 
         """
-        # # Add a very weak force constraint on all metal-metal
-        # # distances.
-        # metal_dist = max(
-        #     bb.get_maximum_diameter()
-        #     for bb in mol.building_block_vertices
-        # )
+        # Add a very weak force constraint on all metal-metal
+        # distances.
         #
         # for atoms in combinations(metal_atoms, r=2):
         #     ff.UFFAddDistanceConstraint(
         #         idx1=atoms[0].id,
         #         idx2=atoms[1].id,
-        #         relative=False,
-        #         minLen=metal_dist,
-        #         maxLen=metal_dist,
+        #         relative=True,
+        #         minLen=0.8,
+        #         maxLen=0.8,
         #         forceConstant=0.25e1
         #     )
 
