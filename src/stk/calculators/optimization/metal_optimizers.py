@@ -461,70 +461,6 @@ class MetalOptimizer(Optimizer):
 
         """
 
-        # Write rdkit molecule with metal atoms and bonds deleted.
-        edit_mol = self.to_rdkit_mol_no_metals(
-            mol,
-            metal_atoms=metal_atoms,
-            metal_bonds=metal_bonds
-        )
-
-        # Non-bonded interaction cutoffs need to be made very large
-        # because at the point of intialisation, the molecules that
-        # will eventually interact are very far apart.
-        rdkit.SanitizeMol(edit_mol)
-        ff = rdkit.UFFGetMoleculeForceField(
-            edit_mol,
-            vdwThresh=30,
-            ignoreInterfragInteractions=False
-        )
-
-        # Constrain selected bonds, angles and dihedrals and metal
-        # atoms.
-        # Constrain the metal centre.
-        self.apply_metal_centre_constraints(
-            mol,
-            ff,
-            metal_bonds,
-            metal_atoms
-        )
-
-        # Add angular constraints that enforce relative orientation
-        # between metal complexes + the topology centre of mass.
-        if self._restrict_orientation:
-            self.apply_orientation_restriction(
-                ff,
-                mol,
-                metal_bonds,
-                metal_atoms
-            )
-
-        # Constrain all bonds and angles based on input structure
-        # except for:
-        # (1) bonds including metals
-        # (2) bonds including atoms bonded to metals
-        for constraint in input_constraints:
-            const = input_constraints[constraint]
-            if const['type'] == 'bond' and self._restrict_bonds:
-                # Add distance constraints in place of metal bonds.
-                ff.UFFAddDistanceConstraint(
-                    idx1=const['idx1'],
-                    idx2=const['idx2'],
-                    relative=True,
-                    minLen=1.0,
-                    maxLen=1.0,
-                    forceConstant=const['fc']
-                )
-            elif const['type'] == 'angle' and self._restrict_angles:
-                ff.UFFAddAngleConstraint(
-                    idx1=const['idx1'],
-                    idx2=const['idx2'],
-                    idx3=const['idx3'],
-                    relative=False,
-                    minAngleDeg=const['angle'],
-                    maxAngleDeg=const['angle'],
-                    forceConstant=const['fc']
-                )
-
         # For bonds between ligand bonders and the rest of the ligand,
         # a weak force constant is applied to minimize to rel_distance.
         # This is the slow relaxation of the high-force bonds.
@@ -597,6 +533,70 @@ class MetalOptimizer(Optimizer):
         # Perform a forcefield optimisation that
         # only optimises non metal atoms that are not bonded to the
         # metal.
+
+        # Write rdkit molecule with metal atoms and bonds deleted.
+        edit_mol = self.to_rdkit_mol_no_metals(
+            mol,
+            metal_atoms=metal_atoms,
+            metal_bonds=metal_bonds
+        )
+
+        # Non-bonded interaction interactions need to be turned on
+        # because at the point of intialisation, the molecule are
+        # technically separate (not bonded) and are treated as
+        # fragments.
+        rdkit.SanitizeMol(edit_mol)
+        ff = rdkit.UFFGetMoleculeForceField(
+            edit_mol,
+            ignoreInterfragInteractions=self._ignore_vdw
+        )
+
+        # Constrain selected bonds, angles and dihedrals and metal
+        # atoms.
+        # Constrain the metal centre.
+        self.apply_metal_centre_constraints(
+            mol,
+            ff,
+            metal_bonds,
+            metal_atoms
+        )
+
+        # Add angular constraints that enforce relative orientation
+        # between metal complexes + the topology centre of mass.
+        if self._restrict_orientation:
+            self.apply_orientation_restriction(
+                ff,
+                mol,
+                metal_bonds,
+                metal_atoms
+            )
+
+        # Constrain all bonds and angles based on input structure
+        # except for:
+        # (1) bonds including metals
+        # (2) bonds including atoms bonded to metals
+        for constraint in input_constraints:
+            const = input_constraints[constraint]
+            if const['type'] == 'bond' and self._restrict_bonds:
+                # Add distance constraints in place of metal bonds.
+                ff.UFFAddDistanceConstraint(
+                    idx1=const['idx1'],
+                    idx2=const['idx2'],
+                    relative=False,
+                    minLen=const['length'],
+                    maxLen=const['length'],
+                    forceConstant=const['fc']
+                )
+            elif const['type'] == 'angle' and self._restrict_angles:
+                ff.UFFAddAngleConstraint(
+                    idx1=const['idx1'],
+                    idx2=const['idx2'],
+                    idx3=const['idx3'],
+                    relative=False,
+                    minAngleDeg=const['angle'],
+                    maxAngleDeg=const['angle'],
+                    forceConstant=const['fc']
+                )
 
         # Optimisation with UFF in RDKit. This method uses constraints
         # on the metal centre to attempt to enforce the metal geometry
