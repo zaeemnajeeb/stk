@@ -7,6 +7,9 @@ from itertools import combinations
 import rdkit.Chem.AllChem as rdkit
 import logging
 import numpy as np
+import subprocess as sp
+import os
+import uuid
 
 from ...utilities import vector_angle
 from .optimizers import Optimizer
@@ -907,3 +910,470 @@ class MetalOptimizer(Optimizer):
         if bond.atom2 in metal_atoms:
             return True
         return False
+
+
+class GulpMetalOptimizer(MetalOptimizer):
+    """
+    Applies forcefield optimizers that can handle metal centres.
+
+    Notes
+    -----
+    By default, :meth:`optimize` will run a restricted optimization
+    using constraints and the UFF4MOF. This forcefield requires some
+    explicit metal atom definitions, which are determined by the user.
+
+    Attributes
+    ----------
+
+
+    Examples
+    --------
+
+    """
+
+    def __init__(self, gulp_path, output_dir=None, use_cache=False):
+        """
+        Initialize a :class:`GulpMetalOptimizer` instance.
+
+        Parameters
+        ----------
+
+        """
+        self._gulp_path = gulp_path
+        self._output_dir = output_dir
+        self.metal_a_no = list(range(21, 31))
+        self.metal_a_no += list(range(39, 49))+list(range(72, 81))
+
+        super(MetalOptimizer, self).__init__(use_cache=use_cache)
+
+    def _add_atom_charge_flags(self, atom, atomkey):
+        total_valence = rdkit.Atom.GetTotalValence(atom)
+        print('tv', total_valence)
+        formal_charge = rdkit.Atom.GetFormalCharge(atom)
+        print('fc', formal_charge)
+
+        atnum = int(atom.GetAtomicNum())
+        print('atn', atnum)
+        # Mg.
+        if atnum == 12:
+            if total_valence == 2:
+                atomkey += '+2'
+            else:
+                sys.exit('charge warning')
+        # Al.
+        elif atnum == 13:
+            if total_valence != 3:
+                sys.exit('charge warning')
+
+        # Si.
+        elif atnum == 14:
+            if total_valence != 4:
+                sys.exit('charge warning')
+
+        # P.
+        elif atnum == 15:
+            if total_valence == 3:
+                atomkey += '+3'
+            elif total_valence == 5:
+                atomkey += '+5'
+            else:
+                sys.exit('charge warning')
+
+        # S.
+        elif atnum == 16:
+            if total_valence == 2:
+                atomkey += '+2'
+            elif total_valence == 4:
+                atomkey += '+4'
+            elif total_valence == 6:
+                atomkey += '+6'
+            else:
+                sys.exit('charge warning')
+
+        # Zn.
+        elif atnum == 30:
+            if total_valence == 2:
+                atomkey += '+2'
+            else:
+                sys.exit('charge warning')
+
+        # Ga.
+        elif atnum == 31:
+            if total_valence == 3:
+                atomkey += '+3'
+            else:
+                sys.exit('charge warning')
+
+        # As.
+        elif atnum == 33:
+            if total_valence == 3:
+                atomkey += '+3'
+            else:
+                sys.exit('charge warning')
+
+        # Se.
+        elif atnum == 34:
+            if total_valence == 2:
+                atomkey += '+2'
+            else:
+                sys.exit('charge warning')
+
+        # Cd.
+        elif atnum == 48:
+            if total_valence == 2:
+                atomkey += '+2'
+            else:
+                sys.exit('charge warning')
+
+        # In.
+        elif atnum == 49:
+            if total_valence == 3:
+                atomkey += '+3'
+            else:
+                sys.exit('charge warning')
+
+        # Sb.
+        elif atnum == 51:
+            if total_valence == 3:
+                atomkey += '+3'
+            else:
+                sys.exit('charge warning')
+
+        # Te.
+        elif atnum == 52:
+            if total_valence == 2:
+                atomkey += '+2'
+            else:
+                sys.exit('charge warning')
+
+        # Hg.
+        elif atnum == 80:
+            if total_valence == 2:
+                atomkey += '+2'
+            else:
+                sys.exit('charge warning')
+
+        # Tl.
+        elif atnum == 81:
+            if total_valence == 3:
+                atomkey += '+3'
+            else:
+                sys.exit('charge warning')
+
+        # Pb.
+        elif atnum == 82:
+            if total_valence == 3:
+                atomkey += '+3'
+            else:
+                sys.exit('charge warning')
+
+        # Bi.
+        elif atnum == 83:
+            if total_valence == 3:
+                atomkey += '+3'
+            else:
+                sys.exit('charge warning')
+
+        # Po.
+        elif atnum == 84:
+            if total_valence == 2:
+                atomkey += '+2'
+            else:
+                sys.exit('charge warning')
+
+        # Lanthanides.
+        elif atnum >= 57 and atnum <= 71:
+            if total_valence == 6:
+                atomkey += '+3'
+            else:
+                sys.exit('charge warning')
+
+        return atomkey
+
+    def _get_atom_label(self, atom):
+        atnum = int(atom.GetAtomicNum())
+        print(atnum)
+        atomkey = atom.GetSymbol()
+        print(atomkey)
+        if len(atomkey) == 1:
+            atomkey += '_'
+        print(atomkey)
+
+        table = rdkit.GetPeriodicTable()
+
+        chk1 = (
+            rdkit.PeriodicTable.GetDefaultValence(table, atnum) == -1
+        )
+        chk2 = (rdkit.PeriodicTable.GetNOuterElecs(table, atnum) != 1)
+        chk3 = (rdkit.PeriodicTable.GetNOuterElecs(table, atnum) != 7)
+        chk4 = chk2 and chk3
+        print(chk1, chk2, chk3, chk4)
+        if chk1 or chk4:
+            print(rdkit.PeriodicTable.GetDefaultValence(table, atnum))
+            print(rdkit.PeriodicTable.GetNOuterElecs(table, atnum))
+            print('-----')
+            print(rdkit.Atom.GetHybridization(atom))
+            hybrid = rdkit.Atom.GetHybridization(atom)
+            print(hybrid)
+            if atnum == 84:
+                print('84')
+                atomkey += '3'
+                print(atomkey)
+                if hybrid != rdkit.HybridizationType.SP3:
+                    print('warning 84')
+            elif atnum == 80:
+                print('80')
+                atomkey += '1'
+                print(atomkey)
+                if hybrid != rdkit.HybridizationType.SP:
+                    print('warning 80')
+            else:
+                if hybrid == rdkit.HybridizationType.SP:
+                    atomkey += '1'
+                    print(atomkey)
+                elif hybrid == rdkit.HybridizationType.SP2:
+                    chk1a = rdkit.Atom.GetIsAromatic(atom)
+                    bonds = rdkit.Atom.GetBonds(atom)
+                    conjugated = False
+                    for bond in bonds:
+                        print(bond)
+                        print(rdkit.Bond.GetIsConjugated(bond))
+                        if rdkit.Bond.GetIsConjugated(bond):
+                            conjugated = True
+                            break
+                    chk2a = conjugated
+                    chk3a = atnum in [6, 7, 8, 16]
+                    chk4a = (chk1a or chk2a)
+                    if chk4a and chk3a:
+                        atomkey += 'R'
+                        print(atomkey)
+                    else:
+                        atomkey += '2'
+                        print(atomkey)
+                elif hybrid == rdkit.HybridizationType.SP3:
+                    atomkey += '3'
+                    print(atomkey)
+                elif hybrid == rdkit.HybridizationType.SP3D:
+                    atomkey += '5'
+                    print(atomkey)
+                elif hybrid == rdkit.HybridizationType.SP3D2:
+                    atomkey += '6'
+                    print(atomkey)
+                else:
+                    sys.exit('final warning. not recog')
+        atomkey = self._add_atom_charge_flags(atom, atomkey)
+        return atomkey
+
+    def _type_translator(self):
+        type_translator = {}
+        types = set([self.atom_labels[i] for i in self.atom_labels])
+        for t in types:
+            if not t[1].isalpha():
+                symb = t[0]
+            else:
+                symb = t[0:2]
+            for i in range(1, 100):
+                name = f'{symb}{i}'
+                print(name)
+                if name in type_translator.values():
+                    continue
+                else:
+                    type_translator[t] = name
+                    break
+
+        print(types)
+        print(type_translator)
+        return type_translator
+
+    def _position_section(self, mol, type_translator):
+        position_section = '\ncartesian\n'
+        for atom in mol.atoms:
+            atom_type = type_translator[self.atom_labels[atom.id]]
+            position = mol.get_center_of_mass(atom_ids=[atom.id])
+            posi_string = (
+                f'{atom_type} core {round(position[0], 5)} '
+                f'{round(position[1], 5)} {round(position[2], 5)}\n'
+            )
+            position_section += posi_string
+
+        return position_section
+
+    def _bond_section(self, mol, metal_atoms):
+        bond_section = '\n'
+        for bond in mol.bonds:
+            atom_types = [
+                self.atom_labels[i.id]
+                for i in [bond.atom1, bond.atom2]
+            ]
+
+            # Set bond orders.
+            if self.has_h(bond):
+                # H has bond order of 1.
+                bond_type = ''
+            elif self.has_M(bond, metal_atoms):
+                bond_type = 'half'
+            elif '_R' in atom_types[0] and '_R' in atom_types[1]:
+                bond_type = 'resonant'
+            elif bond.order == 1:
+                bond_type = ''
+            elif bond.order == 2:
+                bond_type = 'double'
+            elif bond.order == 3:
+                bond_type = 'triple'
+            print(bond, bond_type, atom_types)
+
+            string = (
+                f'connect {bond.atom1.id+1} {bond.atom2.id+1} '
+                f'{bond_type}'
+            )
+            bond_section += string+'\n'
+
+        return bond_section
+
+    def _species_section(self, type_translator):
+        species_section = '\nspecies\n'
+        for spec in type_translator:
+            name = type_translator[spec]
+            species_section += f'{name} {spec}\n'
+
+        return species_section
+
+    def _write_gulp_file(self, mol, metal_atoms, in_file, output_xyz):
+
+        type_translator = self._type_translator()
+
+        top_line = 'opti conv noautobond fix molmec cartesian\n'
+
+        position_section = self._position_section(mol, type_translator)
+        bond_section = self._bond_section(mol, metal_atoms)
+        species_section = self._species_section(type_translator)
+
+        library = '\nlibrary uff4mof.lib\n'
+
+        output_section = (
+            '\n'
+            f'output xyz {output_xyz}\n'
+            # 'output movie xyz steps_.xyz\n'
+        )
+
+        with open(in_file, 'w') as f:
+            f.write(top_line)
+            f.write(position_section)
+            f.write(bond_section)
+            f.write(species_section)
+            f.write(library)
+            f.write(output_section)
+
+    def assign_FF(self, mol, metal_FF):
+        """
+        Assign forcefield types to molecule.
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+
+        None : :class:`NoneType`
+
+        """
+        metal_atoms = self.get_metal_atoms(mol)
+        metal_ids = [i.id for i in metal_atoms]
+        metal_bonds, _ = self.get_metal_bonds(mol, metal_atoms)
+        edit_mol = self.to_rdkit_mol_no_metals(
+            mol=mol,
+            metal_atoms=metal_atoms,
+            metal_bonds=metal_bonds
+        )
+        print(edit_mol)
+
+        # Get forcefield parameters.
+        rdkit.SanitizeMol(edit_mol)
+        self.atom_labels = {}
+        for i in range(edit_mol.GetNumAtoms()):
+            if i in metal_ids:
+                print('is metal')
+                print(i, mol.atoms[i])
+                self.atom_labels[i] = 'metal'
+            else:
+                atom = edit_mol.GetAtomWithIdx(i)
+                atom_label = self._get_atom_label(atom)
+                print(mol.atoms[i], atom_label)
+                self.atom_labels[i] = atom_label
+
+        # Write UFF4MOF specific forcefield parameters.
+        # Metals.
+        for atomid in self.atom_labels:
+            if self.atom_labels[atomid] == 'metal':
+                print(self.atom_labels[atomid])
+                self.atom_labels[atomid] = metal_FF
+                print(self.atom_labels[atomid])
+
+        # Metal binder atoms of specific forcefields.
+        # Check functional groups.
+
+    def _run_gulp(self, in_file, out_file):
+        cmd = f'{self._gulp_path} < {in_file}'
+        print(cmd)
+        with open(out_file, 'w') as f:
+            # Note that sp.call will hold the program until completion
+            # of the calculation.
+            sp.call(
+                cmd,
+                stdin=sp.PIPE,
+                stdout=f,
+                stderr=sp.PIPE,
+                # Shell is required to run complex arguments.
+                shell=True
+            )
+
+    def _move_generated_files(self, in_file, out_file, output_xyz):
+        if not os.path.exists(self._output_dir):
+            os.mkdir(self._output_dir)
+
+        os.rename(in_file, f'{self._output_dir}/{in_file}')
+        os.rename(out_file, f'{self._output_dir}/{out_file}')
+        os.rename(output_xyz, f'{self._output_dir}/{output_xyz}')
+
+    def optimize(self, mol):
+        """
+        Optimize `mol`.
+
+        Parameters
+        ----------
+        mol : :class:`.Molecule`
+            The molecule to be optimized.
+
+        Returns
+        -------
+        None : :class:`NoneType`
+
+        """
+        if self._output_dir is None:
+            output_dir = str(uuid.uuid4().int)
+        else:
+            output_dir = self._output_dir
+        output_dir = os.path.abspath(output_dir)
+
+        in_file = 'gulp_opt.gin'
+        out_file = 'gulp_opt.ginout'
+        output_xyz = 'gulp_opt.xyz'
+
+        metal_atoms = self.get_metal_atoms(mol)
+
+        # Write GULP file.
+        self._write_gulp_file(
+            mol=mol,
+            metal_atoms=metal_atoms,
+            in_file=in_file,
+            output_xyz=output_xyz
+        )
+
+        # Run.
+        self._run_gulp(in_file, out_file)
+
+        # Update from output.
+        mol.update_from_file(output_xyz)
+
+        # Move files.
+        self._move_generated_files(in_file, out_file, output_xyz)
