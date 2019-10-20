@@ -1166,7 +1166,7 @@ class GulpMetalOptimizer(MetalOptimizer):
 
     def _type_translator(self):
         type_translator = {}
-        types = set([self.atom_labels[i] for i in self.atom_labels])
+        types = set([self.atom_labels[i][0] for i in self.atom_labels])
         for t in types:
             if not t[1].isalpha():
                 symb = t[0]
@@ -1188,7 +1188,7 @@ class GulpMetalOptimizer(MetalOptimizer):
     def _position_section(self, mol, type_translator):
         position_section = '\ncartesian\n'
         for atom in mol.atoms:
-            atom_type = type_translator[self.atom_labels[atom.id]]
+            atom_type = type_translator[self.atom_labels[atom.id][0]]
             position = mol.get_center_of_mass(atom_ids=[atom.id])
             posi_string = (
                 f'{atom_type} core {round(position[0], 5)} '
@@ -1202,7 +1202,7 @@ class GulpMetalOptimizer(MetalOptimizer):
         bond_section = '\n'
         for bond in mol.bonds:
             atom_types = [
-                self.atom_labels[i.id]
+                self.atom_labels[i.id][0]
                 for i in [bond.atom1, bond.atom2]
             ]
 
@@ -1285,29 +1285,38 @@ class GulpMetalOptimizer(MetalOptimizer):
             metal_atoms=metal_atoms,
             metal_bonds=metal_bonds
         )
-        print(edit_mol)
 
         # Get forcefield parameters.
         rdkit.SanitizeMol(edit_mol)
         self.atom_labels = {}
+        func_group_atoms = {
+            j.id: i.fg_type.name
+            for i in mol.func_groups
+            for j in i.bonders
+        }
         for i in range(edit_mol.GetNumAtoms()):
             if i in metal_ids:
                 print('is metal')
                 print(i, mol.atoms[i])
-                self.atom_labels[i] = 'metal'
+                self.atom_labels[i] = [None, 'metal', None]
             else:
                 atom = edit_mol.GetAtomWithIdx(i)
                 atom_label = self._get_atom_label(atom)
                 print(mol.atoms[i], atom_label)
-                self.atom_labels[i] = atom_label
+                if i in func_group_atoms:
+                    fg = func_group_atoms[i]
+                    self.atom_labels[i] = [atom_label, 'bonder', fg]
+                else:
+                    self.atom_labels[i] = [atom_label, None, None]
 
         # Write UFF4MOF specific forcefield parameters.
         # Metals.
         for atomid in self.atom_labels:
-            if self.atom_labels[atomid] == 'metal':
+            if self.atom_labels[atomid][1] == 'metal':
                 print(self.atom_labels[atomid])
-                self.atom_labels[atomid] = metal_FF
+                self.atom_labels[atomid][0] = metal_FF
                 print(self.atom_labels[atomid])
+                input()
 
         # Metal binder atoms of specific forcefields.
         # Check functional groups.
