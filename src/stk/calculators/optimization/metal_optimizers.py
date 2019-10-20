@@ -1441,7 +1441,6 @@ class GulpMDMetalOptimizer(GulpMetalOptimizer):
         mol,
         metal_atoms,
         in_file,
-        output_xyz,
         output_traj
     ):
 
@@ -1472,7 +1471,6 @@ class GulpMDMetalOptimizer(GulpMetalOptimizer):
         output_section = (
             '\n'
             f'output trajectory ascii {output_traj}\n'
-            f'output xyz {output_xyz}\n'
         )
 
         with open(in_file, 'w') as f:
@@ -1638,7 +1636,8 @@ class GulpMDMetalOptimizer(GulpMetalOptimizer):
 
         in_file = 'gulp_MD.gin'
         out_file = 'gulp_MD.ginout'
-        output_xyz = 'gulp_MD.xyz'
+        output_xyz = 'gulp_MD_template.xyz'
+        mol.write(output_xyz)
         output_traj = 'gulp_MD.trg'
         xyz_traj = 'gulp_MD_traj.xyz'
         low_conf_xyz = 'low_energy_conf.xyz'
