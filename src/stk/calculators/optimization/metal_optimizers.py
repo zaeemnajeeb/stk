@@ -1327,13 +1327,12 @@ class GulpMetalOptimizer(MetalOptimizer):
                 shell=True
             )
 
-    def _move_generated_files(self, in_file, out_file, output_xyz):
+    def _move_generated_files(self, files):
         if not os.path.exists(self._output_dir):
             os.mkdir(self._output_dir)
 
-        os.rename(in_file, f'{self._output_dir}/{in_file}')
-        os.rename(out_file, f'{self._output_dir}/{out_file}')
-        os.rename(output_xyz, f'{self._output_dir}/{output_xyz}')
+        for file in files:
+            os.rename(file, f'{self._output_dir}/{file}')
 
     def optimize(self, mol):
         """
@@ -1376,4 +1375,6 @@ class GulpMetalOptimizer(MetalOptimizer):
         mol.update_from_file(output_xyz)
 
         # Move files.
-        self._move_generated_files(in_file, out_file, output_xyz)
+        self._move_generated_files(
+            files=[in_file, out_file, output_xyz]
+        )
