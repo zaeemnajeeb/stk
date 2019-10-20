@@ -1378,3 +1378,300 @@ class GulpMetalOptimizer(MetalOptimizer):
         self._move_generated_files(
             files=[in_file, out_file, output_xyz]
         )
+
+
+class GulpMDMetalOptimizer(GulpMetalOptimizer):
+    """
+    Applies forcefield MD that can handle metal centres.
+
+    Notes
+    -----
+    By default, :meth:`optimize` will run a restricted optimization
+    using constraints and the UFF4MOF. This forcefield requires some
+    explicit metal atom definitions, which are determined by the user.
+
+    Attributes
+    ----------
+
+
+    Examples
+    --------
+
+    """
+
+    def __init__(
+        self,
+        gulp_path,
+        output_dir=None,
+        integrator='stochastic',
+        ensemble='nvt',
+        temperature='300',
+        equilbration='1.0',
+        production='10.0',
+        timestep='1.0',
+        sample='0.050',
+        write='0.050',
+        use_cache=False
+    ):
+        """
+        Initialize a :class:`GulpMetalOptimizer` instance.
+
+        Parameters
+        ----------
+
+        """
+        self._gulp_path = gulp_path
+        self._output_dir = output_dir
+        self._integrator = integrator
+        self._ensemble = ensemble
+        self._temperature = temperature
+        self._equilbration = equilbration
+        self._production = production
+        self._timestep = timestep
+        self._sample = sample
+        self._write = write
+
+        self.metal_a_no = list(range(21, 31))
+        self.metal_a_no += list(range(39, 49))+list(range(72, 81))
+
+        super(MetalOptimizer, self).__init__(use_cache=use_cache)
+
+    def _write_gulp_file(
+        self,
+        mol,
+        metal_atoms,
+        in_file,
+        output_xyz,
+        output_traj
+    ):
+
+        type_translator = self._type_translator()
+
+        top_line = 'md conv noautobond fix molmec cartesian\n'
+
+        position_section = self._position_section(mol, type_translator)
+        bond_section = self._bond_section(mol, metal_atoms)
+        species_section = self._species_section(type_translator)
+
+        library = '\nlibrary uff4mof.lib\n'
+
+        md_section = (
+            '\n'
+            "mdmaxtemp 10000\n"
+            f"integrator {self._integrator}\n"
+            f"ensemble {self._ensemble}\n"
+            f"temperature {self._temperature}\n"
+            f"equilbration {self._equilbration} ps\n"
+            f"production {self._production} ps\n"
+            f"timestep {self._timestep} fs\n"
+            f"sample {self._sample} ps\n"
+            f"write {self._write} ps\n"
+            '\n'
+        )
+
+        output_section = (
+            '\n'
+            f'output trajectory ascii {output_traj}\n'
+            f'output xyz {output_xyz}\n'
+        )
+
+        with open(in_file, 'w') as f:
+            f.write(top_line)
+            f.write(position_section)
+            f.write(bond_section)
+            f.write(species_section)
+            f.write(library)
+            f.write(md_section)
+            f.write(output_section)
+
+    def _convert_traj_to_xyz(self, output_xyz, output_traj, xyz_traj):
+
+        # Get atom types from an existing xyz file.
+        atom_types = []
+        with open(output_xyz, 'r') as f:
+            for line in f.readlines()[2:]:
+                atom_types.append(line.rstrip().split(' ')[0])
+
+        # Read in lines from trajectory file.
+        with open(output_traj, 'r') as f:
+            lines = f.readlines()
+
+        # Split file using strings.
+        id = 0
+        s_times = {}
+        s_coords = {}
+        s_vels = {}
+        s_derivs = {}
+        s_sites = {}
+        coords = []
+        vels = []
+        derivs = []
+        sites = []
+        switch = None
+        for line in lines:
+            li = line.rstrip()
+            if '#  Time/KE/E/T' in li:
+                switch = 'times'
+                s_coords[id] = coords
+                coords = []
+                s_vels[id] = vels
+                vels = []
+                s_derivs[id] = derivs
+                derivs = []
+                s_sites[id] = sites
+                sites = []
+                id += 1
+            elif '#  Coordinates' in li:
+                switch = 'coords'
+            elif '#  Velocities' in li:
+                switch = 'vels'
+            elif '#  Derivatives' in li:
+                switch = 'derivs'
+            elif '#  Site energies' in li:
+                switch = 'sites'
+            elif switch == 'coords':
+                coords.append([i for i in li.split(' ') if i])
+            elif switch == 'vels':
+                vels.append([i for i in li.split(' ') if i])
+            elif switch == 'derivs':
+                derivs.append([i for i in li.split(' ') if i])
+            elif switch == 'sites':
+                sites.append([i for i in li.split(' ') if i])
+            elif switch == 'times':
+                s_times[id] = [i for i in li.split(' ') if i]
+            elif switch is None:
+                pass
+        # Add final timestep.
+        s_coords[id] = coords
+        coords = []
+        s_vels[id] = vels
+        vels = []
+        s_derivs[id] = derivs
+        derivs = []
+        s_sites[id] = sites
+        sites = []
+
+        ids = []
+        tt = []
+        pot_energies = []
+        new_lines = []
+        for id in s_times:
+            times = s_times[id]
+            ids.append(id)
+            tt.append(float(times[0]))
+            pot_energies.append(float(times[2]))
+            coords = s_coords[id]
+            sites = s_sites[id]
+            xyz_string = (
+                f'{len(coords)}\n'
+                f'{times[0]},{times[1]},{times[2]},{times[3]}\n'
+            )
+
+            for i, coord in enumerate(coords):
+                site = sites[i][0]
+                xyz_string += (
+                    f'{atom_types[i]} {coord[0]} {coord[1]} '
+                    f'{coord[2]} {site}\n'
+                )
+
+            new_lines.append(xyz_string)
+
+        with open(xyz_traj, 'w') as f:
+            for line in new_lines:
+                f.write(line)
+
+        return atom_types, ids, tt, pot_energies, s_times, s_coords
+
+    def _save_lowest_energy_conf(
+        self,
+        output_xyz,
+        output_traj,
+        xyz_traj,
+        low_conf_xyz
+    ):
+
+        # Convert GULP trajectory file to xyz trajectory.
+        results = self._convert_traj_to_xyz(
+            output_xyz,
+            output_traj,
+            xyz_traj
+        )
+        atom_types, ids, tt, pot_energies, s_times, s_coords = results
+
+        # Find lowest energy conformation and output to XYZ.
+        min_energy = min(pot_energies)
+        print(min_energy)
+        min_id = ids[pot_energies.index(min_energy)]
+        print(min_id)
+        times = s_times[min_id]
+        coords = s_coords[min_id]
+        xyz_string = (
+            f'{len(coords)}\n'
+            f'{times[0]},{times[1]},{times[2]},{times[3]}\n'
+        )
+        for i, coord in enumerate(coords):
+            xyz_string += (
+                f'{atom_types[i]} {coord[0]} {coord[1]} {coord[2]}\n'
+            )
+        with open(low_conf_xyz, 'w') as f:
+            f.write(xyz_string)
+
+    def optimize(self, mol):
+        """
+        Optimize `mol`.
+
+        Parameters
+        ----------
+        mol : :class:`.Molecule`
+            The molecule to be optimized.
+
+        Returns
+        -------
+        None : :class:`NoneType`
+
+        """
+        if self._output_dir is None:
+            output_dir = str(uuid.uuid4().int)
+        else:
+            output_dir = self._output_dir
+        output_dir = os.path.abspath(output_dir)
+
+        in_file = 'gulp_MD.gin'
+        out_file = 'gulp_MD.ginout'
+        output_xyz = 'gulp_MD.xyz'
+        output_traj = 'gulp_MD.trg'
+        xyz_traj = 'gulp_MD_traj.xyz'
+        low_conf_xyz = 'low_energy_conf.xyz'
+
+        metal_atoms = self.get_metal_atoms(mol)
+
+        # Write GULP file.
+        self._write_gulp_file(
+            mol=mol,
+            metal_atoms=metal_atoms,
+            in_file=in_file,
+            output_xyz=output_xyz,
+            output_traj=output_traj
+        )
+
+        # Run.
+        self._run_gulp(in_file, out_file)
+
+        # Get lowest energy conformer from trajectory.
+        self._save_lowest_energy_conf(
+            output_xyz,
+            output_traj,
+            xyz_traj,
+            low_conf_xyz
+        )
+
+        # Update from output.
+        mol.update_from_file(low_conf_xyz)
+
+        # Move files.
+        self._move_generated_files(
+            files=[
+                in_file, out_file, output_xyz,
+                output_traj, xyz_traj, low_conf_xyz
+            ]
+        )
