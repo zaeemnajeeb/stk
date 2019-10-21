@@ -956,6 +956,12 @@ class GulpMetalOptimizer(MetalOptimizer):
         super(MetalOptimizer, self).__init__(use_cache=use_cache)
 
     def _add_atom_charge_flags(self, atom, atomkey):
+        """
+
+
+        https://github.com/rdkit/rdkit/blob/master/Code/
+        GraphMol/ForceFieldHelpers/UFF/AtomTyper.cpp
+        """
         total_valence = rdkit.Atom.GetTotalValence(atom)
         print('tv', total_valence)
         formal_charge = rdkit.Atom.GetFormalCharge(atom)
@@ -1102,6 +1108,12 @@ class GulpMetalOptimizer(MetalOptimizer):
         return atomkey
 
     def _get_atom_label(self, atom):
+        """
+
+
+        https://github.com/rdkit/rdkit/blob/master/Code/
+        GraphMol/ForceFieldHelpers/UFF/AtomTyper.cpp
+        """
         atnum = int(atom.GetAtomicNum())
         print(atnum)
         atomkey = atom.GetSymbol()
