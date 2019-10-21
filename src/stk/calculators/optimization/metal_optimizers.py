@@ -990,14 +990,16 @@ class GulpMetalOptimizer(MetalOptimizer):
 
         # S.
         elif atnum == 16:
-            if total_valence == 2:
-                atomkey += '+2'
-            elif total_valence == 4:
-                atomkey += '+4'
-            elif total_valence == 6:
-                atomkey += '+6'
-            else:
-                sys.exit('charge warning')
+            hybrid = rdkit.Atom.GetHybridization(atom)
+            if hybrid != rdkit.HybridizationType.SP2:
+                if total_valence == 2:
+                    atomkey += '+2'
+                elif total_valence == 4:
+                    atomkey += '+4'
+                elif total_valence == 6:
+                    atomkey += '+6'
+                else:
+                    sys.exit('charge warning')
 
         # Zn.
         elif atnum == 30:
