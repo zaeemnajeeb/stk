@@ -1707,6 +1707,7 @@ class GulpMDMetalOptimizer(GulpMetalOptimizer):
         self._move_generated_files(
             files=[
                 in_file, out_file, output_xyz,
-                output_traj, xyz_traj, low_conf_xyz
+                output_traj, xyz_traj, low_conf_xyz,
+                'temp_conf.xyz'
             ]
         )
