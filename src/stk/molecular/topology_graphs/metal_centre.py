@@ -3,6 +3,8 @@ Metal Complex
 =============
 
 #. :class:`.SquarePlanar`
+#. :class:`.Paddlewheel`
+#. :class:`.Octahedral`
 
 """
 
@@ -705,13 +707,43 @@ class Octahedral(MetalCentre):
 
     vertex_data = (
         _MetalCentreVertexData(0, 0, 0),
+        _MetalCentreVertexData(1, 0, 0),
         _MetalCentreVertexData(0, 1, 0),
+        _MetalCentreVertexData(0, 0, 1),
+        _MetalCentreVertexData(-1, 0, 0),
+        _MetalCentreVertexData(0, -1, 0),
+        _MetalCentreVertexData(0, 0, -1),
     )
 
     edge_data = (
         EdgeData(
             vertex_data[0],
             vertex_data[1],
+            position=[2.0, 0, 0]
+        ),
+        EdgeData(
+            vertex_data[0],
+            vertex_data[2],
             position=[0, 2.0, 0]
+        ),
+        EdgeData(
+            vertex_data[0],
+            vertex_data[3],
+            position=[0, 0, 2.0]
+        ),
+        EdgeData(
+            vertex_data[0],
+            vertex_data[4],
+            position=[-2.0, 0, 0]
+        ),
+        EdgeData(
+            vertex_data[0],
+            vertex_data[5],
+            position=[0, -2.0, 0]
+        ),
+        EdgeData(
+            vertex_data[0],
+            vertex_data[6],
+            position=[0, 0, -2.0]
         ),
     )

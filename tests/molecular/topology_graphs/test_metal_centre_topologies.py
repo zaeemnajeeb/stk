@@ -142,13 +142,13 @@ def _test_construction(cycle, num_expected_bbs):
 def test_sqpl():
     metal = _build_metal()
     n_atom = _build_N_atom()
-    sqpl = stk.metal_centre.SquarePlanar()
-    sqpl_complex = stk.ConstructedMolecule(
+    top = stk.metal_centre.SquarePlanar()
+    complex = stk.ConstructedMolecule(
         building_blocks=[metal, n_atom],
-        topology_graph=sqpl,
+        topology_graph=top,
         building_block_vertices={
-            metal: tuple([sqpl.vertices[0]]),
-            n_atom: sqpl.vertices[1:]
+            metal: tuple([top.vertices[0]]),
+            n_atom: top.vertices[1:]
         }
     )
 
@@ -157,4 +157,25 @@ def test_sqpl():
         n_atom: 4,
     }
 
-    _test_construction(sqpl_complex, num_expected_bbs)
+    _test_construction(complex, num_expected_bbs)
+
+
+def test_oh():
+    metal = _build_metal()
+    n_atom = _build_N_atom()
+    top = stk.metal_centre.Octahedral()
+    complex = stk.ConstructedMolecule(
+        building_blocks=[metal, n_atom],
+        topology_graph=top,
+        building_block_vertices={
+            metal: tuple([top.vertices[0]]),
+            n_atom: top.vertices[1:]
+        }
+    )
+
+    num_expected_bbs = {
+        metal: 1,
+        n_atom: 6,
+    }
+
+    _test_construction(complex, num_expected_bbs)
