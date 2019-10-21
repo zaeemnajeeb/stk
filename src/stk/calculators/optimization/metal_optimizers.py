@@ -498,13 +498,11 @@ class MetalOptimizer(Optimizer):
 
         # Perform UFF optimization with rdkit.
         ff.Minimize(maxIts=self._max_iterations)
-        energy = ff.CalcEnergy()
 
         # Update stk molecule from optimized molecule. This should
         # only modify atom positions, which means metal atoms will be
         # reinstated.
         mol.update_from_rdkit_mol(edit_mol)
-        return energy
 
     def optimize(self, mol):
         """
@@ -609,36 +607,29 @@ class MetalOptimizer(Optimizer):
         # metal-ligand and adjacent bonds are slowly relaxed to normal
         # values.
         # The rest of the ligands are constrained to the input value.
-        with open('opt.ey', 'w') as f:
-            for i in range(self._res_steps):
-                e = self._restricted_optimization(
-                    mol=mol,
-                    edit_mol=edit_mol,
-                    ff=ff,
-                    metal_atoms=metal_atoms,
-                    metal_bonds=metal_bonds,
-                    ids_to_metals=ids_to_metals,
-                    input_constraints=input_constraints
-                )
-                mol.write(f'opt_{i}.xyz')
-                f.write(f'{i},{e}\n')
-                print(i)
+        for i in range(self._res_steps):
+            self._restricted_optimization(
+                mol=mol,
+                edit_mol=edit_mol,
+                ff=ff,
+                metal_atoms=metal_atoms,
+                metal_bonds=metal_bonds,
+                ids_to_metals=ids_to_metals,
+                input_constraints=input_constraints
+            )
 
-            # Finish with one long optimisation.
-            if self._do_long_opt:
-                self._max_iterations = 500
-                e = self._restricted_optimization(
-                    mol=mol,
-                    edit_mol=edit_mol,
-                    ff=ff,
-                    metal_atoms=metal_atoms,
-                    metal_bonds=metal_bonds,
-                    ids_to_metals=ids_to_metals,
-                    input_constraints=input_constraints
-                )
-                mol.write(f'opt_{i+1}.xyz')
-                f.write(f'long,{e}\n')
-                print(i)
+        # Finish with one long optimisation.
+        if self._do_long_opt:
+            self._max_iterations = 500
+            self._restricted_optimization(
+                mol=mol,
+                edit_mol=edit_mol,
+                ff=ff,
+                metal_atoms=metal_atoms,
+                metal_bonds=metal_bonds,
+                ids_to_metals=ids_to_metals,
+                input_constraints=input_constraints
+            )
 
     def apply_metal_centre_constraints(
         self,
@@ -963,12 +954,9 @@ class GulpMetalOptimizer(MetalOptimizer):
         GraphMol/ForceFieldHelpers/UFF/AtomTyper.cpp
         """
         total_valence = rdkit.Atom.GetTotalValence(atom)
-        print('tv', total_valence)
-        formal_charge = rdkit.Atom.GetFormalCharge(atom)
-        print('fc', formal_charge)
-
         atnum = int(atom.GetAtomicNum())
-        print('atn', atnum)
+
+        # Go through element cases.
         # Mg.
         if atnum == 12:
             if total_valence == 2:
@@ -1115,12 +1103,9 @@ class GulpMetalOptimizer(MetalOptimizer):
         GraphMol/ForceFieldHelpers/UFF/AtomTyper.cpp
         """
         atnum = int(atom.GetAtomicNum())
-        print(atnum)
         atomkey = atom.GetSymbol()
-        print(atomkey)
         if len(atomkey) == 1:
             atomkey += '_'
-        print(atomkey)
 
         table = rdkit.GetPeriodicTable()
 
@@ -1130,37 +1115,24 @@ class GulpMetalOptimizer(MetalOptimizer):
         chk2 = (rdkit.PeriodicTable.GetNOuterElecs(table, atnum) != 1)
         chk3 = (rdkit.PeriodicTable.GetNOuterElecs(table, atnum) != 7)
         chk4 = chk2 and chk3
-        print(chk1, chk2, chk3, chk4)
         if chk1 or chk4:
-            print(rdkit.PeriodicTable.GetDefaultValence(table, atnum))
-            print(rdkit.PeriodicTable.GetNOuterElecs(table, atnum))
-            print('-----')
-            print(rdkit.Atom.GetHybridization(atom))
             hybrid = rdkit.Atom.GetHybridization(atom)
-            print(hybrid)
             if atnum == 84:
-                print('84')
                 atomkey += '3'
-                print(atomkey)
                 if hybrid != rdkit.HybridizationType.SP3:
-                    print('warning 84')
+                    sys.exit('warning 84')
             elif atnum == 80:
-                print('80')
                 atomkey += '1'
-                print(atomkey)
                 if hybrid != rdkit.HybridizationType.SP:
-                    print('warning 80')
+                    sys.exit('warning 80')
             else:
                 if hybrid == rdkit.HybridizationType.SP:
                     atomkey += '1'
-                    print(atomkey)
                 elif hybrid == rdkit.HybridizationType.SP2:
                     chk1a = rdkit.Atom.GetIsAromatic(atom)
                     bonds = rdkit.Atom.GetBonds(atom)
                     conjugated = False
                     for bond in bonds:
-                        print(bond)
-                        print(rdkit.Bond.GetIsConjugated(bond))
                         if rdkit.Bond.GetIsConjugated(bond):
                             conjugated = True
                             break
@@ -1169,19 +1141,14 @@ class GulpMetalOptimizer(MetalOptimizer):
                     chk4a = (chk1a or chk2a)
                     if chk4a and chk3a:
                         atomkey += 'R'
-                        print(atomkey)
                     else:
                         atomkey += '2'
-                        print(atomkey)
                 elif hybrid == rdkit.HybridizationType.SP3:
                     atomkey += '3'
-                    print(atomkey)
                 elif hybrid == rdkit.HybridizationType.SP3D:
                     atomkey += '5'
-                    print(atomkey)
                 elif hybrid == rdkit.HybridizationType.SP3D2:
                     atomkey += '6'
-                    print(atomkey)
                 else:
                     sys.exit('final warning. not recog')
         atomkey = self._add_atom_charge_flags(atom, atomkey)
@@ -1197,15 +1164,12 @@ class GulpMetalOptimizer(MetalOptimizer):
                 symb = t[0:2]
             for i in range(1, 100):
                 name = f'{symb}{i}'
-                print(name)
                 if name in type_translator.values():
                     continue
                 else:
                     type_translator[t] = name
                     break
 
-        print(types)
-        print(type_translator)
         return type_translator
 
     def _position_section(self, mol, type_translator):
@@ -1243,7 +1207,6 @@ class GulpMetalOptimizer(MetalOptimizer):
                 bond_type = 'double'
             elif bond.order == 3:
                 bond_type = 'triple'
-            print(bond, bond_type, atom_types)
 
             string = (
                 f'connect {bond.atom1.id+1} {bond.atom2.id+1} '
@@ -1319,13 +1282,10 @@ class GulpMetalOptimizer(MetalOptimizer):
         }
         for i in range(edit_mol.GetNumAtoms()):
             if i in metal_ids:
-                print('is metal')
-                print(i, mol.atoms[i])
                 self.atom_labels[i] = [None, 'metal', None]
             else:
                 atom = edit_mol.GetAtomWithIdx(i)
                 atom_label = self._get_atom_label(atom)
-                print(mol.atoms[i], atom_label)
                 if i in func_group_atoms:
                     fg = func_group_atoms[i]
                     self.atom_labels[i] = [atom_label, 'bonder', fg]
@@ -1336,16 +1296,13 @@ class GulpMetalOptimizer(MetalOptimizer):
         # Metals.
         for atomid in self.atom_labels:
             if self.atom_labels[atomid][1] == 'metal':
-                print(self.atom_labels[atomid])
                 self.atom_labels[atomid][0] = self._metal_FF
-                print(self.atom_labels[atomid])
 
         # Metal binder atoms of specific forcefields.
         # Check functional groups.
 
     def _run_gulp(self, in_file, out_file):
         cmd = f'{self._gulp_path} < {in_file}'
-        print(cmd)
         with open(out_file, 'w') as f:
             # Note that sp.call will hold the program until completion
             # of the calculation.
@@ -1370,9 +1327,7 @@ class GulpMetalOptimizer(MetalOptimizer):
         with open(file, 'r') as f:
             for line in f.readlines():
                 if 'Final energy =' in line:
-                    print(line)
                     string = nums.search(line.rstrip()).group(0)
-                    print(string)
                     return float(string)
 
     def optimize(self, mol):
