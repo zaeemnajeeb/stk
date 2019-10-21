@@ -5,9 +5,11 @@ Defines optimizers for metallo-architectures.
 
 from itertools import combinations
 import rdkit.Chem.AllChem as rdkit
+from os.path import join
 import logging
 import numpy as np
 import subprocess as sp
+import re
 import os
 import uuid
 
@@ -931,7 +933,13 @@ class GulpMetalOptimizer(MetalOptimizer):
 
     """
 
-    def __init__(self, gulp_path, output_dir=None, use_cache=False):
+    def __init__(
+        self,
+        gulp_path,
+        metal_FF,
+        output_dir=None,
+        use_cache=False
+    ):
         """
         Initialize a :class:`GulpMetalOptimizer` instance.
 
@@ -940,6 +948,7 @@ class GulpMetalOptimizer(MetalOptimizer):
 
         """
         self._gulp_path = gulp_path
+        self._metal_FF = metal_FF
         self._output_dir = output_dir
         self.metal_a_no = list(range(21, 31))
         self.metal_a_no += list(range(39, 49))+list(range(72, 81))
@@ -1264,7 +1273,7 @@ class GulpMetalOptimizer(MetalOptimizer):
             f.write(library)
             f.write(output_section)
 
-    def assign_FF(self, mol, metal_FF):
+    def assign_FF(self, mol):
         """
         Assign forcefield types to molecule.
 
@@ -1314,9 +1323,8 @@ class GulpMetalOptimizer(MetalOptimizer):
         for atomid in self.atom_labels:
             if self.atom_labels[atomid][1] == 'metal':
                 print(self.atom_labels[atomid])
-                self.atom_labels[atomid][0] = metal_FF
+                self.atom_labels[atomid][0] = self._metal_FF
                 print(self.atom_labels[atomid])
-                input()
 
         # Metal binder atoms of specific forcefields.
         # Check functional groups.
@@ -1342,6 +1350,16 @@ class GulpMetalOptimizer(MetalOptimizer):
 
         for file in files:
             os.rename(file, f'{self._output_dir}/{file}')
+
+    def extract_final_energy(self, file):
+        nums = re.compile(r"[+-]?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?")
+        with open(file, 'r') as f:
+            for line in f.readlines():
+                if 'Final energy =' in line:
+                    print(line)
+                    string = nums.search(line.rstrip()).group(0)
+                    print(string)
+                    return float(string)
 
     def optimize(self, mol):
         """
@@ -1411,6 +1429,7 @@ class GulpMDMetalOptimizer(GulpMetalOptimizer):
     def __init__(
         self,
         gulp_path,
+        metal_FF,
         output_dir=None,
         integrator='stochastic',
         ensemble='nvt',
@@ -1418,8 +1437,7 @@ class GulpMDMetalOptimizer(GulpMetalOptimizer):
         equilbration='1.0',
         production='10.0',
         timestep='1.0',
-        sample='0.050',
-        write='0.050',
+        N_conformers=10,
         use_cache=False
     ):
         """
@@ -1430,6 +1448,7 @@ class GulpMDMetalOptimizer(GulpMetalOptimizer):
 
         """
         self._gulp_path = gulp_path
+        self._metal_FF = metal_FF
         self._output_dir = output_dir
         self._integrator = integrator
         self._ensemble = ensemble
@@ -1437,8 +1456,10 @@ class GulpMDMetalOptimizer(GulpMetalOptimizer):
         self._equilbration = equilbration
         self._production = production
         self._timestep = timestep
-        self._sample = sample
-        self._write = write
+        self._N_conformers = N_conformers
+        samples = float(self._production) / float(self._N_conformers)
+        self._sample = samples
+        self._write = samples
 
         self.metal_a_no = list(range(21, 31))
         self.metal_a_no += list(range(39, 49))+list(range(72, 81))
@@ -1589,8 +1610,30 @@ class GulpMDMetalOptimizer(GulpMetalOptimizer):
 
         return atom_types, ids, tt, pot_energies, s_times, s_coords
 
+    def _write_conformer_xyz_file(
+        self,
+        id,
+        filename,
+        s_times,
+        s_coords,
+        atom_types
+    ):
+        times = s_times[id]
+        coords = s_coords[id]
+        xyz_string = (
+            f'{len(coords)}\n'
+            f'{times[0]},{times[1]},{times[2]},{times[3]}\n'
+        )
+        for i, coord in enumerate(coords):
+            xyz_string += (
+                f'{atom_types[i]} {coord[0]} {coord[1]} {coord[2]}\n'
+            )
+        with open(filename, 'w') as f:
+            f.write(xyz_string)
+
     def _save_lowest_energy_conf(
         self,
+        mol,
         output_xyz,
         output_traj,
         xyz_traj,
@@ -1605,23 +1648,40 @@ class GulpMDMetalOptimizer(GulpMetalOptimizer):
         )
         atom_types, ids, tt, pot_energies, s_times, s_coords = results
 
-        # Find lowest energy conformation and output to XYZ.
-        min_energy = min(pot_energies)
-        print(min_energy)
-        min_id = ids[pot_energies.index(min_energy)]
-        print(min_id)
-        times = s_times[min_id]
-        coords = s_coords[min_id]
-        xyz_string = (
-            f'{len(coords)}\n'
-            f'{times[0]},{times[1]},{times[2]},{times[3]}\n'
-        )
-        for i, coord in enumerate(coords):
-            xyz_string += (
-                f'{atom_types[i]} {coord[0]} {coord[1]} {coord[2]}\n'
+        # Optimise all conformers.
+        min_energy = 1E10
+        for id in ids:
+            self._write_conformer_xyz_file(
+                id=id,
+                filename='temp_conf.xyz',
+                s_times=s_times,
+                s_coords=s_coords,
+                atom_types=atom_types
             )
-        with open(low_conf_xyz, 'w') as f:
-            f.write(xyz_string)
+            mol.update_from_file('temp_conf.xyz')
+            gulp_opt = GulpMetalOptimizer(
+                gulp_path=self._gulp_path,
+                metal_FF=self._metal_FF,
+                output_dir=self._output_dir
+            )
+            gulp_opt.assign_FF(mol)
+            gulp_opt.optimize(mol=mol)
+            energy = gulp_opt.extract_final_energy(
+                file=join(self._output_dir, 'gulp_opt.ginout')
+            )
+            print(energy, min_energy)
+
+            if energy < min_energy:
+                # Find lowest energy conformation and output to XYZ.
+                print(min_energy)
+                min_energy = energy
+                self._write_conformer_xyz_file(
+                    id=id,
+                    filename=low_conf_xyz,
+                    s_times=s_times,
+                    s_coords=s_coords,
+                    atom_types=atom_types
+                )
 
     def optimize(self, mol):
         """
@@ -1658,7 +1718,6 @@ class GulpMDMetalOptimizer(GulpMetalOptimizer):
             mol=mol,
             metal_atoms=metal_atoms,
             in_file=in_file,
-            output_xyz=output_xyz,
             output_traj=output_traj
         )
 
@@ -1667,10 +1726,11 @@ class GulpMDMetalOptimizer(GulpMetalOptimizer):
 
         # Get lowest energy conformer from trajectory.
         self._save_lowest_energy_conf(
-            output_xyz,
-            output_traj,
-            xyz_traj,
-            low_conf_xyz
+            mol=mol,
+            output_xyz=output_xyz,
+            output_traj=output_traj,
+            xyz_traj=xyz_traj,
+            low_conf_xyz=low_conf_xyz
         )
 
         # Update from output.
