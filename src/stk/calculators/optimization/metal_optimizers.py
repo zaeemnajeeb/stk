@@ -1638,11 +1638,9 @@ class GulpMDMetalOptimizer(GulpMetalOptimizer):
             energy = gulp_opt.extract_final_energy(
                 file=join(self._output_dir, 'gulp_opt.ginout')
             )
-            print(energy, min_energy)
 
             if energy < min_energy:
                 # Find lowest energy conformation and output to XYZ.
-                print(min_energy)
                 min_energy = energy
                 self._write_conformer_xyz_file(
                     id=id,
