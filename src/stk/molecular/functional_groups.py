@@ -619,6 +619,13 @@ _fg_types = (
     ),
 
     FGType(
+        name="metal_bound_NMN",
+        func_group_smarts="[N]~*~[N]",
+        bonder_smarts=["[$([N])]"]*2,
+        deleter_smarts=[]
+    ),
+
+    FGType(
         name="unsaturated_site",
         func_group_smarts="[He]",
         bonder_smarts=[],
@@ -632,7 +639,29 @@ _fg_types = (
             '[$([#6]~[#7X2])]',
             '[$([#6]~[#7X2])]'
         ],
-        deleter_smarts=(["[#7X2]~[#6](~[#6])"])
+        deleter_smarts=(["[#7X2]"])
+    ),
+
+    FGType(
+        name='CNC_metal',
+        func_group_smarts='[#6]~[#7X2]~[#6]',
+        bonder_smarts=[
+            '[$([#6]~[#7X2])]',
+            '[$([#6]~[#7X2])]'
+        ],
+        deleter_smarts=(["[#7X2]"])
+    ),
+
+    FGType(
+        name='NCCN_metal',
+        func_group_smarts='[#6]~[#7X2]~[#6]~[#6]~[#7X2]~[#6]',
+        bonder_smarts=[
+            '[$([#6]~[#7X2])]',
+            '[$([#6]~[#7X2])]',
+            '[$([#6]~[#7X2])]',
+            '[$([#6]~[#7X2])]'
+        ],
+        deleter_smarts=(["[#7X2]"]*2)
     ),
 )
 

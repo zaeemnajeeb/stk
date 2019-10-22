@@ -219,7 +219,13 @@ class Reactor:
                 self._react_metal,
 
             _ReactionKey('metal_bound_N', 'pyridine_N_metal'):
-                self._react_metal
+                self._react_metal,
+
+            _ReactionKey('metal_bound_NMN', 'NCCN_metal'):
+                self._react_metal,
+
+            _ReactionKey('metal_bound_N', 'CNC_metal'):
+                self._react_metal,
         }
 
     def add_reaction(self, func_groups, periodicity):
