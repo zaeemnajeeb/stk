@@ -1414,6 +1414,7 @@ class GulpMDMetalOptimizer(GulpMetalOptimizer):
         production='10.0',
         timestep='1.0',
         N_conformers=10,
+        opt_conformers=True,
         use_cache=False
     ):
         """
@@ -1436,6 +1437,7 @@ class GulpMDMetalOptimizer(GulpMetalOptimizer):
         samples = float(self._production) / float(self._N_conformers)
         self._sample = samples
         self._write = samples
+        self._opt_conformers = opt_conformers
 
         self.metal_a_no = list(range(21, 31))
         self.metal_a_no += list(range(39, 49))+list(range(72, 81))
@@ -1628,38 +1630,51 @@ class GulpMDMetalOptimizer(GulpMetalOptimizer):
         )
         atom_types, ids, tt, pot_energies, s_times, s_coords = results
 
-        # Optimise all conformers.
-        min_energy = 1E10
-        for id in ids:
-            self._write_conformer_xyz_file(
-                id=id,
-                filename='temp_conf.xyz',
-                s_times=s_times,
-                s_coords=s_coords,
-                atom_types=atom_types
-            )
-            mol.update_from_file('temp_conf.xyz')
-            gulp_opt = GulpMetalOptimizer(
-                gulp_path=self._gulp_path,
-                metal_FF=self._metal_FF,
-                output_dir=self._output_dir
-            )
-            gulp_opt.assign_FF(mol)
-            gulp_opt.optimize(mol=mol)
-            energy = gulp_opt.extract_final_energy(
-                file=join(self._output_dir, 'gulp_opt.ginout')
-            )
-
-            if energy < min_energy:
-                # Find lowest energy conformation and output to XYZ.
-                min_energy = energy
+        # Find lowest energy conformation and output to XYZ.
+        if self._opt_conformers:
+            # Optimise all conformers.
+            min_energy = 1E10
+            for id in ids:
                 self._write_conformer_xyz_file(
                     id=id,
-                    filename=low_conf_xyz,
+                    filename='temp_conf.xyz',
                     s_times=s_times,
                     s_coords=s_coords,
                     atom_types=atom_types
                 )
+                mol.update_from_file('temp_conf.xyz')
+                gulp_opt = GulpMetalOptimizer(
+                    gulp_path=self._gulp_path,
+                    metal_FF=self._metal_FF,
+                    output_dir=self._output_dir
+                )
+                gulp_opt.assign_FF(mol)
+                gulp_opt.optimize(mol=mol)
+                energy = gulp_opt.extract_final_energy(
+                    file=join(self._output_dir, 'gulp_opt.ginout')
+                )
+
+                if energy < min_energy:
+                    min_energy = energy
+                    self._write_conformer_xyz_file(
+                        id=id,
+                        filename=low_conf_xyz,
+                        s_times=s_times,
+                        s_coords=s_coords,
+                        atom_types=atom_types
+                    )
+        else:
+            min_energy = min(pot_energies)
+            print(min_energy)
+            min_id = ids[pot_energies.index(min_energy)]
+            print(min_id)
+            self._write_conformer_xyz_file(
+                id=min_id,
+                filename=low_conf_xyz,
+                s_times=s_times,
+                s_coords=s_coords,
+                atom_types=atom_types
+            )
 
     def optimize(self, mol):
         """
