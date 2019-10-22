@@ -1737,15 +1737,88 @@ class GulpMDMetalOptimizer(GulpMetalOptimizer):
         )
 
 
-class MetalMacroModelMD(MacroModelMD):
+class MetalMacroModelFF(MacroModelForceField):
     """
     Runs a molecular dynamics conformer search using MacroModel.
 
     """
 
+    def __init__(
+        self,
+        macromodel_path,
+        output_dir=None,
+        restricted=False,
+        timeout=None,
+        force_field=16,
+        maximum_iterations=2500,
+        minimum_gradient=0.05,
+        restricted_bonds=None,
+        restricted_bond_angles=None,
+        restricted_torsional_angles=None,
+        use_cache=False
+    ):
+        """
+        Initialize a :class:`MacroModelForceField` object.
+
+        Parameters
+        ----------
+        macromodel_path : :class:`str`
+            The full path of the Schrodinger suite within the user's
+            machine. For example, on a Linux machine this may be
+            something like ``'/opt/schrodinger2017-2'``.
+
+        output_dir : :class:`str`, optional
+            The name of the directory into which files generated during
+            the optimization are written, if ``None`` then
+            :func:`uuid.uuid4` is used.
+
+        restricted : :class:`bool`, optional
+            If ``True`` then an optimization is performed only on the
+            bonds added by :meth:`~.Topology.construct`. If ``False``
+            then all bonds are optimized.
+
+        timeout : :class:`float`, optional
+            The amount in seconds the optimization is allowed to run
+            before being terminated. ``None`` means there is no
+            timeout.
+
+        force_field : :class:`int`, optional
+            The number of the force field to be used.
+
+        maximum_iterations : :class:`int`, optional
+            The maximum number of iterations done during the
+            optimization. Cannot be more than ``999999``.
+
+        minimum_gradient : :class:`float`, optional
+            The gradient at which optimization is stopped.
+            Cannot be less than ``0.0001``.
+
+        use_cache : :class:`bool`, optional
+            If ``True`` :meth:`optimize` will not run twice on the same
+            molecule.
+
+        """
+        self._restricted_bonds = restricted_bonds
+        self._restricted_bond_angles = restricted_bond_angles
+        self._restricted_torsional_angles = restricted_torsional_angles
+
+        super().__init__(
+            macromodel_path=macromodel_path,
+            restricted=restricted,
+            output_dir=output_dir,
+            force_field=force_field,
+            maximum_iterations=maximum_iterations,
+            minimum_gradient=minimum_gradient,
+            timeout=timeout,
+            use_cache=use_cache
+        )
+
     def _fix_distances(self, mol, fix_block):
         """
         Add lines fixing bond distances to ``.com`` body.
+
+        Have to set these differently, because :attr:`mol` does not
+        have :attr:`func_groups` assigned,
 
         Parameters
         ----------
@@ -1763,7 +1836,6 @@ class MetalMacroModelMD(MacroModelMD):
 
         for bond in self._restricted_bonds:
             bond = list(bond)
-
             # Make sure that the indices are increased by 1 in the .mae
             # file.
             atom1_id = bond[0] + 1
@@ -1777,6 +1849,9 @@ class MetalMacroModelMD(MacroModelMD):
     def _fix_bond_angles(self, mol, fix_block):
         """
         Add lines fixing bond angles to the ``.com`` body.
+
+        Have to set these differently, because :attr:`mol` does not
+        have :attr:`func_groups` assigned,
 
         Parameters
         ----------
@@ -1810,6 +1885,122 @@ class MetalMacroModelMD(MacroModelMD):
     def _fix_torsional_angles(self, mol, fix_block):
         """
         Add lines fixing torsional bond angles to the ``.com`` body.
+
+        Have to set these differently, because :attr:`mol` does not
+        have :attr:`func_groups` assigned,
+
+        Parameters
+        ----------
+        mol : :class:`.Molecule`
+            The molecule to be optimized.
+        fix_block : :class:`str`
+            A string holding fix commands in the ``.com`` file.
+
+        Returns
+        -------
+        :class:`str`
+            A string holding fix commands in the ``.com`` file.
+
+        """
+        for torsion in self._restricted_torsional_angles:
+            torsion = list(torsion)
+
+            # Make sure that the indices are increased by 1 in the .mae
+            # file.
+            atom1_id = torsion[0] + 1
+            atom2_id = torsion[1] + 1
+            atom3_id = torsion[2] + 1
+            atom4_id = torsion[3] + 1
+            atom_ids = [atom1_id, atom2_id, atom3_id, atom4_id]
+            args = ('FXTA', *atom_ids, 99999, 361, 0, 0)
+            fix_block += self._get_com_line(*args)
+            fix_block += '\n'
+
+        return fix_block
+
+
+class MetalMacroModelMD(MacroModelMD):
+    """
+    Runs a molecular dynamics conformer search using MacroModel.
+
+    """
+
+    def _fix_distances(self, mol, fix_block):
+        """
+        Add lines fixing bond distances to ``.com`` body.
+
+        Have to set these differently, because :attr:`mol` does not
+        have :attr:`func_groups` assigned,
+
+        Parameters
+        ----------
+        mol : :class:`.Molecule`
+            The molecule to be optimized.
+        fix_block : :class:`str`
+            A string holding fix commands in the ``.com`` file.
+
+        Returns
+        -------
+        :class:`str`
+            A string holding fix commands in the ``.com`` file.
+
+        """
+
+        for bond in self._restricted_bonds:
+            bond = list(bond)
+
+            # Make sure that the indices are increased by 1 in the .mae
+            # file.
+            atom1_id = bond[0] + 1
+            atom2_id = bond[1] + 1
+            args = ('FXDI', atom1_id, atom2_id, 0, 0, 99999, 0, 0, 0)
+            fix_block += self._get_com_line(*args)
+            fix_block += '\n'
+
+        return fix_block
+
+    def _fix_bond_angles(self, mol, fix_block):
+        """
+        Add lines fixing bond angles to the ``.com`` body.
+
+        Have to set these differently, because :attr:`mol` does not
+        have :attr:`func_groups` assigned,
+
+        Parameters
+        ----------
+        mol : :class:`.Molecule`
+            The molecule to be optimized.
+        fix_block : :class:`str`
+            A string holding fix commands in the ``.com`` file.
+
+        Returns
+        -------
+        :class:`str`
+            A string holding fix commands in the ``.com`` file.
+
+        """
+
+        for angle in self._restricted_bond_angles:
+            angle = list(angle)
+
+            # Make sure that the indices are increased by 1 in the .mae
+            # file.
+            atom1_id = angle[0] + 1
+            atom2_id = angle[1] + 1
+            atom3_id = angle[2] + 1
+            atom_ids = [atom1_id, atom2_id, atom3_id]
+            args = ('FXBA', *atom_ids, 0, 99999, 0, 0, 0)
+            fix_block += self._get_com_line(*args)
+            fix_block += '\n'
+
+        return fix_block
+
+    def _fix_torsional_angles(self, mol, fix_block):
+        """
+        Add lines fixing torsional bond angles to the ``.com`` body.
+
+        Have to set these differently, because :attr:`mol` does not
+        have :attr:`func_groups` assigned,
 
         Parameters
         ----------
@@ -1965,10 +2156,13 @@ class MacroModelFFMetalOptimizer(MetalOptimizer):
                         constraint['idx4']
                     )))
 
-        ff = MacroModelForceField(
+        ff = MetalMacroModelFF(
             macromodel_path=self._macromodel_path,
             output_dir=self._output_dir,
             restricted=self._restrict_all_bonds,
+            restricted_bonds=restricted_bonds,
+            restricted_bond_angles=restricted_bond_angles,
+            restricted_torsional_angles=restricted_torsional_angles,
             maximum_iterations=5000,
             minimum_gradient=0.05,
         )
