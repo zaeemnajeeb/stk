@@ -1238,6 +1238,10 @@ class GulpMetalOptimizer(MetalOptimizer):
 
         output_section = (
             '\n'
+            'terse inout potentials\n'
+            'terse inout cell\n'
+            'terse in structure\n'
+            'terse inout derivatives\n'
             f'output xyz {output_xyz}\n'
             # 'output movie xyz steps_.xyz\n'
         )
@@ -1469,6 +1473,10 @@ class GulpMDMetalOptimizer(GulpMetalOptimizer):
 
         output_section = (
             '\n'
+            'terse inout potentials\n'
+            'terse inout cell\n'
+            'terse in structure\n'
+            'terse inout derivatives\n'
             f'output trajectory ascii {output_traj}\n'
         )
 
