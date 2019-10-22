@@ -1665,9 +1665,7 @@ class GulpMDMetalOptimizer(GulpMetalOptimizer):
                     )
         else:
             min_energy = min(pot_energies)
-            print(min_energy)
             min_id = ids[pot_energies.index(min_energy)]
-            print(min_id)
             self._write_conformer_xyz_file(
                 id=min_id,
                 filename=low_conf_xyz,
