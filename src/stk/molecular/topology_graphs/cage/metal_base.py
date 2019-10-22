@@ -9,6 +9,7 @@ Metal Cage
 #. :class:`.M6L12_cube`
 #. :class:`.M12L24_sqpl`
 #. :class:`.M24L48_sqpl`
+#. :class:`.M4L6_Oct`
 
 """
 
@@ -71,6 +72,12 @@ class _MetalVertexData(VertexData):
 
         self.aligner_edge = None
         super().__init__(x, y, z)
+
+    @classmethod
+    def init_at_center(cls, *vertex_data):
+        obj = super().init_at_center(*vertex_data)
+        obj.aligner_edge = None
+        return obj
 
     def clone(self, clear_edges=False):
         """
