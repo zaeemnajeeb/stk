@@ -405,9 +405,6 @@ class Reactor:
 
         """
 
-        # Delete deleters.
-        self._remove_deleters(func_groups)
-
         # Make as many bonds as necessary for bonders.
         # Differs from _react_any because there are multiple
         # bonders.
@@ -419,7 +416,19 @@ class Reactor:
             non_metal_fg = fg2
             metal_fg = fg1
         for bonder in non_metal_fg.bonders:
-            bond_order = self._bond_orders.get(reaction_key, 1)
+            # Need to get bond order from the building blocks.
+            bonds = [
+                i for i in self._mol.bonds
+                if bonder in (i.atom1, i.atom2)
+            ]
+            for b in bonds:
+                a1 = b.atom1
+                a2 = b.atom2
+                deleters = non_metal_fg.deleters
+                if a1 in deleters or a2 in deleters:
+                    bond_order = b.order
+                    break
+
             bond = Bond(
                 atom1=metal_fg.bonders[0],
                 atom2=bonder,
@@ -428,6 +437,9 @@ class Reactor:
             )
             self._mol.bonds.append(bond)
             self._mol.construction_bonds.append(bond)
+
+        # Delete deleters.
+        self._remove_deleters(func_groups)
 
     def _react_diol_with_dihalogen(
         self,
