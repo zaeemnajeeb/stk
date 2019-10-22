@@ -15,6 +15,10 @@ Optimizers
 #. :class:`.TryCatchOptimizer`
 #. :class:`.RaisingOptimizer`
 #. :class:`.MetalOptimizer`
+#. :class:`.GulpMetalOptimizer`
+#. :class:`.GulpMDMetalOptimizer`
+#. :class:`.MacroModelFFMetalOptimizer`
+#. :class:`.MacroModelMDMetalOptimizer`
 
 
 Optimizers are objects used to optimize molecules. Each optimizer is
