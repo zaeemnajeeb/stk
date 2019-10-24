@@ -106,6 +106,180 @@ class SquarePlanarBidentate(MetalCage):
     )
 
 
+class Octahedral(MetalCage):
+    """
+    Represents an octahedral metal complex topology graph.
+
+    See :class:`.MetalCage` for more details and examples.
+
+    Attributes
+    ----------
+    vertex_data : :class:`tuple` of :class:`.VertexData`
+        A class attribute. Holds the data of the vertices which make up
+        the topology graph.
+
+    edge_data : :class:`tuple` of :class:`.EdgeData`
+        A class attribute. Holds the data of the edges which make up
+        the topology graph.
+
+    vertices : :class:`tuple` of :class:`.Vertex`
+        The vertices which make up the topology graph.
+
+    edges : :class:`tuple` of :class:`.Edge`
+        The edges which make up the topology graph.
+
+    """
+
+    vertex_data = (
+        _MetalVertexData(0, 0, 0),
+        _MetalVertexData(1, 0, 0),
+        _MetalVertexData(0, 1, 0),
+        _MetalVertexData(0, 0, 1),
+        _MetalVertexData(-1, 0, 0),
+        _MetalVertexData(0, -1, 0),
+        _MetalVertexData(0, 0, -1),
+    )
+
+    edge_data = (
+        EdgeData(vertex_data[0], vertex_data[1]),
+        EdgeData(vertex_data[0], vertex_data[2]),
+        EdgeData(vertex_data[0], vertex_data[3]),
+        EdgeData(vertex_data[0], vertex_data[4]),
+        EdgeData(vertex_data[0], vertex_data[5]),
+        EdgeData(vertex_data[0], vertex_data[6]),
+    )
+
+
+class Octahedral_S(MetalCage):
+    """
+    Represents an octahedral metal complex topology graph.
+
+    See :class:`.MetalCage` for more details and examples.
+
+    Attributes
+    ----------
+    vertex_data : :class:`tuple` of :class:`.VertexData`
+        A class attribute. Holds the data of the vertices which make up
+        the topology graph.
+
+    edge_data : :class:`tuple` of :class:`.EdgeData`
+        A class attribute. Holds the data of the edges which make up
+        the topology graph.
+
+    vertices : :class:`tuple` of :class:`.Vertex`
+        The vertices which make up the topology graph.
+
+    edges : :class:`tuple` of :class:`.Edge`
+        The edges which make up the topology graph.
+
+    """
+
+    vertex_data = (
+        _MetalVertexData(0, 0, 0),
+        _MetalVertexData(1, 1, 0),
+        _MetalVertexData(0, -1, -1),
+        _MetalVertexData(-1, 0, 1),
+    )
+
+    edge_data = (
+        EdgeData(
+            vertex_data[0],
+            vertex_data[1],
+            position=[0.5, 0.1, 0]
+        ),
+        EdgeData(
+            vertex_data[0],
+            vertex_data[1],
+            position=[0.1, 0.5, 0]
+        ),
+        EdgeData(
+            vertex_data[0],
+            vertex_data[2],
+            position=[0, -0.5, -0.1]
+        ),
+        EdgeData(
+            vertex_data[0],
+            vertex_data[2],
+            position=[0, -0.1, -0.5]
+        ),
+        EdgeData(
+            vertex_data[0],
+            vertex_data[3],
+            position=[-0.1, 0, 0.5]
+        ),
+        EdgeData(
+            vertex_data[0],
+            vertex_data[3],
+            position=[-0.5, 0, 0.1]
+        ),
+    )
+
+
+class Octahedral_R(MetalCage):
+    """
+    Represents an octahedral metal complex topology graph.
+
+    See :class:`.MetalCage` for more details and examples.
+
+    Attributes
+    ----------
+    vertex_data : :class:`tuple` of :class:`.VertexData`
+        A class attribute. Holds the data of the vertices which make up
+        the topology graph.
+
+    edge_data : :class:`tuple` of :class:`.EdgeData`
+        A class attribute. Holds the data of the edges which make up
+        the topology graph.
+
+    vertices : :class:`tuple` of :class:`.Vertex`
+        The vertices which make up the topology graph.
+
+    edges : :class:`tuple` of :class:`.Edge`
+        The edges which make up the topology graph.
+
+    """
+
+    vertex_data = (
+        _MetalVertexData(0, 0, 0),
+        _MetalVertexData(-1, -1, 0),
+        _MetalVertexData(0, 1, 1),
+        _MetalVertexData(1, 0, -1),
+    )
+
+    edge_data = (
+        EdgeData(
+            vertex_data[0],
+            vertex_data[1],
+            position=[-0.5, -0.1, 0]
+        ),
+        EdgeData(
+            vertex_data[0],
+            vertex_data[1],
+            position=[-0.1, -0.5, 0]
+        ),
+        EdgeData(
+            vertex_data[0],
+            vertex_data[2],
+            position=[0, 0.5, 0.1]
+        ),
+        EdgeData(
+            vertex_data[0],
+            vertex_data[2],
+            position=[0, 0.1, 0.5]
+        ),
+        EdgeData(
+            vertex_data[0],
+            vertex_data[3],
+            position=[0.5, 0, -0.1]
+        ),
+        EdgeData(
+            vertex_data[0],
+            vertex_data[3],
+            position=[0.1, 0, -0.5]
+        )
+    )
+
+
 class M2L4_Lantern(MetalCage):
     """
     Represents a M2L4 lantern topology graph with square planar metal.
