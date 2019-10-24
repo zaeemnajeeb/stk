@@ -387,7 +387,7 @@ class _MetalVertex(Vertex):
         if self.is_metal_centre(building_block):
             # Give small vector for reference to avoid numerical issues
             # with metal centres at (0, 0, 0).
-            reference = np.array([.1, 0, 0])
+            reference = np.array([.01, 0, 0])
         else:
             reference = self._get_edge_centroid(
                 centroid_edges=connected_edges,
