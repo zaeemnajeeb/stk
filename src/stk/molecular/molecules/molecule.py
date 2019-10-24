@@ -931,6 +931,48 @@ class Molecule(metaclass=_Cached):
         mol.AddConformer(rdkit_conf)
         return mol
 
+    def to_rdkit_mol_no_metals(self):
+        """
+        Return an :mod:`rdkit` representation.
+
+        Returns
+        -------
+        :class:`rdkit.Mol`
+            The molecule in :mod:`rdkit` format.
+
+        """
+
+        mol = rdkit.EditableMol(rdkit.Mol())
+        for atom in self.atoms:
+            rdkit_atom = rdkit.Atom(atom.atomic_number)
+            rdkit_atom.SetFormalCharge(atom.charge)
+            mol.AddAtom(rdkit_atom)
+
+        metal_a_no = list(range(21, 31))
+        metal_a_no += list(range(39, 49))+list(range(72, 81))
+
+        removed_bonds = []
+        for bond in self.bonds:
+            atm1 = bond.atom1.atomic_number
+            atm2 = bond.atom2.atomic_number
+            if atm1 in metal_a_no or atm2 in metal_a_no:
+                # Do not add bonds to metal atoms.
+                removed_bonds.append(bond)
+                continue
+            mol.AddBond(
+                beginAtomIdx=bond.atom1.id,
+                endAtomIdx=bond.atom2.id,
+                order=rdkit.BondType(bond.order)
+            )
+
+        mol = mol.GetMol()
+        rdkit_conf = rdkit.Conformer(len(self.atoms))
+        for atom_id, atom_coord in enumerate(self._position_matrix.T):
+            rdkit_conf.SetAtomPosition(atom_id, atom_coord)
+            mol.GetAtomWithIdx(atom_id).SetNoImplicit(True)
+        mol.AddConformer(rdkit_conf)
+        return mol, removed_bonds
+
     def to_dict(self, include_attrs=None, ignore_missing_attrs=False):
         """
         Return a :class:`dict` representation.

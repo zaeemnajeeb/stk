@@ -168,6 +168,58 @@ class BuildingBlock(Molecule):
         return obj
 
     @classmethod
+    def init_from_molecule_wmetal(
+        cls,
+        mol,
+        functional_groups=None,
+        use_cache=False,
+    ):
+        """
+        Initialize from a :class:`.Molecule`.
+
+        Parameters
+        ----------
+        mol : :class:`.Molecule`
+            The molecule to initialize from. This can be a
+            any :class:`.Molecule`, such a :class:`.BuildingBlock` or
+            a :class:`.ConstructedMolecule`.
+
+        functional_groups : :class:`iterable` of :class:`str`, optional
+            The names of the functional group types which are to be
+            added to :attr:`func_groups`. If ``None``, then no
+            functional groups are added.
+
+        use_cache : :class:`bool`, optional
+            If ``True``, a new :class:`.BuildingBlock` will
+            not be made if a cached and identical one already exists,
+            the one which already exists will be returned. If ``True``
+            and a cached, identical :class:`BuildingBlock` does not
+            yet exist the created one will be added to the cache.
+
+        Returns
+        -------
+        :class:`.BuildingBlock`
+             The building block. It will have the same atoms, bonds and
+             atomic positions as `mol`.
+
+        """
+        rdkit_mol, removed_bonds = mol.to_rdkit_mol_no_metals()
+
+        mol = cls.init_from_rdkit_mol(
+            mol=rdkit_mol,
+            functional_groups=functional_groups,
+            use_cache=use_cache,
+        )
+
+        all_bonds = [i for i in mol.bonds]
+        for b in removed_bonds:
+            all_bonds.append(b)
+
+        mol.bonds = tuple(b for b in all_bonds)
+
+        return mol
+
+    @classmethod
     def init_from_molecule(
         cls,
         mol,
@@ -883,7 +935,9 @@ class BuildingBlock(Molecule):
         functional_groups = sorted(functional_groups)
 
         # Don't modify the original molecule.
+        print(rdkit.MolToSmiles(mol))
         mol = rdkit.Mol(mol)
+        print(rdkit.MolToSmiles(mol))
         rdkit.SanitizeMol(mol)
         return (
             *functional_groups,
