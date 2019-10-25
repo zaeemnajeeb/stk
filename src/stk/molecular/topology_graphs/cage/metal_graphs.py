@@ -174,6 +174,29 @@ class Octahedral_S(MetalCage):
 
     """
 
+    def _get_scale(self, mol):
+        """
+        Get the scale used for the positions of :attr:`vertices`.
+
+        Parameters
+        ----------
+        mol : :class:`.ConstructedMolecule`
+            The molecule being constructed.
+
+        Returns
+        -------
+        :class:`float` or :class:`list` of :class:`float`
+            The value by which the position of each :class:`Vertex` is
+            scaled. Can be a single number if all axes are scaled by
+            the same amount or a :class:`list` of three numbers if
+            each axis is scaled by a different value.
+
+        """
+        return 0.3*max(
+            bb.get_maximum_diameter()
+            for bb in mol.building_block_vertices
+        )
+
     vertex_data = (
         _MetalVertexData(0, 0, 0),
         _MetalVertexData(1, 1, 0),
@@ -211,7 +234,7 @@ class Octahedral_S(MetalCage):
             vertex_data[0],
             vertex_data[3],
             position=[-0.5, 0, 0.1]
-        ),
+        )
     )
 
 
@@ -238,6 +261,29 @@ class Octahedral_R(MetalCage):
         The edges which make up the topology graph.
 
     """
+
+    def _get_scale(self, mol):
+        """
+        Get the scale used for the positions of :attr:`vertices`.
+
+        Parameters
+        ----------
+        mol : :class:`.ConstructedMolecule`
+            The molecule being constructed.
+
+        Returns
+        -------
+        :class:`float` or :class:`list` of :class:`float`
+            The value by which the position of each :class:`Vertex` is
+            scaled. Can be a single number if all axes are scaled by
+            the same amount or a :class:`list` of three numbers if
+            each axis is scaled by a different value.
+
+        """
+        return 0.3*max(
+            bb.get_maximum_diameter()
+            for bb in mol.building_block_vertices
+        )
 
     vertex_data = (
         _MetalVertexData(0, 0, 0),
@@ -270,12 +316,12 @@ class Octahedral_R(MetalCage):
         EdgeData(
             vertex_data[0],
             vertex_data[3],
-            position=[0.5, 0, -0.1]
+            position=[0.1, 0, -0.5]
         ),
         EdgeData(
             vertex_data[0],
             vertex_data[3],
-            position=[0.1, 0, -0.5]
+            position=[0.5, 0, -0.1]
         )
     )
 
@@ -874,212 +920,20 @@ class M4L6_Oct(MetalCage):
 
     # Vertices of a tetrahdron so that origin is at the origin. Source:
     # http://tinyurl.com/lc262h8.
-    _v0, _v1, _v2, _v3 = _vertex_data = (
+    vertex_data = (
         _MetalVertexData(0, 0, np.sqrt(6)/2),
         _MetalVertexData(-1, -np.sqrt(3)/3, -np.sqrt(6)/6),
         _MetalVertexData(1, -np.sqrt(3)/3, -np.sqrt(6)/6),
         _MetalVertexData(0, 2*np.sqrt(3)/3, -np.sqrt(6)/6)
     )
 
-    vertex_data = (
-        *_vertex_data,
-        _MetalVertexData.init_at_center(_v0, _v1),
-        _MetalVertexData.init_at_center(_v0, _v2),
-        _MetalVertexData.init_at_center(_v0, _v3),
-        _MetalVertexData.init_at_center(_v1, _v2),
-        _MetalVertexData.init_at_center(_v1, _v3),
-        _MetalVertexData.init_at_center(_v2, _v3)
-
-    )
-
     edge_data = (
-        EdgeData(vertex_data[4], vertex_data[0]),
-        EdgeData(vertex_data[4], vertex_data[1]),
-        EdgeData(vertex_data[5], vertex_data[0]),
-        EdgeData(vertex_data[5], vertex_data[2]),
-        EdgeData(vertex_data[6], vertex_data[0]),
-        EdgeData(vertex_data[6], vertex_data[3]),
-        EdgeData(vertex_data[7], vertex_data[1]),
-        EdgeData(vertex_data[7], vertex_data[2]),
-        EdgeData(vertex_data[8], vertex_data[1]),
-        EdgeData(vertex_data[8], vertex_data[3]),
-        EdgeData(vertex_data[9], vertex_data[2]),
-        EdgeData(vertex_data[9], vertex_data[3]),
-
-        EdgeData(vertex_data[4], vertex_data[0]),
-        EdgeData(vertex_data[4], vertex_data[1]),
-        EdgeData(vertex_data[5], vertex_data[0]),
-        EdgeData(vertex_data[5], vertex_data[2]),
-        EdgeData(vertex_data[6], vertex_data[0]),
-        EdgeData(vertex_data[6], vertex_data[3]),
-        EdgeData(vertex_data[7], vertex_data[1]),
-        EdgeData(vertex_data[7], vertex_data[2]),
-        EdgeData(vertex_data[8], vertex_data[1]),
-        EdgeData(vertex_data[8], vertex_data[3]),
-        EdgeData(vertex_data[9], vertex_data[2]),
-        EdgeData(vertex_data[9], vertex_data[3])
-    )
-
-    num_windows = 4
-    num_window_types = 1
-
-
-class M4L6_Oct_SSSS(MetalCage):
-    """
-    Represents a M4L6 tetrahedral topology graph with octahedral metal.
-
-    See :class:`.MetalCage` for more details and examples.
-
-    Attributes
-    ----------
-    vertex_data : :class:`tuple` of :class:`.VertexData`
-        A class attribute. Holds the data of the vertices which make up
-        the topology graph.
-
-    edge_data : :class:`tuple` of :class:`.EdgeData`
-        A class attribute. Holds the data of the edges which make up
-        the topology graph.
-
-    vertices : :class:`tuple` of :class:`.Vertex`
-        The vertices which make up the topology graph.
-
-    edges : :class:`tuple` of :class:`.Edge`
-        The edges which make up the topology graph.
-
-    """
-
-    # Vertices of a tetrahdron so that origin is at the origin. Source:
-    # http://tinyurl.com/lc262h8.
-    _p0 = [0, 0, np.sqrt(6)/2]
-    _p1 = [-1, -np.sqrt(3)/3, -np.sqrt(6)/6]
-    _p2 = [1, -np.sqrt(3)/3, -np.sqrt(6)/6]
-    _p3 = [0, 2*np.sqrt(3)/3, -np.sqrt(6)/6]
-
-    _v0, _v1, _v2, _v3 = _vertex_data = (
-        _MetalVertexData(*_p0),
-        _MetalVertexData(*_p1),
-        _MetalVertexData(*_p2),
-        _MetalVertexData(*_p3)
-    )
-
-    _vertex_data = (
-        *_vertex_data,
-        _MetalVertexData.init_at_center(_v0, _v1),
-        _MetalVertexData.init_at_center(_v0, _v2),
-        _MetalVertexData.init_at_center(_v0, _v3),
-        _MetalVertexData.init_at_center(_v1, _v2),
-        _MetalVertexData.init_at_center(_v1, _v3),
-        _MetalVertexData.init_at_center(_v2, _v3)
-    )
-
-    vertex_data = (
-        *_vertex_data,
-        _MetalVertexData(
-            _p0[0]+0.5*(_p0[0]-_p1[0]),
-            _p0[1]+0.5*(_p0[1]-_p1[1]),
-            _p0[2]+0.5*(_p0[2]-_p1[2])
-        ),
-        _MetalVertexData(
-            _p0[0]+0.5*(_p0[0]-_p2[0]),
-            _p0[1]+0.5*(_p0[1]-_p2[1]),
-            _p0[2]+0.5*(_p0[2]-_p2[2])
-        ),
-        _MetalVertexData(
-            _p0[0]+0.5*(_p0[0]-_p3[0]),
-            _p0[1]+0.5*(_p0[1]-_p3[1]),
-            _p0[2]+0.5*(_p0[2]-_p3[2])
-        ),
-
-        _MetalVertexData(
-            _p1[0]+0.5*(_p1[0]-_p0[0]),
-            _p1[1]+0.5*(_p1[1]-_p0[1]),
-            _p1[2]+0.5*(_p1[2]-_p0[2])
-        ),
-        _MetalVertexData(
-            _p1[0]+0.5*(_p1[0]-_p2[0]),
-            _p1[1]+0.5*(_p1[1]-_p2[1]),
-            _p1[2]+0.5*(_p1[2]-_p2[2])
-        ),
-        _MetalVertexData(
-            _p1[0]+0.5*(_p1[0]-_p3[0]),
-            _p1[1]+0.5*(_p1[1]-_p3[1]),
-            _p1[2]+0.5*(_p1[2]-_p3[2])
-        ),
-
-        _MetalVertexData(
-            _p2[0]+0.5*(_p2[0]-_p0[0]),
-            _p2[1]+0.5*(_p2[1]-_p0[1]),
-            _p2[2]+0.5*(_p2[2]-_p0[2])
-        ),
-        _MetalVertexData(
-            _p2[0]+0.5*(_p2[0]-_p1[0]),
-            _p2[1]+0.5*(_p2[1]-_p1[1]),
-            _p2[2]+0.5*(_p2[2]-_p1[2])
-        ),
-        _MetalVertexData(
-            _p2[0]+0.5*(_p2[0]-_p3[0]),
-            _p2[1]+0.5*(_p2[1]-_p3[1]),
-            _p2[2]+0.5*(_p2[2]-_p3[2])
-        ),
-
-        _MetalVertexData(
-            _p3[0]+0.5*(_p3[0]-_p0[0]),
-            _p3[1]+0.5*(_p3[1]-_p0[1]),
-            _p3[2]+0.5*(_p3[2]-_p0[2])
-        ),
-        _MetalVertexData(
-            _p3[0]+0.5*(_p3[0]-_p1[0]),
-            _p3[1]+0.5*(_p3[1]-_p1[1]),
-            _p3[2]+0.5*(_p3[2]-_p1[2])
-        ),
-        _MetalVertexData(
-            _p3[0]+0.5*(_p3[0]-_p2[0]),
-            _p3[1]+0.5*(_p3[1]-_p2[1]),
-            _p3[2]+0.5*(_p3[2]-_p2[2])
-        ),
-    )
-
-    edge_data = (
-        # Metal ligand edges.
-        EdgeData(vertex_data[4], vertex_data[0]),
-        EdgeData(vertex_data[4], vertex_data[1]),
-        EdgeData(vertex_data[5], vertex_data[0]),
-        EdgeData(vertex_data[5], vertex_data[2]),
-        EdgeData(vertex_data[6], vertex_data[0]),
-        EdgeData(vertex_data[6], vertex_data[3]),
-        EdgeData(vertex_data[7], vertex_data[1]),
-        EdgeData(vertex_data[7], vertex_data[2]),
-        EdgeData(vertex_data[8], vertex_data[1]),
-        EdgeData(vertex_data[8], vertex_data[3]),
-        EdgeData(vertex_data[9], vertex_data[2]),
-        EdgeData(vertex_data[9], vertex_data[3]),
-
-        EdgeData(vertex_data[10], vertex_data[0]),
-        EdgeData(vertex_data[11], vertex_data[0]),
-        EdgeData(vertex_data[12], vertex_data[0]),
-        EdgeData(vertex_data[13], vertex_data[1]),
-        EdgeData(vertex_data[14], vertex_data[1]),
-        EdgeData(vertex_data[15], vertex_data[1]),
-        EdgeData(vertex_data[16], vertex_data[2]),
-        EdgeData(vertex_data[17], vertex_data[2]),
-        EdgeData(vertex_data[18], vertex_data[2]),
-        EdgeData(vertex_data[19], vertex_data[3]),
-        EdgeData(vertex_data[20], vertex_data[3]),
-        EdgeData(vertex_data[21], vertex_data[3]),
-
-        # Ligand-ligand edges.
-        EdgeData(vertex_data[10], vertex_data[4]),
-        EdgeData(vertex_data[11], vertex_data[5]),
-        EdgeData(vertex_data[12], vertex_data[6]),
-        EdgeData(vertex_data[13], vertex_data[4]),
-        EdgeData(vertex_data[14], vertex_data[7]),
-        EdgeData(vertex_data[15], vertex_data[8]),
-        EdgeData(vertex_data[16], vertex_data[5]),
-        EdgeData(vertex_data[17], vertex_data[7]),
-        EdgeData(vertex_data[18], vertex_data[9]),
-        EdgeData(vertex_data[19], vertex_data[6]),
-        EdgeData(vertex_data[20], vertex_data[8]),
-        EdgeData(vertex_data[21], vertex_data[9]),
+        EdgeData(vertex_data[0], vertex_data[1]),
+        EdgeData(vertex_data[0], vertex_data[2]),
+        EdgeData(vertex_data[0], vertex_data[3]),
+        EdgeData(vertex_data[1], vertex_data[2]),
+        EdgeData(vertex_data[1], vertex_data[3]),
+        EdgeData(vertex_data[2], vertex_data[3]),
     )
 
     num_windows = 4
