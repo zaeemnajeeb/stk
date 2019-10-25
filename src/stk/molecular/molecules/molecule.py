@@ -873,9 +873,14 @@ class Molecule(metaclass=_Cached):
                 else:
                     bond_id = len(bond_lines)
 
+                if bond.is_coordination():
+                    order = 1
+                else:
+                    order = bond.order
+
                 bond_lines.append(
                     f'M  V30 {bond_id+1} '
-                    f'{int(bond.order)} {a1+1} {a2+1}\n'
+                    f'{int(order)} {a1+1} {a2+1}\n'
                 )
 
         num_bonds = len(bond_lines)
@@ -916,11 +921,33 @@ class Molecule(metaclass=_Cached):
             rdkit_atom.SetFormalCharge(atom.charge)
             mol.AddAtom(rdkit_atom)
 
+        # Metal atomic numbers.
+        metal_a_no = list(range(21, 31))
+        metal_a_no += list(range(39, 49))+list(range(72, 81))
+
         for bond in self.bonds:
+            if bond.is_coordination():
+                # # Do not add coordination bonds to rdkit molecule.
+                # continue
+                # Add coordination bonds here as DATIVE type.
+                # Specify the atom ids to ensure the non-metal does not
+                # have its valency effected.
+                # EndAtom in rdkit.Bond has valency += 1 from DATIVE.
+                if bond.atom1.atomic_number in metal_a_no:
+                    atm1 = bond.atom2.id
+                    atm2 = bond.atom1.id
+                else:
+                    atm1 = bond.atom1.id
+                    atm2 = bond.atom2.id
+                order = rdkit.BondType.DATIVE
+            else:
+                atm1 = bond.atom1.id
+                atm2 = bond.atom2.id
+                order = bond.order
             mol.AddBond(
-                beginAtomIdx=bond.atom1.id,
-                endAtomIdx=bond.atom2.id,
-                order=rdkit.BondType(bond.order)
+                beginAtomIdx=atm1,
+                endAtomIdx=atm2,
+                order=rdkit.BondType(order)
             )
 
         mol = mol.GetMol()
@@ -930,48 +957,6 @@ class Molecule(metaclass=_Cached):
             mol.GetAtomWithIdx(atom_id).SetNoImplicit(True)
         mol.AddConformer(rdkit_conf)
         return mol
-
-    def to_rdkit_mol_no_metals(self):
-        """
-        Return an :mod:`rdkit` representation.
-
-        Returns
-        -------
-        :class:`rdkit.Mol`
-            The molecule in :mod:`rdkit` format.
-
-        """
-
-        mol = rdkit.EditableMol(rdkit.Mol())
-        for atom in self.atoms:
-            rdkit_atom = rdkit.Atom(atom.atomic_number)
-            rdkit_atom.SetFormalCharge(atom.charge)
-            mol.AddAtom(rdkit_atom)
-
-        metal_a_no = list(range(21, 31))
-        metal_a_no += list(range(39, 49))+list(range(72, 81))
-
-        removed_bonds = []
-        for bond in self.bonds:
-            atm1 = bond.atom1.atomic_number
-            atm2 = bond.atom2.atomic_number
-            if atm1 in metal_a_no or atm2 in metal_a_no:
-                # Do not add bonds to metal atoms.
-                removed_bonds.append(bond)
-                continue
-            mol.AddBond(
-                beginAtomIdx=bond.atom1.id,
-                endAtomIdx=bond.atom2.id,
-                order=rdkit.BondType(bond.order)
-            )
-
-        mol = mol.GetMol()
-        rdkit_conf = rdkit.Conformer(len(self.atoms))
-        for atom_id, atom_coord in enumerate(self._position_matrix.T):
-            rdkit_conf.SetAtomPosition(atom_id, atom_coord)
-            mol.GetAtomWithIdx(atom_id).SetNoImplicit(True)
-        mol.AddConformer(rdkit_conf)
-        return mol, removed_bonds
 
     def to_dict(self, include_attrs=None, ignore_missing_attrs=False):
         """
