@@ -212,20 +212,23 @@ class Reactor:
             _ReactionKey('ring_amine', 'ring_amine'):
                 self._react_ring_amine_with_ring_amine,
 
+            _ReactionKey('metal', 'metal_bound_N'):
+                self._react_coordination,
+
             _ReactionKey('unsaturated_site', 'metal_bound_N'):
                 self._react_unsaturated_site,
 
             _ReactionKey('metal_bound_N', 'amine_metal'):
-                self._react_metal,
+                self._react_metal_bound,
 
             _ReactionKey('metal_bound_N', 'pyridine_N_metal'):
-                self._react_metal,
+                self._react_metal_bound,
 
             _ReactionKey('metal_bound_NMN', 'NCCN_metal'):
-                self._react_metal,
+                self._react_metal_bound,
 
             _ReactionKey('metal_bound_N', 'CNC_metal'):
-                self._react_metal,
+                self._react_metal_bound,
         }
 
     def add_reaction(self, func_groups, periodicity):
@@ -351,6 +354,48 @@ class Reactor:
         self._mol.bonds.append(bond)
         self._mol.construction_bonds.append(bond)
 
+    def _react_coordination(
+        self,
+        reaction_key,
+        func_groups,
+        periodicity
+    ):
+        """
+        Create bonds between functional groups.
+
+        Parameters
+        ----------
+        reaction_key : :class:`._ReactionKey`
+            The key for the reaction.
+
+        func_groups : :class:`list` of :class:`.FunctionalGroup`
+            The functional groups from which deleter atoms should be
+            removed.
+
+        periodicity : :class:`tuple` of :class:`int`
+            Specifies the periodicity of the bonds added by the
+            reaction, which bridge the `func_groups`. See
+            :attr:`.Bond.periodicity`.
+
+        Returns
+        -------
+        None : :class:`NoneType`
+
+        """
+
+        self._remove_deleters(func_groups)
+
+        fg1, fg2 = func_groups
+        bond_order = -1
+        bond = Bond(
+            atom1=fg1.bonders[0],
+            atom2=fg2.bonders[0],
+            order=bond_order,
+            periodicity=periodicity
+        )
+        self._mol.bonds.append(bond)
+        self._mol.construction_bonds.append(bond)
+
     def _react_unsaturated_site(self, reaction_key, func_groups,
                                 periodicity):
         """
@@ -379,7 +424,12 @@ class Reactor:
         # Delete deleters.
         self._remove_deleters(func_groups)
 
-    def _react_metal(self, reaction_key, func_groups, periodicity):
+    def _react_metal_bound(
+        self,
+        reaction_key,
+        func_groups,
+        periodicity
+    ):
         """
         Create bonds between functional groups.
 
