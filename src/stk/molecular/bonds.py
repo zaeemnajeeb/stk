@@ -116,6 +116,7 @@ class Bond:
 
         order : :class:`int`
             The bond order.
+            Equal to -1 to designate a coordination bond.
 
         periodicity : :class:`tuple` of :class:`int`, optional
             The directions across which the bond is periodic. For
@@ -207,6 +208,19 @@ class Bond:
         obj.atom1 = atom_map.get(obj.atom1, obj.atom1)
         obj.atom2 = atom_map.get(obj.atom2, obj.atom2)
         return obj
+
+    def is_coordination(self):
+        """
+        Return ``True`` if the bond is a coordination bond.
+
+        Returns
+        -------
+        :class:`bool`
+            ``True`` if the bond is periodic.
+
+        """
+
+        return self.order == -1
 
     def is_periodic(self):
         """
