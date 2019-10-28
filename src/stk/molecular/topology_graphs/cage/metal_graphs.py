@@ -192,10 +192,7 @@ class Octahedral_S(MetalCage):
             each axis is scaled by a different value.
 
         """
-        return 0.3*max(
-            bb.get_maximum_diameter()
-            for bb in mol.building_block_vertices
-        )
+        return 3
 
     vertex_data = (
         _MetalVertexData(0, 0, 0),
@@ -280,10 +277,7 @@ class Octahedral_R(MetalCage):
             each axis is scaled by a different value.
 
         """
-        return 0.3*max(
-            bb.get_maximum_diameter()
-            for bb in mol.building_block_vertices
-        )
+        return 3
 
     vertex_data = (
         _MetalVertexData(0, 0, 0),
