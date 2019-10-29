@@ -932,3 +932,125 @@ class M4L6_Oct(MetalCage):
 
     num_windows = 4
     num_window_types = 1
+
+
+class M4L6_Oct_Spacer(MetalCage):
+    """
+    Represents a M4L6 tetrahedral topology graph with octahedral metal.
+
+    See :class:`.MetalCage` for more details and examples.
+
+    Attributes
+    ----------
+    vertex_data : :class:`tuple` of :class:`.VertexData`
+        A class attribute. Holds the data of the vertices which make up
+        the topology graph.
+
+    edge_data : :class:`tuple` of :class:`.EdgeData`
+        A class attribute. Holds the data of the edges which make up
+        the topology graph.
+
+    vertices : :class:`tuple` of :class:`.Vertex`
+        The vertices which make up the topology graph.
+
+    edges : :class:`tuple` of :class:`.Edge`
+        The edges which make up the topology graph.
+
+    """
+
+    # Vertices of a tetrahdron so that origin is at the origin. Source:
+    # http://tinyurl.com/lc262h8.
+    _v1, _v2, _v3, _v4 = _vertex_data = (
+        _MetalVertexData(0, 0, np.sqrt(6)/2),
+        _MetalVertexData(-1, -np.sqrt(3)/3, -np.sqrt(6)/6),
+        _MetalVertexData(1, -np.sqrt(3)/3, -np.sqrt(6)/6),
+        _MetalVertexData(0, 2*np.sqrt(3)/3, -np.sqrt(6)/6)
+    )
+
+    vertex_data = (
+        *_vertex_data,
+        _MetalVertexData.init_at_center(_v1, _v2),
+        _MetalVertexData.init_at_center(_v1, _v3),
+        _MetalVertexData.init_at_center(_v1, _v4),
+        _MetalVertexData.init_at_center(_v2, _v3),
+        _MetalVertexData.init_at_center(_v2, _v4),
+        _MetalVertexData.init_at_center(_v3, _v4),
+    )
+
+    edge_data = (
+        EdgeData(vertex_data[0], vertex_data[4]),
+        EdgeData(vertex_data[0], vertex_data[5]),
+        EdgeData(vertex_data[0], vertex_data[6]),
+        EdgeData(vertex_data[1], vertex_data[4]),
+        EdgeData(vertex_data[1], vertex_data[7]),
+        EdgeData(vertex_data[1], vertex_data[8]),
+        EdgeData(vertex_data[2], vertex_data[5]),
+        EdgeData(vertex_data[2], vertex_data[7]),
+        EdgeData(vertex_data[2], vertex_data[9]),
+        EdgeData(vertex_data[3], vertex_data[6]),
+        EdgeData(vertex_data[3], vertex_data[8]),
+        EdgeData(vertex_data[3], vertex_data[9]),
+    )
+
+    num_windows = 4
+    num_window_types = 1
+
+
+class M4L4_Oct_Spacer(MetalCage):
+    """
+    Represents a M4L4 tetrahedral topology graph with octahedral metal.
+
+    See :class:`.MetalCage` for more details and examples.
+
+    Attributes
+    ----------
+    vertex_data : :class:`tuple` of :class:`.VertexData`
+        A class attribute. Holds the data of the vertices which make up
+        the topology graph.
+
+    edge_data : :class:`tuple` of :class:`.EdgeData`
+        A class attribute. Holds the data of the edges which make up
+        the topology graph.
+
+    vertices : :class:`tuple` of :class:`.Vertex`
+        The vertices which make up the topology graph.
+
+    edges : :class:`tuple` of :class:`.Edge`
+        The edges which make up the topology graph.
+
+    """
+
+    # Vertices of a tetrahdron so that origin is at the origin. Source:
+    # http://tinyurl.com/lc262h8.
+    _v1, _v2, _v3, _v4 = _vertex_data = (
+        _MetalVertexData(0, 0, np.sqrt(6)/2),
+        _MetalVertexData(-1, -np.sqrt(3)/3, -np.sqrt(6)/6),
+        _MetalVertexData(1, -np.sqrt(3)/3, -np.sqrt(6)/6),
+        _MetalVertexData(0, 2*np.sqrt(3)/3, -np.sqrt(6)/6)
+    )
+
+    vertex_data = (
+        *_vertex_data,
+        _MetalVertexData.init_at_center(_v1, _v2, _v3),
+        _MetalVertexData.init_at_center(_v1, _v2, _v4),
+        _MetalVertexData.init_at_center(_v1, _v3, _v4),
+        _MetalVertexData.init_at_center(_v2, _v3, _v4)
+    )
+
+    edge_data = (
+        EdgeData(vertex_data[0], vertex_data[4]),
+        EdgeData(vertex_data[0], vertex_data[5]),
+        EdgeData(vertex_data[0], vertex_data[6]),
+        EdgeData(vertex_data[1], vertex_data[4]),
+        EdgeData(vertex_data[1], vertex_data[5]),
+        EdgeData(vertex_data[1], vertex_data[7]),
+        EdgeData(vertex_data[2], vertex_data[4]),
+        EdgeData(vertex_data[2], vertex_data[6]),
+        EdgeData(vertex_data[2], vertex_data[7]),
+        EdgeData(vertex_data[3], vertex_data[5]),
+        EdgeData(vertex_data[3], vertex_data[6]),
+        EdgeData(vertex_data[3], vertex_data[7]),
+    )
+
+    num_windows = 4
+    num_window_types = 1
