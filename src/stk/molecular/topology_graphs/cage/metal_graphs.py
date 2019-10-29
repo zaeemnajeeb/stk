@@ -192,7 +192,7 @@ class Octahedral_S(MetalCage):
             each axis is scaled by a different value.
 
         """
-        return 3
+        return 4
 
     vertex_data = (
         _MetalVertexData(0, 0, 0),
@@ -277,7 +277,7 @@ class Octahedral_R(MetalCage):
             each axis is scaled by a different value.
 
         """
-        return 3
+        return 4
 
     vertex_data = (
         _MetalVertexData(0, 0, 0),
