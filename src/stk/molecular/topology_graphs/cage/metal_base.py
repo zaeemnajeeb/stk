@@ -332,6 +332,89 @@ class _MetalVertex(Vertex):
 
         return building_block.get_position_matrix()
 
+    def _place_bidentate_building_block(
+        self,
+        building_block,
+        vertices,
+        edges
+    ):
+        """
+        Place `building_block` on the :class:`.Vertex`.
+
+        Parameters
+        ----------
+        building_block : :class:`.BuildingBlock`
+            The building block molecule which is to be placed on the
+            vertex.
+
+        vertices : :class:`tuple` of :class:`.Vertex`
+            All vertices in the topology graph. The index of each
+            vertex must match its :class:`~.Vertex.id`.
+
+        edges : :class:`tuple` of :class:`.Edge`
+            All edges in the topology graph. The index of each
+            edge must match its :class:`~.Edge.id`.
+
+        Returns
+        -------
+        :class:`numpy.nadarray`
+            The position matrix of `building_block` after being
+            placed.
+
+        """
+        building_block.set_centroid(
+            position=self._position,
+            atom_ids=building_block.get_bonder_ids()
+        )
+        connected_edges = tuple(edges[id_] for id_ in self._edge_ids)
+        # Vector between the deleter atoms.
+        start = building_block.get_direction(
+            atom_ids=[
+                i for j in building_block.func_groups
+                for i in j.get_deleter_ids()
+            ]
+        )
+
+        # Vector between the connected edges.
+        c_edge_positions = [
+            i.get_position() for i in connected_edges
+        ]
+        target = c_edge_positions[1] - c_edge_positions[0]
+
+        # Align them.
+        building_block.apply_rotation_between_vectors(
+            start=start,
+            target=target,
+            origin=building_block.get_centroid()
+        )
+
+        # Now align vector between bonder centroids and edge centroid.
+        bonder_centroid = building_block.get_centroid(
+            atom_ids=[
+                i for j in building_block.func_groups
+                for i in j.get_bonder_ids()
+            ]
+        )
+        deleter_centroid = building_block.get_centroid(
+            atom_ids=[
+                i for j in building_block.func_groups
+                for i in j.get_deleter_ids()
+            ]
+        )
+        start = deleter_centroid - bonder_centroid
+
+        target = self._get_edge_centroid(
+            centroid_edges=connected_edges,
+            vertices=vertices
+        ) - self._position
+        building_block.apply_rotation_between_vectors(
+            start=start,
+            target=target,
+            origin=building_block.get_centroid()
+        )
+
+        return building_block.get_position_matrix()
+
     def _place_linear_building_block(
         self,
         building_block,
