@@ -194,44 +194,61 @@ class Octahedral_S(MetalCage):
         """
         return 5
 
+    # Use fg_assignment to ensure the desired stereochemistry is
+    # achieved.
     vertex_data = (
-        _MetalVertexData(0, 0, 0),
-        _MetalVertexData(1, 1, 0),
-        _MetalVertexData(0, -1, -1),
-        _MetalVertexData(-1, 0, 1),
+        _MetalVertexData(
+            0, 0, 0,
+            fg_assignment={0: 0, 1: 1, 2: 2, 3: 3, 4: 4, 5: 5}
+        ),
+        _MetalVertexData(
+            1, 1, 0,
+            fg_assignment={0: 0, 1: 1}
+        ),
+        _MetalVertexData(
+            0, -1, -1,
+            fg_assignment={0: 4, 1: 5}
+        ),
+        _MetalVertexData(
+            -1, 0, 1,
+            fg_assignment={0: 2, 1: 3}
+        ),
     )
 
+    # The ordering here matters for the stereochemistry.
+    # The first edge to appear between two vertices determines the
+    # directionality of the binding ligand.
     edge_data = (
         EdgeData(
             vertex_data[0],
             vertex_data[1],
-            position=[0.5, 0.1, 0]
+            position=[0.1, 0, 0]
         ),
         EdgeData(
             vertex_data[0],
             vertex_data[1],
-            position=[0.1, 0.5, 0]
-        ),
-        EdgeData(
-            vertex_data[0],
-            vertex_data[2],
-            position=[0, -0.5, -0.1]
-        ),
-        EdgeData(
-            vertex_data[0],
-            vertex_data[2],
-            position=[0, -0.1, -0.5]
+            position=[0, 0.1, 0]
         ),
         EdgeData(
             vertex_data[0],
             vertex_data[3],
-            position=[-0.1, 0, 0.5]
+            position=[0, 0, 0.1]
         ),
         EdgeData(
             vertex_data[0],
             vertex_data[3],
-            position=[-0.5, 0, 0.1]
-        )
+            position=[-0.1, 0, 0]
+        ),
+        EdgeData(
+            vertex_data[0],
+            vertex_data[2],
+            position=[0, -0.1, 0]
+        ),
+        EdgeData(
+            vertex_data[0],
+            vertex_data[2],
+            position=[0, 0, -0.1]
+        ),
     )
 
 
@@ -279,44 +296,61 @@ class Octahedral_R(MetalCage):
         """
         return 5
 
+    # Use fg_assignment to ensure the desired stereochemistry is
+    # achieved.
     vertex_data = (
-        _MetalVertexData(0, 0, 0),
-        _MetalVertexData(-1, -1, 0),
-        _MetalVertexData(0, 1, 1),
-        _MetalVertexData(1, 0, -1),
+        _MetalVertexData(
+            0, 0, 0,
+            fg_assignment={0: 0, 1: 1, 2: 2, 3: 3, 4: 4, 5: 5}
+        ),
+        _MetalVertexData(
+            1, 1, 0,
+            fg_assignment={0: 0, 1: 1}
+        ),
+        _MetalVertexData(
+            0, -1, 1,
+            fg_assignment={0: 4, 1: 2}
+        ),
+        _MetalVertexData(
+            -1, 0, -1,
+            fg_assignment={0: 5, 1: 3}
+        ),
     )
 
+    # The ordering here matters for the stereochemistry.
+    # The first edge to appear between two vertices determines the
+    # directionality of the binding ligand.
     edge_data = (
         EdgeData(
             vertex_data[0],
             vertex_data[1],
-            position=[-0.5, -0.1, 0]
+            position=[0.1, 0, 0]
         ),
         EdgeData(
             vertex_data[0],
             vertex_data[1],
-            position=[-0.1, -0.5, 0]
+            position=[0, 0.1, 0]
         ),
         EdgeData(
             vertex_data[0],
             vertex_data[2],
-            position=[0, 0.5, 0.1]
+            position=[0, -0.1, 0]
         ),
         EdgeData(
             vertex_data[0],
             vertex_data[2],
-            position=[0, 0.1, 0.5]
+            position=[0, 0, 0.1]
         ),
         EdgeData(
             vertex_data[0],
             vertex_data[3],
-            position=[0.1, 0, -0.5]
+            position=[0, 0, -0.1]
         ),
         EdgeData(
             vertex_data[0],
             vertex_data[3],
-            position=[0.5, 0, -0.1]
-        )
+            position=[-0.1, 0, 0]
+        ),
     )
 
 

@@ -53,7 +53,7 @@ class _MetalVertexData(VertexData):
 
     """
 
-    def __init__(self, x, y, z):
+    def __init__(self, x, y, z, fg_assignment=None):
         """
         Initialize a :class:`_MetalVertexData`.
 
@@ -71,12 +71,14 @@ class _MetalVertexData(VertexData):
         """
 
         self.aligner_edge = None
+        self.fg_assignment = fg_assignment
         super().__init__(x, y, z)
 
     @classmethod
     def init_at_center(cls, *vertex_data):
         obj = super().init_at_center(*vertex_data)
         obj.aligner_edge = None
+        obj.fg_assignment = None
         return obj
 
     def clone(self, clear_edges=False):
@@ -98,6 +100,7 @@ class _MetalVertexData(VertexData):
         clone = super().clone(clear_edges)
         clone.unsaturated = self.unsaturated
         clone.aligner_edge = self.aligner_edge
+        clone.fg_assignment = self.fg_assignment
         return clone
 
     def get_vertex(self):
@@ -119,6 +122,7 @@ class _MetalVertex(Vertex):
     def __init__(self, data):
         self._aligner_edge = data.aligner_edge
         self._unsaturated = data.unsaturated
+        self._fg_assignment = data.fg_assignment
         super().__init__(data)
 
     def clone(self, clear_edges=False):
@@ -140,7 +144,11 @@ class _MetalVertex(Vertex):
         clone = super().clone(clear_edges)
         clone._aligner_edge = self._aligner_edge
         clone._unsaturated = self._unsaturated
+        clone._fg_assignment = self._fg_assignment
         return clone
+
+    def get_fg_assignments(self):
+        return self._fg_assignment
 
     def get_aligner_edge(self):
         return self._aligner_edge
@@ -1047,6 +1055,55 @@ class MetalCage(TopologyGraph):
             self.vertex_edge_assignments[vertex.id] = vertex
 
         self._clean_up(mol)
+
+    def _place_building_blocks_serial(self, mol, vertices, edges):
+        bb_id = 0
+
+        vertex_building_blocks = {
+            vertex: bb
+            for bb, vertices in mol.building_block_vertices.items()
+            for vertex in vertices
+        }
+        # Use a shorter alias.
+        counter = mol.building_block_counter
+        for stage in self._stages:
+            for instance_vertex in stage:
+                vertex = vertices[instance_vertex.id]
+                bb = vertex_building_blocks[instance_vertex]
+                original_coords = bb.get_position_matrix()
+
+                mol._position_matrix.extend(
+                    vertex.place_building_block(bb, vertices, edges)
+                )
+                if vertex._fg_assignment is None:
+                    assignments = vertex.assign_func_groups_to_edges(
+                        building_block=bb,
+                        vertices=vertices,
+                        edges=edges
+                    )
+                else:
+                    assignments = vertex._fg_assignment
+                print(assignments)
+                input()
+                atom_map = self._assign_func_groups_to_edges(
+                    mol=mol,
+                    bb=bb,
+                    bb_id=bb_id,
+                    edges=edges,
+                    assignments=assignments
+                )
+                # Perform additional, miscellaneous operations.
+                vertex.after_assign_func_groups_to_edges(
+                    building_block=bb,
+                    func_groups=mol.func_groups[-len(bb.func_groups):],
+                    vertices=vertices,
+                    edges=edges
+                )
+
+                bb.set_position_matrix(original_coords)
+                mol.bonds.extend(b.clone(atom_map) for b in bb.bonds)
+                counter.update([bb])
+                bb_id += 1
 
     def _get_scale(self, mol):
         """
