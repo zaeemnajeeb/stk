@@ -153,6 +153,33 @@ class _MetalVertex(Vertex):
     def get_aligner_edge(self):
         return self._aligner_edge
 
+    def is_bidentate(self, building_block, vertices, edges):
+        bb_fg_names = list(set((
+            i.fg_type.name for i in building_block.func_groups
+        )))
+        # Has one bidentate FG.
+        bidentate_fg_mono = ['NCCN_metal']
+        # Has two FGs, representing bidentate FG.
+        bidentate_fg_duo = ['CNC_metal']
+        if any([i in bb_fg_names for i in bidentate_fg_mono]):
+            return True
+
+        # Check that there are two coordinating FGs.
+        elif all([i in bb_fg_names for i in bidentate_fg_duo]):
+            # Check that all connections are to the same vertex.
+            connected_edges = tuple(
+                edges[id_] for id_ in self._edge_ids
+            )
+            connected_vertices = tuple(
+                vertices[id_] for i in connected_edges
+                for id_ in i._vertex_ids if id_ != self.id
+            )
+            if len(set(connected_vertices)) == 1:
+                return True
+            return False
+        else:
+            return False
+
     def is_metal_centre(self, building_block):
         bb_fg_names = list(set((
             i.fg_type.name for i in building_block.func_groups
@@ -197,12 +224,24 @@ class _MetalVertex(Vertex):
                 edges=edges
             )
         elif len(building_block.func_groups) == 1:
+            if self.is_bidentate(building_block, vertices, edges):
+                return self._place_bidentate_building_block(
+                    building_block=building_block,
+                    vertices=vertices,
+                    edges=edges
+                )
             return self._place_cap_building_block(
                 building_block=building_block,
                 vertices=vertices,
                 edges=edges
             )
         elif len(building_block.func_groups) == 2:
+            if self.is_bidentate(building_block, vertices, edges):
+                return self._place_bidentate_building_block(
+                    building_block=building_block,
+                    vertices=vertices,
+                    edges=edges
+                )
             return self._place_linear_building_block(
                 building_block=building_block,
                 vertices=vertices,
@@ -656,7 +695,6 @@ class _MetalVertex(Vertex):
                 vector1=edge_direction,
                 vector2=aligner_edge_direction
             )
-
             projection = edge_direction @ axis
             if theta > 0 and projection < 0:
                 return 2*np.pi - theta
@@ -1069,6 +1107,7 @@ class MetalCage(TopologyGraph):
         for stage in self._stages:
             for instance_vertex in stage:
                 vertex = vertices[instance_vertex.id]
+
                 bb = vertex_building_blocks[instance_vertex]
                 original_coords = bb.get_position_matrix()
 
@@ -1083,8 +1122,7 @@ class MetalCage(TopologyGraph):
                     )
                 else:
                     assignments = vertex._fg_assignment
-                print(assignments)
-                input()
+
                 atom_map = self._assign_func_groups_to_edges(
                     mol=mol,
                     bb=bb,
