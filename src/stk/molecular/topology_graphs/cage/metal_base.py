@@ -431,6 +431,14 @@ class _MetalVertex(Vertex):
         )
         connected_edges = tuple(edges[id_] for id_ in self._edge_ids)
 
+        # If connected edges have custom positions, do not rotate.
+        custom_positions = all(
+            i._custom_position is True for i in connected_edges
+        )
+
+        if custom_positions and self.is_metal_centre(building_block):
+            return building_block.get_position_matrix()
+
         if self.is_metal_centre(building_block):
             # Give small vector for reference to avoid numerical issues
             # with metal centres at (0, 0, 0).
