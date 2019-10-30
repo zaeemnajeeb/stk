@@ -225,7 +225,7 @@ class Reactor:
                 self._react_metal_bound,
 
             _ReactionKey('metal_bound_NMN', 'NCCN_metal'):
-                self._react_metal_bound,
+                self._react_metal_bidentate,
 
             _ReactionKey('metal_bound_N', 'CNC_metal'):
                 self._react_metal_bound,
@@ -457,12 +457,11 @@ class Reactor:
         # Differs from _react_any because there are multiple
         # bonders.
         fg1, fg2 = func_groups
-        if 'metal_bound' not in fg1.fg_type.name:
-            non_metal_fg = fg1
-            metal_fg = fg2
-        else:
-            non_metal_fg = fg2
-            metal_fg = fg1
+        non_metal_fg = (
+            fg1 if 'metal_bound' not in fg1.fg_type.name else fg2
+        )
+        metal_fg = fg2 if non_metal_fg is fg1 else fg1
+
         for bonder in non_metal_fg.bonders:
             # Need to get bond order from the building blocks.
             bonds = [
@@ -485,6 +484,104 @@ class Reactor:
             )
             self._mol.bonds.append(bond)
             self._mol.construction_bonds.append(bond)
+
+        # Delete deleters.
+        self._remove_deleters(func_groups)
+
+    def _react_metal_bidentate(
+        self,
+        reaction_key,
+        func_groups,
+        periodicity
+    ):
+        """
+        Create bonds between functional groups.
+
+        Parameters
+        ----------
+        reaction_key : :class:`._ReactionKey`
+            The key for the reaction.
+
+        func_groups : :class:`list` of :class:`.FunctionalGroup`
+            The functional groups from which deleter atoms should be
+            removed.
+
+        periodicity : :class:`tuple` of :class:`int`
+            Specifies the periodicity of the bonds added by the
+            reaction, which bridge the `func_groups`. See
+            :attr:`.Bond.periodicity`.
+
+        Returns
+        -------
+        None : :class:`NoneType`
+
+        """
+
+        # Make as many bonds as necessary for bonders.
+        # Differs from _react_any because there are multiple
+        # bonders.
+        fg1, fg2 = func_groups
+        non_metal_fg = (
+            fg1 if 'metal_bound' not in fg1.fg_type.name else fg2
+        )
+        metal_fg = fg2 if non_metal_fg is fg1 else fg1
+        # Get bonders connected to same deleter, which gives two sets
+        # of bonders.
+        bonder_groups = {i: [] for i in non_metal_fg.deleters}
+        for bond in self._mol.bonds:
+            a1 = bond.atom1
+            a2 = bond.atom2
+            has_bonder = any([
+                i in non_metal_fg.bonders for i in [a1, a2]
+            ])
+            has_deleter = any([
+                i in non_metal_fg.deleters for i in [a1, a2]
+            ])
+            if has_bonder and has_deleter:
+                deleter = a1 if a1 in non_metal_fg.deleters else a2
+                bonder = a1 if deleter is a2 else a2
+                bonder_groups[deleter].append(bonder)
+
+        # For each bonder set, find the closest metal_fg bonder and
+        # react.
+        metal_fgs_done = []
+        for bonder in bonder_groups:
+            # Find closest metal_fg_bonder to the deleter.
+            l_coord = self._mol._position_matrix[bonder.id]
+            distances = []
+            for m_atom in metal_fg.get_bonder_ids():
+                if m_atom in metal_fgs_done:
+                    continue
+                m_coord = self._mol._position_matrix[m_atom]
+                d = euclidean(l_coord, m_coord)
+                distances.append((d, m_atom))
+            distances.sort()
+            metal_fg_id = distances[0][1]
+            metal_fgs_done.append(metal_fg_id)
+
+            # Do reactions.
+            for nm_bonder in bonder_groups[bonder]:
+                # Need to get bond order from the building blocks.
+                bonds = [
+                    i for i in self._mol.bonds
+                    if nm_bonder in (i.atom1, i.atom2)
+                ]
+                for b in bonds:
+                    a1 = b.atom1
+                    a2 = b.atom2
+                    deleters = non_metal_fg.deleters
+                    if a1 in deleters or a2 in deleters:
+                        bond_order = b.order
+                        break
+
+                bond = Bond(
+                    atom1=self._mol.atoms[metal_fg_id],
+                    atom2=nm_bonder,
+                    order=bond_order,
+                    periodicity=periodicity
+                )
+                self._mol.bonds.append(bond)
+                self._mol.construction_bonds.append(bond)
 
         # Delete deleters.
         self._remove_deleters(func_groups)
