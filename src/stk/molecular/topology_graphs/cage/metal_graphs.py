@@ -150,7 +150,7 @@ class Octahedral(MetalCage):
     )
 
 
-class Octahedral_S(MetalCage):
+class Octahedral_Lambda(MetalCage):
     """
     Represents an octahedral metal complex topology graph.
 
@@ -252,7 +252,7 @@ class Octahedral_S(MetalCage):
     )
 
 
-class Octahedral_R(MetalCage):
+class Octahedral_Delta(MetalCage):
     """
     Represents an octahedral metal complex topology graph.
 
