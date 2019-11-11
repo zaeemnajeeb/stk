@@ -1088,3 +1088,76 @@ class M4L4_Oct_Spacer(MetalCage):
 
     num_windows = 4
     num_window_types = 1
+
+
+class M8L6_Oct_Face(MetalCage):
+    """
+    Represents a M8L6 cube topology graph with octahedral metal.
+
+    See :class:`.MetalCage` for more details and examples.
+
+    Attributes
+    ----------
+    vertex_data : :class:`tuple` of :class:`.VertexData`
+        A class attribute. Holds the data of the vertices which make up
+        the topology graph.
+
+    edge_data : :class:`tuple` of :class:`.EdgeData`
+        A class attribute. Holds the data of the edges which make up
+        the topology graph.
+
+    vertices : :class:`tuple` of :class:`.Vertex`
+        The vertices which make up the topology graph.
+
+    edges : :class:`tuple` of :class:`.Edge`
+        The edges which make up the topology graph.
+
+    """
+
+    _v1, _v2, _v3, _v4, _v5, _v6, _v7, _v8 = _vertex_data = (
+        _MetalVertexData(1, 1, 1),
+        _MetalVertexData(1, -1, 1),
+        _MetalVertexData(-1, -1, 1),
+        _MetalVertexData(-1, 1, 1),
+        _MetalVertexData(1, 1, -1),
+        _MetalVertexData(1, -1, -1),
+        _MetalVertexData(-1, -1, -1),
+        _MetalVertexData(-1, 1, -1),
+    )
+
+    vertex_data = (
+        *_vertex_data,
+        _MetalVertexData.init_at_center(_v1, _v2, _v3, _v4),
+        _MetalVertexData.init_at_center(_v1, _v2, _v5, _v6),
+        _MetalVertexData.init_at_center(_v1, _v4, _v5, _v8),
+        _MetalVertexData.init_at_center(_v3, _v4, _v7, _v8),
+        _MetalVertexData.init_at_center(_v5, _v6, _v7, _v8),
+        _MetalVertexData.init_at_center(_v2, _v3, _v6, _v7)
+    )
+
+    edge_data = (
+        EdgeData(vertex_data[0], vertex_data[8]),
+        EdgeData(vertex_data[0], vertex_data[9]),
+        EdgeData(vertex_data[0], vertex_data[10]),
+        EdgeData(vertex_data[1], vertex_data[8]),
+        EdgeData(vertex_data[1], vertex_data[9]),
+        EdgeData(vertex_data[1], vertex_data[13]),
+        EdgeData(vertex_data[2], vertex_data[8]),
+        EdgeData(vertex_data[2], vertex_data[11]),
+        EdgeData(vertex_data[2], vertex_data[13]),
+        EdgeData(vertex_data[3], vertex_data[8]),
+        EdgeData(vertex_data[3], vertex_data[10]),
+        EdgeData(vertex_data[3], vertex_data[11]),
+        EdgeData(vertex_data[4], vertex_data[9]),
+        EdgeData(vertex_data[4], vertex_data[10]),
+        EdgeData(vertex_data[4], vertex_data[12]),
+        EdgeData(vertex_data[5], vertex_data[9]),
+        EdgeData(vertex_data[5], vertex_data[12]),
+        EdgeData(vertex_data[5], vertex_data[13]),
+        EdgeData(vertex_data[6], vertex_data[11]),
+        EdgeData(vertex_data[6], vertex_data[12]),
+        EdgeData(vertex_data[6], vertex_data[13]),
+        EdgeData(vertex_data[7], vertex_data[10]),
+        EdgeData(vertex_data[7], vertex_data[11]),
+        EdgeData(vertex_data[7], vertex_data[12]),
+    )
