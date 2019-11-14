@@ -747,3 +747,56 @@ class Octahedral(MetalCentre):
             position=[0, 0, -2.0]
         ),
     )
+
+
+class Porphyrin(MetalCentre):
+    """
+    Represents a porphyrin metal complex topology graph.
+
+    See :class:`.MetalCentre` for more details and examples.
+
+    Attributes
+    ----------
+    vertex_data : :class:`tuple` of :class:`.VertexData`
+        A class attribute. Holds the data of the vertices which make up
+        the topology graph.
+
+    edge_data : :class:`tuple` of :class:`.EdgeData`
+        A class attribute. Holds the data of the edges which make up
+        the topology graph.
+
+    vertices : :class:`tuple` of :class:`.Vertex`
+        The vertices which make up the topology graph.
+
+    edges : :class:`tuple` of :class:`.Edge`
+        The edges which make up the topology graph.
+
+    """
+
+    vertex_data = (
+        _MetalCentreVertexData(0, 0, 0),
+        _MetalCentreVertexData(0, 0, 0)
+    )
+
+    edge_data = (
+        EdgeData(
+            vertex_data[0],
+            vertex_data[1],
+            position=[0.1, 0, 0]
+        ),
+        EdgeData(
+            vertex_data[0],
+            vertex_data[1],
+            position=[0, 0.1, 0]
+        ),
+        EdgeData(
+            vertex_data[0],
+            vertex_data[1],
+            position=[-0.1, 0, 0]
+        ),
+        EdgeData(
+            vertex_data[0],
+            vertex_data[1],
+            position=[0, -0.1, 0]
+        ),
+    )
