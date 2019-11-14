@@ -1302,7 +1302,8 @@ class GulpMetalOptimizer(MetalOptimizer):
         # Metals.
         for atomid in self.atom_labels:
             if self.atom_labels[atomid][1] == 'metal':
-                self.atom_labels[atomid][0] = self._metal_FF
+                atom_no = mol.atoms[atomid].atomic_number
+                self.atom_labels[atomid][0] = self._metal_FF[atom_no]
 
         # Metal binder atoms of specific forcefields.
         # Check functional groups.
