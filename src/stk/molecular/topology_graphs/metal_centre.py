@@ -5,6 +5,7 @@ Metal Complex
 #. :class:`.SquarePlanar`
 #. :class:`.Paddlewheel`
 #. :class:`.Octahedral`
+#. :class:`.Porphyrin`
 
 """
 

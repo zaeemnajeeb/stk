@@ -403,6 +403,89 @@ class M2L4_Lantern(MetalCage):
     num_window_types = 1
 
 
+class M3L6_sqpl(MetalCage):
+    """
+    Represents a M3L6 topology graph with square planar metal.
+
+    See :class:`.MetalCage` for more details and examples.
+
+    Attributes
+    ----------
+    vertices : :class:`tuple` of :class:`.Vertex`
+        The vertices which make up the topology graph.
+
+    edges : :class:`tuple` of :class:`.Edge`
+        The edges which make up the topology graph.
+
+    """
+
+    R, theta = 1, 0
+
+    vertex_data = (
+        _MetalVertexData(R*np.cos(theta), R*np.sin(theta), 0),
+        _MetalVertexData(
+            R*np.cos(theta+(4*np.pi/3)),
+            R*np.sin(theta+(4*np.pi/3)),
+            0
+        ),
+        _MetalVertexData(
+            R*np.cos(theta+(2*np.pi/3)),
+            R*np.sin(theta+(2*np.pi/3)),
+            0
+        ),
+
+        _MetalVertexData(
+            R*np.cos((theta+np.pi/4)),
+            R*np.sin((theta+np.pi/4)),
+            1
+        ),
+        _MetalVertexData(
+            R*np.cos((theta+np.pi/4)),
+            R*np.sin((theta+np.pi/4)),
+            -1
+        ),
+
+        _MetalVertexData(
+            R*np.cos((theta+np.pi/4)+(4*np.pi/3)),
+            R*np.sin((theta+np.pi/4)+(4*np.pi/3)),
+            1
+        ),
+        _MetalVertexData(
+            R*np.cos((theta+np.pi/4)+(4*np.pi/3)),
+            R*np.sin((theta+np.pi/4)+(4*np.pi/3)),
+            -1
+        ),
+
+        _MetalVertexData(
+            R*np.cos((theta+np.pi/4)+(2*np.pi/3)),
+            R*np.sin((theta+np.pi/4)+(2*np.pi/3)),
+            1
+        ),
+        _MetalVertexData(
+            R*np.cos((theta+np.pi/4)+(2*np.pi/3)),
+            R*np.sin((theta+np.pi/4)+(2*np.pi/3)),
+            -1
+        ),
+    )
+
+    edge_data = (
+        EdgeData(vertex_data[0], vertex_data[3]),
+        EdgeData(vertex_data[0], vertex_data[4]),
+        EdgeData(vertex_data[0], vertex_data[5]),
+        EdgeData(vertex_data[0], vertex_data[6]),
+
+        EdgeData(vertex_data[1], vertex_data[5]),
+        EdgeData(vertex_data[1], vertex_data[6]),
+        EdgeData(vertex_data[1], vertex_data[7]),
+        EdgeData(vertex_data[1], vertex_data[8]),
+
+        EdgeData(vertex_data[2], vertex_data[3]),
+        EdgeData(vertex_data[2], vertex_data[4]),
+        EdgeData(vertex_data[2], vertex_data[7]),
+        EdgeData(vertex_data[2], vertex_data[8]),
+    )
+
+
 class M4L8_sqpl(MetalCage):
     """
     Represents a M4L8 topology graph with square planar metal.

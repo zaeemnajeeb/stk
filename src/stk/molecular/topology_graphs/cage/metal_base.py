@@ -4,13 +4,20 @@ Metal Cage
 
 #. :class:`.SquarePlanarMonodentate`
 #. :class:`.SquarePlanarBidentate`
+#. :class:`.Octahedral`
+#. :class:`.Octahedral_Lambda`
+#. :class:`.Octahedral_Delta`
 #. :class:`.M2L4_Lantern`
+#. :class:`.M3L6_sqpl`
 #. :class:`.M4L8_sqpl`
 #. :class:`.M6L12_cube`
 #. :class:`.M12L24_sqpl`
 #. :class:`.M24L48_sqpl`
 #. :class:`.M4L6_Oct`
-
+#. :class:`.M4L6_Oct_Spacer`
+#. :class:`.M4L4_Oct_Spacer`
+#. :class:`.M8L6_Oct_Face`
+#. :class:`.M6L2L3_Oct`
 """
 
 
