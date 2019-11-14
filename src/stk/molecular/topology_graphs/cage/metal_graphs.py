@@ -422,7 +422,11 @@ class M3L6_sqpl(MetalCage):
     R, theta = 1, 0
 
     vertex_data = (
-        _MetalVertexData(R*np.cos(theta), R*np.sin(theta), 0),
+        _MetalVertexData(
+            R*np.cos(theta),
+            R*np.sin(theta),
+            0
+        ),
         _MetalVertexData(
             R*np.cos(theta+(4*np.pi/3)),
             R*np.sin(theta+(4*np.pi/3)),
@@ -440,30 +444,30 @@ class M3L6_sqpl(MetalCage):
             1
         ),
         _MetalVertexData(
-            R*np.cos((theta+np.pi/4)),
-            R*np.sin((theta+np.pi/4)),
+            R*np.cos((theta+1*np.pi/3)),
+            R*np.sin((theta+1*np.pi/3)),
             -1
         ),
 
         _MetalVertexData(
-            R*np.cos((theta+np.pi/4)+(4*np.pi/3)),
-            R*np.sin((theta+np.pi/4)+(4*np.pi/3)),
+            R*np.cos((theta+1*np.pi/3)+(4*np.pi/3)),
+            R*np.sin((theta+1*np.pi/3)+(4*np.pi/3)),
             1
         ),
         _MetalVertexData(
-            R*np.cos((theta+np.pi/4)+(4*np.pi/3)),
-            R*np.sin((theta+np.pi/4)+(4*np.pi/3)),
+            R*np.cos((theta+1*np.pi/3)+(4*np.pi/3)),
+            R*np.sin((theta+1*np.pi/3)+(4*np.pi/3)),
             -1
         ),
 
         _MetalVertexData(
-            R*np.cos((theta+np.pi/4)+(2*np.pi/3)),
-            R*np.sin((theta+np.pi/4)+(2*np.pi/3)),
+            R*np.cos((theta+1*np.pi/3)+(2*np.pi/3)),
+            R*np.sin((theta+1*np.pi/3)+(2*np.pi/3)),
             1
         ),
         _MetalVertexData(
-            R*np.cos((theta+np.pi/4)+(2*np.pi/3)),
-            R*np.sin((theta+np.pi/4)+(2*np.pi/3)),
+            R*np.cos((theta+1*np.pi/3)+(2*np.pi/3)),
+            R*np.sin((theta+1*np.pi/3)+(2*np.pi/3)),
             -1
         ),
     )
