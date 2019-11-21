@@ -1401,6 +1401,15 @@ class GulpMDMetalOptimizer(GulpMetalOptimizer):
     Examples
     --------
 
+     :meth:`optimize` will convert the input mol to the lowest energy
+     conformer during MD. The conformers can be optimised before hand.
+     In some cases, it may be preferred to save all conformers and
+     analyse them separately. `save_conformers` provides this option.
+
+     EXAMPLE
+
+
+
     """
 
     def __init__(
@@ -1416,6 +1425,7 @@ class GulpMDMetalOptimizer(GulpMetalOptimizer):
         timestep='1.0',
         N_conformers=10,
         opt_conformers=True,
+        save_conformers=False,
         use_cache=False
     ):
         """
@@ -1439,6 +1449,7 @@ class GulpMDMetalOptimizer(GulpMetalOptimizer):
         self._sample = samples
         self._write = samples
         self._opt_conformers = opt_conformers
+        self._save_conformers = save_conformers
 
         self.metal_a_no = list(range(21, 31))
         self.metal_a_no += list(range(39, 49))+list(range(72, 81))
@@ -1636,14 +1647,25 @@ class GulpMDMetalOptimizer(GulpMetalOptimizer):
             # Optimise all conformers.
             min_energy = 1E10
             for id in ids:
+                if self._save_conformers:
+                    conformer_file_name = join(
+                        self._output_dir,
+                        f'conf_{id}.xyz'
+                    )
+                else:
+                    # This will get overwrriten each time.
+                    conformer_file_name = join(
+                        self._output_dir,
+                        'temp_conf.xyz'
+                    )
                 self._write_conformer_xyz_file(
                     id=id,
-                    filename='temp_conf.xyz',
+                    filename=conformer_file_name,
                     s_times=s_times,
                     s_coords=s_coords,
                     atom_types=atom_types
                 )
-                mol.update_from_file('temp_conf.xyz')
+                mol.update_from_file(conformer_file_name)
                 gulp_opt = GulpMetalOptimizer(
                     gulp_path=self._gulp_path,
                     metal_FF=self._metal_FF,
@@ -1665,6 +1687,20 @@ class GulpMDMetalOptimizer(GulpMetalOptimizer):
                         atom_types=atom_types
                     )
         else:
+            if self._save_conformers:
+                for id in ids:
+                    conformer_file_name = join(
+                        self._output_dir,
+                        f'conf_{id}.xyz'
+                    )
+                    self._write_conformer_xyz_file(
+                        id=id,
+                        filename=conformer_file_name,
+                        s_times=s_times,
+                        s_coords=s_coords,
+                        atom_types=atom_types
+                    )
+
             min_energy = min(pot_energies)
             min_id = ids[pot_energies.index(min_energy)]
             self._write_conformer_xyz_file(
