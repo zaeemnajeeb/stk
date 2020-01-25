@@ -619,6 +619,13 @@ _fg_types = (
     ),
 
     FGType(
+        name="metal_bound_O",
+        func_group_smarts="[O]",
+        bonder_smarts=["[$([O])]"],
+        deleter_smarts=[]
+    ),
+
+    FGType(
         name="metal_bound_NMN",
         func_group_smarts="[N]~*~[N]",
         bonder_smarts=["[$([N])]"]*2,
@@ -662,6 +669,35 @@ _fg_types = (
             '[$([#6]~[#7X2])]'
         ],
         deleter_smarts=(["[#7X2]"]*2)
+    ),
+
+    FGType(
+        name='carboxylic_acid_metal',
+        func_group_smarts='[C](=[O])[O][H]',
+        bonder_smarts=[
+            '[$([O]([C]=[O])[H])]',
+            '[$([O]=[C]([O][H]))]'
+        ],
+        deleter_smarts=[
+            '[$([H][O][C](=[O]))]'
+        ]
+    ),
+
+    FGType(
+        name='CO_metal',
+        func_group_smarts='[C]=[O]',
+        bonder_smarts=['[$([C]=[O])]'],
+        deleter_smarts=['[$([O]=[C])]']
+    ),
+
+    FGType(
+        name='COH_metal',
+        func_group_smarts='[C][O][H]',
+        bonder_smarts=['[$([C][O][H])]'],
+        deleter_smarts=[
+            '[$([H][O][C])]',
+            '[$([O]([H])[C])]'
+        ]
     ),
 )
 
