@@ -461,6 +461,16 @@ class _MetalVertex(Vertex):
             atom_ids=building_block.func_groups[0].get_bonder_ids()
         )
         start = fg_centroid - self._position
+        if np.allclose(start, [0, 0, 0], rtol=0, atol=1E-5):
+            print('hereee')
+            # Redefine start.
+            # Vector between the deleter atoms.
+            start = building_block.get_direction(
+                atom_ids=[
+                    i for j in building_block.func_groups
+                    for i in j.get_deleter_ids()
+                ]
+            )
         aligner_edge = edges[self._edge_ids[self._aligner_edge]]
         edge_coord = aligner_edge.get_position()
         connected_edges = tuple(edges[id_] for id_ in self._edge_ids)
