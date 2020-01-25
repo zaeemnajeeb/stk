@@ -215,6 +215,9 @@ class Reactor:
             _ReactionKey('metal', 'metal_bound_N'):
                 self._react_coordination,
 
+            _ReactionKey('metal', 'metal_bound_O'):
+                self._react_coordination,
+
             _ReactionKey('unsaturated_site', 'metal_bound_N'):
                 self._react_unsaturated_site,
 
@@ -228,6 +231,15 @@ class Reactor:
                 self._react_metal_bidentate,
 
             _ReactionKey('metal_bound_N', 'CNC_metal'):
+                self._react_metal_bound,
+
+            _ReactionKey('metal_bound_O', 'carboxylic_acid_metal'):
+                self._react_metal_bound,
+
+            _ReactionKey('metal_bound_O', 'CO_metal'):
+                self._react_metal_bound,
+
+            _ReactionKey('metal_bound_O', 'COH_metal'):
                 self._react_metal_bound,
         }
 
