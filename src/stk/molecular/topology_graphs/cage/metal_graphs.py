@@ -460,7 +460,7 @@ class Porphyrin(MetalCage):
 
     vertex_data = (
         _MetalVertexData(0, 0, 0),
-        _MetalVertexData(0, 0, 0.1)
+        _MetalVertexData(0, 0, 0)
     )
 
     edge_data = (
