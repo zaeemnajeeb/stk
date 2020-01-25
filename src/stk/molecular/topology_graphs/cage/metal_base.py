@@ -462,7 +462,6 @@ class _MetalVertex(Vertex):
         )
         start = fg_centroid - self._position
         if np.allclose(start, [0, 0, 0], rtol=0, atol=1E-5):
-            print('hereee')
             # Redefine start.
             # Vector between the deleter atoms.
             start = building_block.get_direction(
