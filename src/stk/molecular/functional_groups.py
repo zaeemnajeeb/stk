@@ -660,6 +660,16 @@ _fg_types = (
     ),
 
     FGType(
+        name='CNBr_metal',
+        func_group_smarts='[#6]~[#7X2]~[#35]',
+        bonder_smarts=[
+            '[$([#6]~[#7X2])]',
+            '[$([#35]~[#7X2])]'
+        ],
+        deleter_smarts=(["[#7X2]"])
+    ),
+
+    FGType(
         name='NCCN_metal',
         func_group_smarts='[#6]~[#7X2]~[#6]~[#6]~[#7X2]~[#6]',
         bonder_smarts=[

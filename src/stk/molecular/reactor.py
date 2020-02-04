@@ -233,6 +233,9 @@ class Reactor:
             _ReactionKey('metal_bound_N', 'CNC_metal'):
                 self._react_metal_bound,
 
+            _ReactionKey('metal_bound_N', 'CNBr_metal'):
+                self._react_metal_bound,
+
             _ReactionKey('metal_bound_O', 'carboxylic_acid_metal'):
                 self._react_metal_bound,
 
