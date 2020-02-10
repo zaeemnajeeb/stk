@@ -12,6 +12,7 @@ import subprocess as sp
 import re
 import os
 import uuid
+import shutil
 
 from ...utilities import vector_angle
 from .macromodel import MacroModelMD, MacroModelForceField
@@ -1358,6 +1359,11 @@ class GulpMetalOptimizer(MetalOptimizer):
             output_dir = self._output_dir
         output_dir = os.path.abspath(output_dir)
 
+        if os.path.exists(output_dir):
+            shutil.rmtree(output_dir)
+
+        os.mkdir(output_dir)
+
         in_file = 'gulp_opt.gin'
         out_file = 'gulp_opt.ginout'
         output_xyz = 'gulp_opt.xyz'
@@ -1730,6 +1736,11 @@ class GulpMDMetalOptimizer(GulpMetalOptimizer):
         else:
             output_dir = self._output_dir
         output_dir = os.path.abspath(output_dir)
+
+        if os.path.exists(output_dir):
+            shutil.rmtree(output_dir)
+
+        os.mkdir(output_dir)
 
         in_file = 'gulp_MD.gin'
         out_file = 'gulp_MD.ginout'
