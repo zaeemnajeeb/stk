@@ -908,6 +908,103 @@ class MetalOptimizer(Optimizer):
         return False
 
 
+class Collapser(MetalOptimizer):
+    """
+    Applies collapsing algorithm.
+
+
+    Attributes
+    ----------
+
+
+    Examples
+    --------
+
+    """
+
+    def __init__(self, step_size, distance_cut, use_cache=False):
+        """
+        Initialize a :class:`MetalOptimizer` instance.
+
+        Parameters
+        ----------
+
+        """
+
+        self.step_size = step_size
+        self.distance_cut = distance_cut
+
+        super(MetalOptimizer, self).__init__(use_cache=use_cache)
+
+    def no_short_contacts(self, mol):
+        """
+        Define a function that determines when collapsing should stop.
+
+        Parameters
+        ----------
+
+        """
+
+        for atom1, atom2 in combinations(mol.atoms, 2):
+            chk1 = atom1.id != atom2.id
+            chk2 = (
+                atom1.atomic_number != 1 and atom2.atomic_number != 1
+            )
+            chk3 = atom1.building_block_id != atom2.building_block_id
+            if chk1 and chk2 and chk3:
+                dist = mol.get_atom_distance(atom1.id, atom2.id)
+                if dist < self.distance_cut:
+                    print('shorts', atom1, atom2, dist)
+                    return False
+        print('no shorts')
+        return True
+
+    def optimize(self, mol):
+        """
+        Optimize `mol`.
+
+        Parameters
+        ----------
+        mol : :class:`.Molecule`
+            The molecule to be optimized.
+
+        Returns
+        -------
+        None : :class:`NoneType`
+
+        """
+
+        cent = mol.get_center_of_mass()
+        BB_ids = list(set([i.building_block_id for i in mol.atoms]))
+        BB_atom_ids = {i: [] for i in BB_ids}
+        for i in mol.atoms:
+            BB_atom_ids[i.building_block_id].append(i.id)
+
+        # Get BB COM vector to molecule COM.
+        BB_cent_vectors = {
+            i: mol.get_centroid(atom_ids=BB_atom_ids[i])-cent
+            for i in BB_atom_ids
+        }
+        print(cent)
+        print(BB_cent_vectors)
+
+        # Translate each BB along BB_COM_vectors `step`.
+        # `step` is the proportion of the BB_COM_vectors that is moved.
+        step_no = 0
+        step = self.step_size
+        while self.no_short_contacts(mol):
+            print(step_no)
+            new_pos = mol.get_position_matrix()
+            for atom in mol.atoms:
+                bb_id = atom.building_block_id
+                pos = mol.get_position_matrix()[atom.id]
+                new_pos[atom.id] = pos - step*BB_cent_vectors[bb_id]
+
+            step_no += 1
+            mol.set_position_matrix(new_pos)
+            mol.write(f'temp_{step_no}.mol')
+
+
 class GulpMetalOptimizer(MetalOptimizer):
     """
     Applies forcefield optimizers that can handle metal centres.
