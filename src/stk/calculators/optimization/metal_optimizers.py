@@ -922,7 +922,13 @@ class Collapser(MetalOptimizer):
 
     """
 
-    def __init__(self, step_size, distance_cut, use_cache=False):
+    def __init__(
+        self,
+        output_dir,
+        step_size,
+        distance_cut,
+        use_cache=False
+    ):
         """
         Initialize a :class:`MetalOptimizer` instance.
 
@@ -931,12 +937,35 @@ class Collapser(MetalOptimizer):
 
         """
 
-        self.step_size = step_size
-        self.distance_cut = distance_cut
+        self._output_dir = output_dir
+        self._step_size = step_size
+        self._distance_cut = distance_cut
 
         super(MetalOptimizer, self).__init__(use_cache=use_cache)
 
-    def no_short_contacts(self, mol):
+    def _get_inter_BB_distance(self, mol):
+        """
+        Calculate the minimum inter building block distance.
+
+        Parameters
+        ----------
+
+        """
+
+        min_dist = 1000
+        for atom1, atom2 in combinations(mol.atoms, 2):
+            chk1 = atom1.id != atom2.id
+            chk2 = (
+                atom1.atomic_number != 1 and atom2.atomic_number != 1
+            )
+            chk3 = atom1.building_block_id != atom2.building_block_id
+            if chk1 and chk2 and chk3:
+                dist = mol.get_atom_distance(atom1.id, atom2.id)
+                min_dist = min([dist, min_dist])
+
+        return min_dist
+
+    def _no_short_contacts(self, mol):
         """
         Define a function that determines when collapsing should stop.
 
@@ -953,11 +982,32 @@ class Collapser(MetalOptimizer):
             chk3 = atom1.building_block_id != atom2.building_block_id
             if chk1 and chk2 and chk3:
                 dist = mol.get_atom_distance(atom1.id, atom2.id)
-                if dist < self.distance_cut:
+                if dist < self._distance_cut:
                     print('shorts', atom1, atom2, dist)
                     return False
-        print('no shorts')
+
         return True
+
+    def _update_mol_position_matrix(self, mol, step, vectors, scales):
+        """
+        Update the position matrix of the mol.
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+        Position matrix.
+
+        """
+
+        new_pos = mol.get_position_matrix()
+        for atom in mol.atoms:
+            bb_id = atom.building_block_id
+            pos = mol.get_position_matrix()[atom.id]
+            new_pos[atom.id] = pos - step*vectors[bb_id]*scales[bb_id]
+
+        return new_pos
 
     def optimize(self, mol):
         """
@@ -974,6 +1024,17 @@ class Collapser(MetalOptimizer):
 
         """
 
+        # Handle output dir.
+        if self._output_dir is None:
+            output_dir = str(uuid.uuid4().int)
+        else:
+            output_dir = self._output_dir
+        output_dir = os.path.abspath(output_dir)
+
+        if os.path.exists(output_dir):
+            shutil.rmtree(output_dir)
+        os.mkdir(output_dir)
+
         cent = mol.get_center_of_mass()
         BB_ids = list(set([i.building_block_id for i in mol.atoms]))
         BB_atom_ids = {i: [] for i in BB_ids}
@@ -985,24 +1046,50 @@ class Collapser(MetalOptimizer):
             i: mol.get_centroid(atom_ids=BB_atom_ids[i])-cent
             for i in BB_atom_ids
         }
-        print(cent)
-        print(BB_cent_vectors)
+        # Scale the step size based on the different distances of
+        # BBs from the COM. Impacts anisotropic topologies.
+        max_distance = max([
+            np.linalg.norm(BB_cent_vectors[i])
+            for i in BB_cent_vectors
+        ])
+        BB_cent_scales = {
+            i: np.linalg.norm(BB_cent_vectors[i])/max_distance
+            for i in BB_cent_vectors
+        }
 
         # Translate each BB along BB_COM_vectors `step`.
         # `step` is the proportion of the BB_COM_vectors that is moved.
         step_no = 0
-        step = self.step_size
-        while self.no_short_contacts(mol):
-            print(step_no)
-            new_pos = mol.get_position_matrix()
-            for atom in mol.atoms:
-                bb_id = atom.building_block_id
-                pos = mol.get_position_matrix()[atom.id]
-                new_pos[atom.id] = pos - step*BB_cent_vectors[bb_id]
-
+        step = self._step_size
+        while self._no_short_contacts(mol):
+            new_pos = self._update_mol_position_matrix(
+                mol=mol,
+                step=step,
+                vectors=BB_cent_vectors,
+                scales=BB_cent_scales
+            )
             step_no += 1
             mol.set_position_matrix(new_pos)
-            mol.write(f'temp_{step_no}.mol')
+            mol.write(
+                os.path.join(output_dir, f'collapsed_{step_no}.mol')
+            )
+
+        # Check that we have not gone too far.
+        min_dist = self._get_inter_BB_distance(mol)
+        if min_dist < self._distance_cut / 2:
+            # Revert to half the previous step if we have.
+            step = -(self._step_size/2)
+            new_pos = self._update_mol_position_matrix(
+                mol=mol,
+                step=step,
+                vectors=BB_cent_vectors,
+                scales=BB_cent_scales
+            )
+            step_no += 1
+            mol.set_position_matrix(new_pos)
+            mol.write(
+                os.path.join(output_dir, f'collapsed_rev.mol')
+            )
 
 
 class GulpMetalOptimizer(MetalOptimizer):
