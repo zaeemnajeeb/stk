@@ -1009,6 +1009,39 @@ class Collapser(MetalOptimizer):
 
         return new_pos
 
+    def _get_BB_vectors(self, mol, BB_atom_ids):
+        """
+        Get the BB to COM vectors.
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+        Position matrix.
+
+        """
+
+        cent = mol.get_center_of_mass()
+
+        # Get BB COM vector to molecule COM.
+        BB_cent_vectors = {
+            i: mol.get_centroid(atom_ids=BB_atom_ids[i])-cent
+            for i in BB_atom_ids
+        }
+        # Scale the step size based on the different distances of
+        # BBs from the COM. Impacts anisotropic topologies.
+        max_distance = max([
+            np.linalg.norm(BB_cent_vectors[i])
+            for i in BB_cent_vectors
+        ])
+        BB_cent_scales = {
+            i: np.linalg.norm(BB_cent_vectors[i])/max_distance
+            for i in BB_cent_vectors
+        }
+
+        return BB_cent_vectors, BB_cent_scales
+
     def optimize(self, mol):
         """
         Optimize `mol`.
@@ -1035,33 +1068,22 @@ class Collapser(MetalOptimizer):
             shutil.rmtree(output_dir)
         os.mkdir(output_dir)
 
-        cent = mol.get_center_of_mass()
         BB_ids = list(set([i.building_block_id for i in mol.atoms]))
         BB_atom_ids = {i: [] for i in BB_ids}
         for i in mol.atoms:
             BB_atom_ids[i.building_block_id].append(i.id)
-
-        # Get BB COM vector to molecule COM.
-        BB_cent_vectors = {
-            i: mol.get_centroid(atom_ids=BB_atom_ids[i])-cent
-            for i in BB_atom_ids
-        }
-        # Scale the step size based on the different distances of
-        # BBs from the COM. Impacts anisotropic topologies.
-        max_distance = max([
-            np.linalg.norm(BB_cent_vectors[i])
-            for i in BB_cent_vectors
-        ])
-        BB_cent_scales = {
-            i: np.linalg.norm(BB_cent_vectors[i])/max_distance
-            for i in BB_cent_vectors
-        }
 
         # Translate each BB along BB_COM_vectors `step`.
         # `step` is the proportion of the BB_COM_vectors that is moved.
         step_no = 0
         step = self._step_size
         while self._no_short_contacts(mol):
+            # Update each step the building block vectors and distance.
+            BB_cent_vectors, BB_cent_scales = self._get_BB_vectors(
+                mol=mol,
+                BB_atom_ids=BB_atom_ids
+            )
+
             new_pos = self._update_mol_position_matrix(
                 mol=mol,
                 step=step,
