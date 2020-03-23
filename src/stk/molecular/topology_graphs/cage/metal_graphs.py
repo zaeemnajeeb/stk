@@ -1355,31 +1355,37 @@ class M8L6_Oct_Face(MetalCage):
         _MetalVertexData.init_at_center(_v2, _v3, _v6, _v7)
     )
 
+    # Ordered with bonds of faces going clockwise.
     edge_data = (
         EdgeData(vertex_data[0], vertex_data[8]),
-        EdgeData(vertex_data[0], vertex_data[9]),
-        EdgeData(vertex_data[0], vertex_data[10]),
         EdgeData(vertex_data[1], vertex_data[8]),
-        EdgeData(vertex_data[1], vertex_data[9]),
-        EdgeData(vertex_data[1], vertex_data[13]),
         EdgeData(vertex_data[2], vertex_data[8]),
-        EdgeData(vertex_data[2], vertex_data[11]),
-        EdgeData(vertex_data[2], vertex_data[13]),
         EdgeData(vertex_data[3], vertex_data[8]),
-        EdgeData(vertex_data[3], vertex_data[10]),
-        EdgeData(vertex_data[3], vertex_data[11]),
+
         EdgeData(vertex_data[4], vertex_data[9]),
-        EdgeData(vertex_data[4], vertex_data[10]),
-        EdgeData(vertex_data[4], vertex_data[12]),
         EdgeData(vertex_data[5], vertex_data[9]),
-        EdgeData(vertex_data[5], vertex_data[12]),
-        EdgeData(vertex_data[5], vertex_data[13]),
-        EdgeData(vertex_data[6], vertex_data[11]),
-        EdgeData(vertex_data[6], vertex_data[12]),
-        EdgeData(vertex_data[6], vertex_data[13]),
+        EdgeData(vertex_data[1], vertex_data[9]),
+        EdgeData(vertex_data[0], vertex_data[9]),
+
+        EdgeData(vertex_data[4], vertex_data[10]),
+        EdgeData(vertex_data[0], vertex_data[10]),
+        EdgeData(vertex_data[3], vertex_data[10]),
         EdgeData(vertex_data[7], vertex_data[10]),
+
+        EdgeData(vertex_data[3], vertex_data[11]),
+        EdgeData(vertex_data[2], vertex_data[11]),
+        EdgeData(vertex_data[6], vertex_data[11]),
         EdgeData(vertex_data[7], vertex_data[11]),
+
+        EdgeData(vertex_data[5], vertex_data[12]),
+        EdgeData(vertex_data[4], vertex_data[12]),
         EdgeData(vertex_data[7], vertex_data[12]),
+        EdgeData(vertex_data[6], vertex_data[12]),
+
+        EdgeData(vertex_data[1], vertex_data[13]),
+        EdgeData(vertex_data[5], vertex_data[13]),
+        EdgeData(vertex_data[6], vertex_data[13]),
+        EdgeData(vertex_data[2], vertex_data[13]),
     )
 
 
