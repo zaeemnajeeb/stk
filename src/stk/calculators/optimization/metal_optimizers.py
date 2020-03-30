@@ -927,6 +927,7 @@ class Collapser(MetalOptimizer):
         output_dir,
         step_size,
         distance_cut,
+        scale_steps=True,
         use_cache=False
     ):
         """
@@ -935,11 +936,24 @@ class Collapser(MetalOptimizer):
         Parameters
         ----------
 
+        output_dir - str
+
+        step size - float
+
+        distance_cut - float
+            Angstrom value stopping condition.
+
+        scale_steps - bool
+            Whether to scale the step of each BB by its relative
+            distance from COM.
+
+
         """
 
         self._output_dir = output_dir
         self._step_size = step_size
         self._distance_cut = distance_cut
+        self._scale_steps = scale_steps
 
         super(MetalOptimizer, self).__init__(use_cache=use_cache)
 
@@ -949,6 +963,10 @@ class Collapser(MetalOptimizer):
 
         Parameters
         ----------
+
+        Returns
+        -------
+        min_dist - float
 
         """
 
@@ -971,6 +989,12 @@ class Collapser(MetalOptimizer):
 
         Parameters
         ----------
+        mol : :class:`.Molecule`
+            The molecule to be optimized.
+
+        Returns
+        -------
+        bool
 
         """
 
@@ -1015,10 +1039,15 @@ class Collapser(MetalOptimizer):
 
         Parameters
         ----------
+        mol : :class:`.Molecule`
+            The molecule to be optimized.
+
+        BB_atom_ids : dict
 
         Returns
         -------
-        Position matrix.
+        BB_cent_vectors and BB_cent_scales.
+            Dicts
 
         """
 
@@ -1029,16 +1058,23 @@ class Collapser(MetalOptimizer):
             i: mol.get_centroid(atom_ids=BB_atom_ids[i])-cent
             for i in BB_atom_ids
         }
+
         # Scale the step size based on the different distances of
         # BBs from the COM. Impacts anisotropic topologies.
-        max_distance = max([
-            np.linalg.norm(BB_cent_vectors[i])
-            for i in BB_cent_vectors
-        ])
-        BB_cent_scales = {
-            i: np.linalg.norm(BB_cent_vectors[i])/max_distance
-            for i in BB_cent_vectors
-        }
+        if self._scale_steps:
+            max_distance = max([
+                np.linalg.norm(BB_cent_vectors[i])
+                for i in BB_cent_vectors
+            ])
+            BB_cent_scales = {
+                i: np.linalg.norm(BB_cent_vectors[i])/max_distance
+                for i in BB_cent_vectors
+            }
+        else:
+            BB_cent_scales = {
+                i: 1
+                for i in BB_cent_vectors
+            }
 
         return BB_cent_vectors, BB_cent_scales
 
