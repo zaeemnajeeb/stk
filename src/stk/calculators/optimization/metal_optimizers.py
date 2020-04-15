@@ -1632,6 +1632,60 @@ class GulpMetalOptimizer(MetalOptimizer):
         )
 
 
+class GulpCGMetalOptimizer(GulpMetalOptimizer):
+    """
+    Applies forcefield optimizers that can handle metal centres.
+
+    Uses Conjugate Graditent method.
+
+    Notes
+    -----
+    By default, :meth:`optimize` will run a restricted optimization
+    using constraints and the UFF4MOF. This forcefield requires some
+    explicit metal atom definitions, which are determined by the user.
+
+    Attributes
+    ----------
+
+
+    Examples
+    --------
+
+    """
+
+    def _write_gulp_file(self, mol, metal_atoms, in_file, output_xyz):
+
+        type_translator = self._type_translator()
+
+        top_line = (
+            'opti conj unit conv noautobond fix molmec cartesian\n'
+        )
+
+        position_section = self._position_section(mol, type_translator)
+        bond_section = self._bond_section(mol, metal_atoms)
+        species_section = self._species_section(type_translator)
+
+        library = '\nlibrary uff4mof.lib\n'
+
+        output_section = (
+            '\n'
+            'terse inout potentials\n'
+            'terse inout cell\n'
+            'terse in structure\n'
+            'terse inout derivatives\n'
+            f'output xyz {output_xyz}\n'
+            # 'output movie xyz steps_.xyz\n'
+        )
+
+        with open(in_file, 'w') as f:
+            f.write(top_line)
+            f.write(position_section)
+            f.write(bond_section)
+            f.write(species_section)
+            f.write(library)
+            f.write(output_section)
+
+
 class GulpMDMetalOptimizer(GulpMetalOptimizer):
     """
     Applies forcefield MD that can handle metal centres.
@@ -1724,7 +1778,7 @@ class GulpMDMetalOptimizer(GulpMetalOptimizer):
 
         md_section = (
             '\n'
-            "mdmaxtemp 10000\n"
+            "mdmaxtemp 100000000\n"
             f"integrator {self._integrator}\n"
             f"ensemble {self._ensemble}\n"
             f"temperature {self._temperature}\n"
