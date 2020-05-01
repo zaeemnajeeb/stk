@@ -1,7 +1,14 @@
 import pytest
 import stk
+from rdkit.Chem import AllChem as rdkit
 
 from ..case_data import CaseData
+
+
+metal_bound_atom = rdkit.MolFromSmiles('N->[Fe+2]')
+metal_bound_atom.AddConformer(rdkit.Conformer(
+    metal_bound_atom.GetNumAtoms())
+)
 
 
 @pytest.fixture(
@@ -384,6 +391,38 @@ from ..case_data import CaseData
                     bromine2=stk.Br(4),
                     bonders=(stk.C(1), stk.C(3)),
                     deleters=(stk.Br(2), stk.Br(4)),
+                ),
+            ),
+        ),
+
+        CaseData(
+            factory=stk.MetalBoundAtomFactory(
+                atom_smarts='N',
+                metal_smarts='Fe',
+            ),
+            molecule=stk.BuildingBlock.init_from_rdkit_mol(
+                metal_bound_atom
+            ),
+            functional_groups=(
+                stk.MetalBoundAtom(
+                    atom=stk.N(0),
+                    metal=stk.Fe(1, charge=2),
+                ),
+            ),
+        ),
+      
+        CaseData(
+            factory=stk.SmartsFunctionalGroupFactory(
+                smarts='[C][N]',
+                bonders=(0, ),
+                deleters=(1, ),
+            ),
+            molecule=stk.BuildingBlock('NCC'),
+            functional_groups=(
+                stk.GenericFunctionalGroup(
+                    atoms=(stk.N(0), stk.C(1)),
+                    bonders=(stk.C(1), ),
+                    deleters=(stk.N(0), ),
                 ),
             ),
         ),

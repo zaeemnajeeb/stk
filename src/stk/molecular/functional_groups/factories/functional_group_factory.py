@@ -38,6 +38,9 @@ stk.molecular.functional_groups.factories.fluoro_factory\
     Iodo Factory <\
 stk.molecular.functional_groups.factories.iodo_factory\
 >
+    Metal Bound Atom Factory <\
+stk.molecular.functional_groups.factories.metal_bound_atom_factory\
+>
     Primary Amino Factory <\
 stk.molecular.functional_groups.factories.primary_amino_factory\
 >
@@ -46,6 +49,9 @@ stk.molecular.functional_groups.factories.ring_amine_factory\
 >
     Secondary Amino Factory <\
 stk.molecular.functional_groups.factories.secondary_amino_factory\
+>
+    Smarts Functional Group Factory <\
+stk.molecular.functional_groups.factories.smarts_functional_group_factory\
 >
     Terminal Alkene Factory <\
 stk.molecular.functional_groups.factories.terminal_alkene_factory\

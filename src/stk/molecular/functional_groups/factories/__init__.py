@@ -10,9 +10,11 @@ from .difluoro_factory import *  # noqa
 from .diol_factory import *  # noqa
 from .fluoro_factory import *  # noqa
 from .iodo_factory import *  # noqa
+from .metal_bound_atom_factory import *  # noqa
 from .primary_amino_factory import *  # noqa
 from .ring_amine_factory import *  # noqa
 from .secondary_amino_factory import *  # noqa
+from .smarts_functional_group_factory import *  # noqa
 from .terminal_alkene_factory import *  # noqa
 from .terminal_alkyne_factory import *  # noqa
 from .thioacid_factory import *  # noqa
