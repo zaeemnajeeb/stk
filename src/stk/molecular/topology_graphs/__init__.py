@@ -5,4 +5,5 @@ from . import cage  # noqa
 from . import host_guest  # noqa
 from . import rotaxane  # noqa
 from . import macrocycle  # noqa
+from . import metal_complex  # noqa
 from . import metal_centre  # noqa
