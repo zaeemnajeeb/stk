@@ -10,7 +10,6 @@ from .vertices import (
     _MetalVertex,
     _MonoDentateLigandVertex,
     _BiDentateLigandVertex,
-    _UnsaturatedLigandVertex,
 )
 from ..topology_graph import TopologyGraph
 from ...reactions import GenericReactionFactory
@@ -32,8 +31,6 @@ class MetalComplex(TopologyGraph):
         self,
         metals,
         ligands,
-        unsaturated_vertices,
-        vertex_alignments=None,
         reaction_factory=GenericReactionFactory(),
         num_processes=1,
     ):
@@ -94,25 +91,20 @@ class MetalComplex(TopologyGraph):
             ligand: self._get_ligand_vertices(ids)
             for ligand, ids in ligands.items()
         }
-        unsaturated_vertices = {
-            unsaturated_vertex: self._get_unsaturated_vertices(ids)
-            for unsaturated_vertex, ids in unsaturated_vertices.items()
-        }
-
-        print(metals, ligands, unsaturated_vertices)
+        print(metals, ligands)
 
         building_blocks_types = set(chain(
-            metals.keys(), ligands.keys(), unsaturated_vertices.keys()
+            metals.keys(), ligands.keys()
         ))
         print(building_blocks_types)
         building_blocks = {i: [] for i in building_blocks_types}
         for bb in building_blocks_types:
-            for v in metals[bb]:
-                building_blocks[bb].append(v)
-            for v in ligands[bb]:
-                building_blocks[bb].append(v)
-            for v in unsaturated_vertices[bb]:
-                building_blocks[bb].append(v)
+            if bb in metals:
+                for v in metals[bb]:
+                    building_blocks[bb].append(v)
+            if bb in ligands:
+                for v in ligands[bb]:
+                    building_blocks[bb].append(v)
 
         print(building_blocks)
 
@@ -170,37 +162,14 @@ class MetalComplex(TopologyGraph):
             vertex_ids = (vertex_ids, )
 
         for vertex_id in vertex_ids:
-            yield self._liagnd_vertex_prototypes[vertex_id]
-
-    def _get_unsaturated_vertices(self, vertex_ids):
-        """
-        Yield vertex prototypes.
-
-        Parameters
-        ----------
-        vertex_ids : :class:`iterable` of :class:`int`
-            The ids of the vertices to yield.
-
-        Yields
-        ------
-        :class:`.Vertex`
-            A vertex prototype of the topology graph.
-
-        """
-
-        if isinstance(vertex_ids, int):
-            vertex_ids = (vertex_ids, )
-
-        for vertex_id in vertex_ids:
-            yield self._unsaturated_vertex_prototypes[vertex_id]
+            yield self._ligand_vertex_prototypes[vertex_id]
 
     def clone(self):
         clone = super().clone()
-        raise NotImplementedError()
-        clone._guest_start = self._guest_start
-        clone._guest_target = self._guest_target
-        clone._displacement = self._displacement
         return clone
+
+    def _run_reactions(self, state):
+        return state
 
     def _get_scale(self, building_block_vertices):
         return 3
