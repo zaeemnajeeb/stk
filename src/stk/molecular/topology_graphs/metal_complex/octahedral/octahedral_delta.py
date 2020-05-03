@@ -1,5 +1,5 @@
 """
-Octahedral Lambda
+Octahedral Delta
 =================
 
 """
@@ -9,7 +9,7 @@ from ..vertices import _MetalVertex, _BiDentateLigandVertex
 from ...topology_graph import Edge
 
 
-class OctahedralLambda(MetalComplex):
+class OctahedralDelta(MetalComplex):
     """
     Represents a metal complex topology graph.
 
@@ -32,8 +32,8 @@ class OctahedralLambda(MetalComplex):
     )
     _ligand_vertex_prototypes = (
         _BiDentateLigandVertex(1, [1, 1, 0]),
-        _BiDentateLigandVertex(2, [0, -1, -1]),
-        _BiDentateLigandVertex(3, [-1, 0, 1]),
+        _BiDentateLigandVertex(2, [0, -1, 1]),
+        _BiDentateLigandVertex(3, [-1, 0, -1]),
     )
 
     # The ordering here matters for the stereochemistry.
@@ -53,27 +53,27 @@ class OctahedralLambda(MetalComplex):
             position=[0, 1, 0],
         ),
         Edge(
-            id=2,
-            vertex1=_metal_vertex_prototypes[0],
-            vertex2=_ligand_vertex_prototypes[2],
-            position=[0, 0, 1],
-        ),
-        Edge(
-            id=3,
-            vertex1=_metal_vertex_prototypes[0],
-            vertex2=_ligand_vertex_prototypes[2],
-            position=[-1, 0, 0],
-        ),
-        Edge(
             id=4,
             vertex1=_metal_vertex_prototypes[0],
             vertex2=_ligand_vertex_prototypes[1],
             position=[0, -1, 0],
         ),
         Edge(
-            id=5,
+            id=2,
             vertex1=_metal_vertex_prototypes[0],
             vertex2=_ligand_vertex_prototypes[1],
+            position=[0, 0, 1],
+        ),
+        Edge(
+            id=5,
+            vertex1=_metal_vertex_prototypes[0],
+            vertex2=_ligand_vertex_prototypes[2],
             position=[0, 0, -1],
+        ),
+        Edge(
+            id=3,
+            vertex1=_metal_vertex_prototypes[0],
+            vertex2=_ligand_vertex_prototypes[2],
+            position=[-1, 0, 0],
         ),
     )

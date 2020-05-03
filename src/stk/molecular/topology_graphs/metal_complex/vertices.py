@@ -22,6 +22,7 @@ class _MetalVertex(Vertex):
         ).get_position_matrix()
 
     def map_functional_groups_to_edges(self, building_block, edges):
+        edges = sorted(edges, key=lambda i: i.get_id())
         return {
             fg_id: edge.get_id() for fg_id, edge in enumerate(edges)
         }
@@ -362,6 +363,13 @@ class _BiDentateLigandVertex(Vertex):
         # return building_block.get_position_matrix()
 
     def map_functional_groups_to_edges(self, building_block, edges):
+        fg, = building_block.get_functional_groups(0)
+        fg_position = building_block.get_centroid(fg.get_placer_ids())
+
+        def fg_distance(edge):
+            return euclidean(edge.get_position(), fg_position)
+
+        edges = sorted(edges, key=fg_distance)
         return {
             fg_id: edge.get_id() for fg_id, edge in enumerate(edges)
         }
