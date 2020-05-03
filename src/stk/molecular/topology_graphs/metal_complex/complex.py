@@ -168,9 +168,6 @@ class MetalComplex(TopologyGraph):
         clone = super().clone()
         return clone
 
-    def _run_reactions(self, state):
-        return state
-
     def _get_scale(self, building_block_vertices):
         return 3
 

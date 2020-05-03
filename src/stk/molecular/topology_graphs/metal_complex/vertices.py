@@ -102,32 +102,141 @@ class _BiDentateLigandVertex(Vertex):
         return self.clone()._with_aligner_edge(aligner_edge)
 
     def place_building_block(self, building_block, edges):
+        # Translate building block to vertex position.
         building_block = building_block.with_centroid(
             position=self._position,
             atom_ids=building_block.get_placer_ids(),
         )
-        print(list(building_block.get_placer_ids()))
-        print(edges)
-        print('p1', self._position)
 
-        # # Align vector between edges and vector between placers,
-        # start = building_block.get_direction(
-        #     atom_ids=building_block.get_placer_ids()
+        # Align vector between 2 edges with vector between centroid of
+        # placers in 2 FGs.
+        fg0, fg1 = building_block.get_functional_groups()
+        fg0_position = building_block.get_centroid(
+            atom_ids=fg0.get_placer_ids(),
+        )
+        fg1_position = building_block.get_centroid(
+            atom_ids=fg1.get_placer_ids(),
+        )
+        start = fg1_position - fg0_position
+        # Vector between connected edges.
+        c_edge_positions = [
+            i.get_position() for i in edges
+        ]
+        target = c_edge_positions[1] - c_edge_positions[0]
+        building_block = building_block.with_rotation_between_vectors(
+            start=start,
+            target=target,
+            origin=building_block.get_centroid(),
+        )
+
+        # Align vector between edge-self.position with vector between
+        # placer centroid and deleter centroid.
+        edge_centroid = (
+            sum(edge.get_position() for edge in edges) / len(edges)
+        )
+        placer_centroid = building_block.get_centroid(
+            atom_ids=building_block.get_placer_ids(),
+        )
+        deleter_ids = list((
+            j.get_id()
+            for i in building_block.get_functional_groups()
+            for j in i.get_deleters()
+        ))
+        deleter_centroid = building_block.get_centroid(
+            atom_ids=deleter_ids
+        )
+        start = placer_centroid - deleter_centroid
+        target = self._position - edge_centroid
+        building_block = building_block.with_rotation_between_vectors(
+            start=start,
+            target=target,
+            origin=building_block.get_centroid(),
+        )
+
+        # Translate building block to vertex position.
+        building_block = building_block.with_centroid(
+            position=self._position,
+            atom_ids=building_block.get_placer_ids(),
+        )
+        return building_block.get_position_matrix()
+        #
+        # print('aaaaaaaaa22222222aaa')
+        # # return building_block.get_position_matrix()
+        # # Align normal of placer plane and edge plane.
+        # edge_centroid = (
+        #     sum(edge.get_position() for edge in edges) / len(edges)
         # )
-        # # Vector between connected edges.
-        # c_edge_positions = [
-        #     i.get_position() for i in edges
-        # ]
-        # target = c_edge_positions[1] - c_edge_positions[0]
+        # core_centroid = building_block.get_centroid(
+        #     atom_ids=building_block.get_core_atom_ids(),
+        # )
+        # placer_centroid = building_block.get_centroid(
+        #     atom_ids=building_block.get_placer_ids(),
+        # )
+        # deleter_ids = list((
+        #     j.get_id()
+        #     for i in building_block.get_functional_groups()
+        #     for j in i.get_deleters()
+        # ))
+        # deleter_centroid = building_block.get_centroid(
+        #     atom_ids=deleter_ids
+        # )
+        # print(list(edge.get_position() for edge in edges))
+        # print(edge_centroid)
+        # target_points = [edge.get_position() for edge in edges]
+        # target_points.append(self._position)
+        # target_points = np.array(target_points)
+        # print(target_points)
+        # target_normal = get_acute_vector(
+        #     reference=self._position - edge_centroid,
+        #     vector=get_plane_normal(points=target_points),
+        # )
+        # print(list(
+        #     i
+        #     for i in building_block.get_core_atom_ids()
+        # ))
+        # print(list(
+        #     i
+        #     for i in building_block.get_placer_ids()
+        # ))
+        #
+        # print('en', target_normal)
+        # print('c', core_centroid)
+        # print('p', placer_centroid)
+        # print('d', deleter_centroid)
+        # print('dp', deleter_centroid - placer_centroid)
+        # start = get_acute_vector(
+        #     reference=deleter_centroid - placer_centroid,
+        #     vector=building_block.get_plane_normal(
+        #         atom_ids=building_block.get_placer_ids(),
+        #     ),
+        # )
+        # print('s', start)
+        # # return building_block.get_position_matrix()
         # building_block = building_block.with_rotation_between_vectors(
         #     start=start,
-        #     target=target,
-        #     origin=building_block.get_centroid(),
+        #     target=target_normal,
+        #     origin=self._position,
         # )
+        # core_centroid = building_block.get_centroid(
+        #     atom_ids=building_block.get_core_atom_ids(),
+        # )
+        # placer_centroid = building_block.get_centroid(
+        #     atom_ids=building_block.get_placer_ids(),
+        # )
+        # start = get_acute_vector(
+        #     reference=placer_centroid - core_centroid,
+        #     vector=building_block.get_plane_normal(
+        #         atom_ids=building_block.get_placer_ids(),
+        #     ),
+        # )
+        # print('ns', start)
+        # print('============')
+        # return building_block.get_position_matrix()
+
         #
-        # # Align vector 1 and 2.
-        # # Vector 1: vector between deleter centroid and bonder centroid
-        # # Vector 2: vector between edge centrod and vertex position.
+        # Align vector 1 and 2.
+        # Vector 1: vector between deleter centroid and bonder centroid
+        # Vector 2: vector between edge centrod and vertex position.
         # deleter_ids = list((
         #     j.get_id()
         #     for i in building_block.get_functional_groups()
@@ -149,6 +258,7 @@ class _BiDentateLigandVertex(Vertex):
         #     target=target,
         #     origin=building_block.get_centroid(),
         # )
+        # return building_block.get_position_matrix()
         #
         # # Rotate vector1 onto vector2:
         # print('--')
@@ -181,22 +291,11 @@ class _BiDentateLigandVertex(Vertex):
         # )
         # print('rot', placer_centroid, edge_centroid, placer_centroid - edge_centroid)
         # print('=======')
-        return building_block.get_position_matrix()
+        # return building_block.get_position_matrix()
 
         # Rotate building block about edge centroid to minimize the
         # angles between
         # FG_ binder atoms - edge_i position - binder centroid.
-
-
-        # fg0, fg1 = building_block.get_functional_groups()
-        # # fg0_position = building_block.get_centroid(
-        # #     atom_ids=fg0.get_placer_ids(),
-        # # )
-        # # fg1_position = building_block.get_centroid(
-        # #     atom_ids=fg1.get_placer_ids(),
-        # # )
-        # print(fg0, fg1)
-
 
         #
         # fg_bonder_centroid = building_block.get_centroid(
