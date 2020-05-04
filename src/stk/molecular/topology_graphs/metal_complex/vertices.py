@@ -131,22 +131,35 @@ class _BiDentateLigandVertex(Vertex):
         )
 
         # Align vector between edge-self.position with vector between
-        # placer centroid and deleter centroid.
+        # placer centroid and core of the molecule centroid.
+        # Importantly, we use a projection of the placer-core vector
+        # that is orthogonal to the FG-FG vector in a bidentate
+        # ligand for this alignment.
         edge_centroid = (
             sum(edge.get_position() for edge in edges) / len(edges)
         )
         placer_centroid = building_block.get_centroid(
             atom_ids=building_block.get_placer_ids(),
         )
-        deleter_ids = list((
-            j.get_id()
-            for i in building_block.get_functional_groups()
-            for j in i.get_deleters()
-        ))
-        deleter_centroid = building_block.get_centroid(
-            atom_ids=deleter_ids
+        core_centroid = building_block.get_centroid(
+            atom_ids=building_block.get_core_atom_ids(),
         )
-        start = placer_centroid - deleter_centroid
+
+        fg0, fg1 = building_block.get_functional_groups()
+        fg0_position = building_block.get_centroid(
+            atom_ids=fg0.get_placer_ids(),
+        )
+        fg1_position = building_block.get_centroid(
+            atom_ids=fg1.get_placer_ids(),
+        )
+        fg_vector = fg1_position - fg0_position
+        placer_to_core_vector = placer_centroid - core_centroid
+        proj_onto_fg_vector = fg_vector * np.dot(
+            placer_to_core_vector,
+            fg_vector
+        ) / np.dot(fg_vector, fg_vector)
+        orthogonal_vector = proj_onto_fg_vector - placer_to_core_vector
+        start = orthogonal_vector
         target = self._position - edge_centroid
         building_block = building_block.with_rotation_between_vectors(
             start=start,
