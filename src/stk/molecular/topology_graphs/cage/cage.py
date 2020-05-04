@@ -262,6 +262,8 @@ class Cage(TopologyGraph):
                 building_blocks=building_blocks,
             )
 
+        print(building_blocks)
+
         self._vertex_alignments = vertex_alignments = (
             dict(vertex_alignments)
             if vertex_alignments is not None

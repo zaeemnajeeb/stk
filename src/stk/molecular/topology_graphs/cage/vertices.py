@@ -137,6 +137,7 @@ class _CageVertex(Vertex):
 
 class _LinearCageVertex(_CageVertex):
     def place_building_block(self, building_block, edges):
+        print('-----------------hhh')
         building_block = building_block.with_centroid(
             position=self._position,
             atom_ids=building_block.get_placer_ids(),
@@ -182,6 +183,8 @@ class _LinearCageVertex(_CageVertex):
 
 class _NonLinearCageVertex(_CageVertex):
     def place_building_block(self, building_block, edges):
+        print('-----------------')
+        print(building_block)
         building_block = building_block.with_centroid(
             position=self._position,
             atom_ids=building_block.get_placer_ids(),
@@ -203,6 +206,7 @@ class _NonLinearCageVertex(_CageVertex):
         placer_centroid = building_block.get_centroid(
             atom_ids=building_block.get_placer_ids(),
         )
+        print(edge_centroid, core_centroid, placer_centroid)
         building_block = building_block.with_rotation_between_vectors(
             start=get_acute_vector(
                 reference=core_centroid - placer_centroid,
