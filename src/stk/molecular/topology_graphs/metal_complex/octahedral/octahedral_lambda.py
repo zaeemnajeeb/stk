@@ -4,7 +4,7 @@ Octahedral Lambda
 
 """
 
-from ..complex import MetalComplex
+from ..metal_complex import MetalComplex
 from ..vertices import _MetalVertex, _BiDentateLigandVertex
 from ...topology_graph import Edge
 

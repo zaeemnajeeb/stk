@@ -1,3 +1,4 @@
 from . import vertices  # noqa
-from .complex import *  # noqa
-from .octahedral import *
+from .metal_complex import *  # noqa
+from .octahedral import *  # noqa
+from .square_planar import *  # noqa
