@@ -34,6 +34,35 @@ class _MonoDentateLigandVertex(Vertex):
 
     """
 
+    def place_building_block(self, building_block, edges):
+        building_block = building_block.with_centroid(
+            position=self._position,
+            atom_ids=building_block.get_placer_ids(),
+        )
+        fg, = building_block.get_functional_groups()
+        fg_centroid = building_block.get_centroid(
+            atom_ids=fg.get_placer_ids(),
+        )
+        core_centroid = building_block.get_centroid(
+            atom_ids=building_block.get_core_atom_ids(),
+        )
+        edge_centroid = (
+            sum(edge.get_position() for edge in edges) / len(edges)
+        )
+        target = edge_centroid - self._position
+        return building_block.with_rotation_between_vectors(
+            start=fg_centroid - core_centroid,
+            # _cap_direction is defined by a subclass.
+            target=target,
+            origin=self._position,
+        ).get_position_matrix()
+
+    def map_functional_groups_to_edges(self, building_block, edges):
+        edges = sorted(edges, key=lambda i: i.get_id())
+        return {
+            fg_id: edge.get_id() for fg_id, edge in enumerate(edges)
+        }
+
 
 class _BiDentateLigandVertex(Vertex):
     """
@@ -45,7 +74,6 @@ class _BiDentateLigandVertex(Vertex):
         self,
         id,
         position,
-        aligner_edge=0,
     ):
         """
         Initialize a :class:`._CageVertex`.
