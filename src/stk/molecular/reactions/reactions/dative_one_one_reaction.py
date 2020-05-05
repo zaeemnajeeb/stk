@@ -4,8 +4,14 @@ Dative One-One Reaction
 
 """
 
+from itertools import chain
+
 from .reaction import Reaction
 from ...bonds import Bond
+
+
+class NoMetalAtomError(Exception):
+    ...
 
 
 class DativeOneOneReaction(Reaction):
@@ -61,11 +67,42 @@ class DativeOneOneReaction(Reaction):
 
         """
 
+        def is_metal_atom(atom):
+            """
+            Check if atom has atomic number of a metal atom.
+            Parameters
+            ----------
+            atom : :class:`.Atom`
+                An stk Atom.
+            Returns
+            -------
+            :class:`bool`
+                ``True`` if atom has the atomic number of a metal atom.
+            """
+
+            # Metal atomic numbers.
+            metal_atomic_numbers = set(chain(
+                list(range(21, 31)),
+                list(range(39, 49)),
+                list(range(72, 81))
+            ))
+
+            return atom.get_atomic_number() in metal_atomic_numbers
+
         bondera = next(self._functional_group1.get_bonders())
         bonderb = next(self._functional_group2.get_bonders())
 
-        print(bondera, bonderb)
-
+        if is_metal_atom(bondera):
+            bonder2 = bondera
+            bonder1 = bonderb
+        elif is_metal_atom(bonderb):
+            bonder2 = bonderb
+            bonder1 = bondera
+        else:
+            raise NoMetalAtomError(
+                f'{bondera} and {bonderb} are metal atoms, so a dative'
+                ' bond is not necessary.'
+            )
         return bonder1, bonder2
 
     def _get_new_bonds(self):
