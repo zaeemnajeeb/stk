@@ -5,7 +5,7 @@ M4L4 Square
 """
 
 from ..cage import Cage
-from ..vertices import _LinearCageVertex, _NonLinearCageVertex
+from ..vertices import _BentMetalComplexCageVertex, _LinearCageVertex
 from ...topology_graph import Edge
 
 
@@ -18,10 +18,10 @@ class M4L4Square(Cage):
     """
 
     _vertex_prototypes = (
-        _NonLinearCageVertex(0, [1, 1, 0]),
-        _NonLinearCageVertex(1, [1, -1, 0]),
-        _NonLinearCageVertex(2, [-1, -1, 0]),
-        _NonLinearCageVertex(3, [-1, 1, 0]),
+        _BentMetalComplexCageVertex(0, [1, 1, 0]),
+        _BentMetalComplexCageVertex(1, [1, -1, 0]),
+        _BentMetalComplexCageVertex(2, [-1, -1, 0]),
+        _BentMetalComplexCageVertex(3, [-1, 1, 0]),
 
         _LinearCageVertex(4, [1, 0, 0], False),
         _LinearCageVertex(5, [0, -1, 0], False),
@@ -40,7 +40,7 @@ class M4L4Square(Cage):
         Edge(5, _vertex_prototypes[3], _vertex_prototypes[6]),
 
         Edge(6, _vertex_prototypes[3], _vertex_prototypes[7]),
-        Edge(7, _vertex_prototypes[1], _vertex_prototypes[7]),
+        Edge(7, _vertex_prototypes[0], _vertex_prototypes[7]),
     )
 
     _num_windows = 1

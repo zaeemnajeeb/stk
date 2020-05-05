@@ -137,7 +137,6 @@ class _CageVertex(Vertex):
 
 class _LinearCageVertex(_CageVertex):
     def place_building_block(self, building_block, edges):
-        print('-----------------hhh')
         building_block = building_block.with_centroid(
             position=self._position,
             atom_ids=building_block.get_placer_ids(),
@@ -183,8 +182,6 @@ class _LinearCageVertex(_CageVertex):
 
 class _NonLinearCageVertex(_CageVertex):
     def place_building_block(self, building_block, edges):
-        print('-----------------')
-        print(building_block)
         building_block = building_block.with_centroid(
             position=self._position,
             atom_ids=building_block.get_placer_ids(),
@@ -206,7 +203,6 @@ class _NonLinearCageVertex(_CageVertex):
         placer_centroid = building_block.get_centroid(
             atom_ids=building_block.get_placer_ids(),
         )
-        print(edge_centroid, core_centroid, placer_centroid)
         building_block = building_block.with_rotation_between_vectors(
             start=get_acute_vector(
                 reference=core_centroid - placer_centroid,
@@ -252,4 +248,35 @@ class _NonLinearCageVertex(_CageVertex):
                 fg_sorter.get_items(),
                 edge_sorter.get_items(),
             )
+        }
+
+
+class _BentMetalComplexCageVertex(_CageVertex):
+    def place_building_block(self, building_block, edges):
+        building_block = building_block.with_centroid(
+            position=self._position,
+            atom_ids=building_block.get_placer_ids(),
+        )
+        edge_centroid = (
+            sum(edge.get_position() for edge in edges) / len(edges)
+        )
+        core_centroid = building_block.get_centroid(
+            atom_ids=building_block.get_core_atom_ids(),
+        )
+        return building_block.with_rotation_between_vectors(
+            start=core_centroid - self._position,
+            target=self._position - edge_centroid,
+            origin=self._position,
+        ).get_position_matrix()
+
+    def map_functional_groups_to_edges(self, building_block, edges):
+        fg, = building_block.get_functional_groups(0)
+        fg_position = building_block.get_centroid(fg.get_placer_ids())
+
+        def fg_distance(edge):
+            return euclidean(edge.get_position(), fg_position)
+
+        edges = sorted(edges, key=fg_distance)
+        return {
+            fg_id: edge.get_id() for fg_id, edge in enumerate(edges)
         }
