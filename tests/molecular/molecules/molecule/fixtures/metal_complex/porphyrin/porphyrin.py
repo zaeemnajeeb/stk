@@ -49,9 +49,11 @@ _quad_1 = stk.BuildingBlock(
                 )
             ),
             smiles=(
-                'Brc1ccc(C2=C3C=CC4=C(c5ccc(Br)cc5)C5=N6->[Zn+2]7('
-                '<-[N]8C(=CC=C8C(c8ccc(Br)cc8)=C6C=C5)C(c5ccc(Br)cc5)'
-                '=C5C=CC2=N->75)<-[N]34)cc1'
+                '[H]C1=C([H])C2=N3->[Zn+2]45<-N6=C(C([H])=C([H])C6=C'
+                '(c6c([H])c([H])c(Br)c([H])c6[H])c6c([H])c([H])c(n->46'
+                ')C(c4c([H])c([H])c(Br)c([H])c4[H])=C13)C(c1c([H])c'
+                '([H])c(Br)c([H])c1[H])=c1c([H])c([H])c(n->51)=C2c1'
+                'c([H])c([H])c(Br)c([H])c1[H]'
             ),
         ),
     ),

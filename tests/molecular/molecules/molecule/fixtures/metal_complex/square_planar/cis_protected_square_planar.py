@@ -45,7 +45,9 @@ _bi_1 = stk.BuildingBlock(
                     )
                 )
             ),
-            smiles=('C1CN->[Pd+2]<-N1'),
+            smiles=(
+                '[H]C1([H])C([H])([H])N([H])([H])->[Pd+2]<-N1([H])[H]'
+            ),
         ),
     ),
 )

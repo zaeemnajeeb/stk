@@ -51,8 +51,9 @@ _iron_bi_1 = stk.BuildingBlock(
                 )
             ),
             smiles=(
-                'BrN1->[Fe+2]23(<-N(Br)=Cc4ccccn->24)(<-N(Br)=Cc2'
-                'ccccn->32)<-n2ccccc2C=1'
+                '[H]C1=N(Br)->[Fe+2]23(<-N(Br)=C([H])c4c([H])c([H])c'
+                '([H])c([H])n->24)(<-N(Br)=C([H])c2c([H])c([H])c([H])'
+                'c([H])n->32)<-n2c([H])c([H])c([H])c([H])c21'
             ),
         ),
     ),

@@ -46,9 +46,16 @@ _iron_mo_1 = stk.BuildingBlock(
                 )
             ),
             smiles=(
-                'c1cn(->[Fe+2](<-n2ccc3c(c2)CCCCC3)(<-n2ccc3c(c2)'
-                'CCCCC3)(<-n2ccc3c(c2)CCCCC3)(<-n2ccc3c(c2)'
-                'CCCCC3)<-n2ccc3c(c2)CCCCC3)cc2c1CCCCC2'
+                '[H]c1c2c(c([H])n(->[Fe+2](<-n3c([H])c([H])c4c(c3[H])'
+                'C([H])([H])C([H])([H])C([H])([H])C([H])([H])C4([H])['
+                'H])(<-n3c([H])c([H])c4c(c3[H])C([H])([H])C([H])([H])'
+                'C([H])([H])C([H])([H])C4([H])[H])(<-n3c([H])c([H])c4'
+                'c(c3[H])C([H])([H])C([H])([H])C([H])([H])C([H])([H])'
+                'C4([H])[H])(<-n3c([H])c([H])c4c(c3[H])C([H])([H])C(['
+                'H])([H])C([H])([H])C([H])([H])C4([H])[H])<-n3c([H])c('
+                '[H])c4c(c3[H])C([H])([H])C([H])([H])C([H])([H])C([H]'
+                ')([H])C4([H])[H])c1[H])C([H])([H])C([H])([H])C([H])('
+                '[H])C([H])([H])C2([H])[H]'
             ),
         ),
     ),
