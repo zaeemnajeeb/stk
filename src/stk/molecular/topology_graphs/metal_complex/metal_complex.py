@@ -47,7 +47,7 @@ class MetalComplex(TopologyGraph):
 
     Constructing metal-containing archiectures requires more explicit
     input than other :class:`.TopologyGraph`.  To build a
-    six-coordinate Iron(II) complex with an octahedral geometry and
+    six-coordinate iron(II) complex with an octahedral geometry and
     lambda stereochemistry, we firstly need to define a metal atom
     (with six functional groups) and the organic ligand
     :class:`.BuildingBlock` (with two functional groups).
@@ -91,7 +91,10 @@ class MetalComplex(TopologyGraph):
     Next we perform construction of the :class:`.TopologyGraph`. Note
     that :class:`.MetalComplex` topologies have a different
     initializer, that clearly defines the placement of metal and ligand
-    building blocks. It is crucial that metal-ligand bonds are
+    building blocks. Each :class:`.MetalComplex` provides example
+    placements in their docstring.
+
+    It is crucial that metal-ligand bonds are
     correctly created to be dative (i.e. the valence of the ligand
     `bonder` is not affected by the bond). This is handled by providing
     the :class:`DativeReactionFactory` a
@@ -123,7 +126,8 @@ class MetalComplex(TopologyGraph):
     :class:`.BuildingBlock` for a :class:`.ConstructedMolecule`, it is
     necessary to build a metal with open metal sites. Here, we provide
     the :class:`.CisProtectedSquarePlanar` topology to allow the user
-    to build a square planar metal complex with two open metal sites.
+    to build a square planar palladium(II) complex with two open metal
+    sites.
 
     .. code-block:: python
 

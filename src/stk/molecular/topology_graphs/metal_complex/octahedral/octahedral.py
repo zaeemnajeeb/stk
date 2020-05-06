@@ -13,11 +13,15 @@ class Octahedral(MetalComplex):
     """
     Represents a metal complex topology graph.
 
-    Metal building blocks with at least 6 functional groups are
+    Metal building blocks with at least six functional groups are
     required for this topology.
 
     Ligand building blocks with one functional group are required for
     this topology.
+
+    :class:`.BuildingBlock` placements:
+        metals: (0, )
+        ligands: (0, 1, 2, 3, 4, 5)
 
     See :class:`.MetalComplex` for more details and examples.
 

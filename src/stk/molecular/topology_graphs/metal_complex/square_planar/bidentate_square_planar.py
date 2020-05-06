@@ -1,6 +1,6 @@
 """
 Bidentate Square Planar
-=============
+=======================
 
 """
 
@@ -18,6 +18,10 @@ class BidentateSquarePlanar(MetalComplex):
 
     Linker building blocks with two functional groups are required
     for this topology graph.
+
+    :class:`.BuildingBlock` placements:
+        metals: (0, )
+        ligands: (0, 1)
 
     See :class:`.MetalComplex` for more details and examples.
 

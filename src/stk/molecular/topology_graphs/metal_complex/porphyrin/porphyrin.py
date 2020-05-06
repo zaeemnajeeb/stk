@@ -13,11 +13,15 @@ class Porphyrin(MetalComplex):
     """
     Represents a metal complex topology graph.
 
-    Metal building blocks with at least 4 functional groups are
+    Metal building blocks with at least four functional groups are
     required for this topology.
 
     Ligand building blocks with two functional groups are required for
     this topology.
+
+    :class:`.BuildingBlock` placements:
+        metals: (0, )
+        ligands: (0, )
 
     See :class:`.MetalComplex` for more details and examples.
 
