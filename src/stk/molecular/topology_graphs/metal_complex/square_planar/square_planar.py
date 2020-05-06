@@ -31,10 +31,10 @@ class SquarePlanar(MetalComplex):
         _MetalVertex(0, [0, 0, 0]),
     )
     _ligand_vertex_prototypes = (
-        _MonoDentateLigandVertex(1, [1, 0, 0]),
-        _MonoDentateLigandVertex(2, [0, 1, 0]),
-        _MonoDentateLigandVertex(3, [-1, 0, 0]),
-        _MonoDentateLigandVertex(4, [0, -1, 0]),
+        _MonoDentateLigandVertex(1, [2.5, 0, 0]),
+        _MonoDentateLigandVertex(2, [0, 2.5, 0]),
+        _MonoDentateLigandVertex(3, [-2.5, 0, 0]),
+        _MonoDentateLigandVertex(4, [0, -2.5, 0]),
     )
 
     _edge_prototypes = (

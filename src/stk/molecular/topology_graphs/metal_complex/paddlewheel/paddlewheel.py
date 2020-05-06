@@ -32,10 +32,10 @@ class Paddlewheel(MetalComplex):
         _MetalVertex(1, [0, -1, 0]),
     )
     _ligand_vertex_prototypes = (
-        _BiDentateLigandVertex(1, [2, 0, 0]),
-        _BiDentateLigandVertex(2, [0, 0, 2]),
-        _BiDentateLigandVertex(3, [-2, 0, 0]),
-        _BiDentateLigandVertex(4, [0, 0, -2]),
+        _BiDentateLigandVertex(2, [2, 0, 0]),
+        _BiDentateLigandVertex(3, [0, 0, 2]),
+        _BiDentateLigandVertex(4, [-2, 0, 0]),
+        _BiDentateLigandVertex(5, [0, 0, -2]),
     )
 
     _edge_prototypes = (

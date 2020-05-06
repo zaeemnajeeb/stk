@@ -31,12 +31,12 @@ class Octahedral(MetalComplex):
         _MetalVertex(0, [0, 0, 0]),
     )
     _ligand_vertex_prototypes = (
-        _MonoDentateLigandVertex(1, [1, 0, 0]),
-        _MonoDentateLigandVertex(2, [0, 1, 0]),
-        _MonoDentateLigandVertex(3, [0, 0, 1]),
-        _MonoDentateLigandVertex(4, [-1, 0, 0]),
-        _MonoDentateLigandVertex(5, [0, -1, 0]),
-        _MonoDentateLigandVertex(6, [0, 0, -1]),
+        _MonoDentateLigandVertex(1, [2.5, 0, 0]),
+        _MonoDentateLigandVertex(2, [0, 2.5, 0]),
+        _MonoDentateLigandVertex(3, [0, 0, 2.5]),
+        _MonoDentateLigandVertex(4, [-2.5, 0, 0]),
+        _MonoDentateLigandVertex(5, [0, -2.5, 0]),
+        _MonoDentateLigandVertex(6, [0, 0, -2.5]),
     )
 
     _edge_prototypes = (
