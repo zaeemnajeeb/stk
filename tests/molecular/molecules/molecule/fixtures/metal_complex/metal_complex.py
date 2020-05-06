@@ -13,12 +13,12 @@ from .paddlewheel import *  # noqa
         lazy_fixture('metal_complex_octahedral'),
         lazy_fixture('metal_complex_octahedrallambda'),
         lazy_fixture('metal_complex_octahedraldelta'),
-        lazy_fixture('metal_complex_porphyin'),
+        lazy_fixture('metal_complex_porphyrin'),
         lazy_fixture('metal_complex_paddlewheel'),
         lazy_fixture('metal_complex_squareplanar'),
         lazy_fixture('metal_complex_bidentatesquareplanar'),
         lazy_fixture('metal_complex_cisprotectedsquareplanar'),
     ),
 )
-def cage(request):
+def metal_complex(request):
     return request.param
