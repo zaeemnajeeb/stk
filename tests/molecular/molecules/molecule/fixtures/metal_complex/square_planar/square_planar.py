@@ -14,7 +14,7 @@ _palladium_atom = _palladium_atom.with_functional_groups(
     (stk.SingleAtom(atom_0) for i in range(4))
 )
 
-_mo_1 = stk.BuildingBlock.init_from_file(
+_mo_1 = stk.BuildingBlock(
     smiles='c1cc2c(cn1)CCCCC2',
     functional_groups=[
         stk.SmartsFunctionalGroupFactory(

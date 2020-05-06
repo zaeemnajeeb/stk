@@ -14,7 +14,7 @@ _iron_atom = _iron_atom.with_functional_groups(
     (stk.SingleAtom(atom_0) for i in range(6))
 )
 
-_iron_mo_1 = stk.BuildingBlock.init_from_file(
+_iron_mo_1 = stk.BuildingBlock(
     smiles='c1cc2c(cn1)CCCCC2',
     functional_groups=[
         stk.SmartsFunctionalGroupFactory(

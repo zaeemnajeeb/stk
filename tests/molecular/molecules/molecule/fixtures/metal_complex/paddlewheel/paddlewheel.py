@@ -14,7 +14,7 @@ _copper_atom = _copper_atom.with_functional_groups(
     (stk.SingleAtom(atom_0) for i in range(4))
 )
 
-_bi_1 = stk.BuildingBlock.init_from_file(
+_bi_1 = stk.BuildingBlock(
     smiles='O=C(O)c1ccc(Br)cc1',
     functional_groups=[
         stk.SmartsFunctionalGroupFactory(
@@ -23,7 +23,7 @@ _bi_1 = stk.BuildingBlock.init_from_file(
             deleters=(2, ),
         ),
         stk.SmartsFunctionalGroupFactory(
-            smarts='[#6]~[#8]',
+            smarts='[#6]~[#8X1]',
             bonders=(1, ),
             deleters=(),
         ),
@@ -35,7 +35,7 @@ _bi_1 = stk.BuildingBlock.init_from_file(
     params=(
         CaseData(
             molecule=stk.ConstructedMolecule(
-                stk.metal_complex.PaddleWheel(
+                stk.metal_complex.Paddlewheel(
                     metals={_copper_atom: (0, 1)},
                     ligands={_bi_1: (0, 1, 2, 3)},
                     reaction_factory=stk.DativeReactionFactory(

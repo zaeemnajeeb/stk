@@ -14,10 +14,10 @@ _zinc_atom = _zinc_atom.with_functional_groups(
     (stk.SingleAtom(atom_0) for i in range(4))
 )
 
-_quad_1 = stk.BuildingBlock.init_from_file(
+_quad_1 = stk.BuildingBlock(
     smiles=(
-        'Brc1ccc(-c2c3nc(c(-c4ccc(Br)cc4)c4ccc([nH]4)c(-c4ccc(Br)cc4)'
-        'c4nc(c(-c5ccc(Br)cc5)c5ccc2[nH]5)C=C4)C=C3)cc1'
+        'Brc1ccc(C2=C3C=CC(=C(c4ccc(Br)cc4)C4=NC(=C(c5ccc(Br)cc5)C5=C'
+        'C=C([N]5)C(c5ccc(Br)cc5)=C5C=CC2=N5)C=C4)[N]3)cc1'
     ),
     functional_groups=[
         stk.SmartsFunctionalGroupFactory(
@@ -49,9 +49,9 @@ _quad_1 = stk.BuildingBlock.init_from_file(
                 )
             ),
             smiles=(
-                'Brc1ccc(C2=C3C=CC4=N3->[Zn+2]35<-N6=C(C=CC6=C(c6ccc'
-                '(Br)cc6)c6ccc2[nH]->36)C(c2ccc(Br)cc2)=c2ccc([nH]->'
-                '52)=C4c2ccc(Br)cc2)cc1'
+                'Brc1ccc(C2=C3C=CC4=C(c5ccc(Br)cc5)C5=N6->[Zn+2]7('
+                '<-[N]8C(=CC=C8C(c8ccc(Br)cc8)=C6C=C5)C(c5ccc(Br)cc5)'
+                '=C5C=CC2=N->75)<-[N]34)cc1'
             ),
         ),
     ),
