@@ -16,10 +16,15 @@ class DativeReactionFactory(ReactionFactory):
     belong to the :class:`.EdgeGroup` passed to it, are
     :class:`.GenericFunctionalGroup` instances. It returns a
     :class:`.Reaction` suitable for two such instances.
+    Unlike :class:`.GenericReactionFactory`, this reaction checks if a
+    dative bond is to be formed and then performs a dative one-to-one
+    reaction, which checks the directionality of the bond.
 
-    Dative bonds are defined with a `bond_order` of 9, 
+    Dative bonds are defined with a bond order of 9.
+
+    Dative bonds are defined with a `bond_order` of 9,
     running from the non-metal atom to the metal atom.
-    
+
     """
 
     def __init__(self, reaction_factory):
