@@ -294,3 +294,17 @@ class _BentMetalComplexCageVertex(_CageVertex):
         return {
             fg_id: edge.get_id() for fg_id, edge in enumerate(edges)
         }
+
+
+class _MetalVertex(_CageVertex):
+    def place_building_block(self, building_block, edges):
+        return building_block.with_centroid(
+            position=self._position,
+            atom_ids=building_block.get_placer_ids(),
+        ).get_position_matrix()
+
+    def map_functional_groups_to_edges(self, building_block, edges):
+        edges = sorted(edges, key=lambda i: i.get_id())
+        return {
+            fg_id: edge.get_id() for fg_id, edge in enumerate(edges)
+        }
