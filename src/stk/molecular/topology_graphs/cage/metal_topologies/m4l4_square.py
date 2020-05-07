@@ -1,18 +1,45 @@
 """
 M4L4 Square
 ===========
+
 """
 
 from ..cage import Cage
 from ..vertices import _BentMetalComplexCageVertex, _LinearCageVertex
 from ...topology_graph import Edge
+# from ...reactions import GenericReactionFactory
 
 
 class M4L4Square(Cage):
     """
     Represents a cage topology graph.
+
     See :class:`.Cage` for more details and examples.
+
     """
+    #
+    # def __init__(
+    #     metal_sites,
+    #     linker_sites,
+    #     vertex_alignments=None,
+    #     reaction_factory=GenericReactionFactory(),
+    #     num_processes=1,
+    # ):
+    #     """
+    #     Initialize a :class:`.M4L4Square`.
+    #
+    #     """
+    #
+    #     print(metal_sites, linker_sites)
+    #
+    #     building_blocks = {**metal_sites, **linker_sites}
+    #
+    #     super().__init__(
+    #         building_blocks,
+    #         vertex_alignments=vertex_alignments,
+    #         reaction_factory=reaction_factory,
+    #         num_processes=num_processes,
+    #     )
 
     _vertex_prototypes = (
         _BentMetalComplexCageVertex(0, [1, 1, 0]),
