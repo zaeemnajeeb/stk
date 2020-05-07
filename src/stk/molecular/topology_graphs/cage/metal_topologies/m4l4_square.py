@@ -14,6 +14,16 @@ class M4L4Square(Cage):
     """
     Represents a cage topology graph.
 
+    Metal building blocks with two functional groups are
+    required for this topology.
+
+    Ligand building blocks with two functional groups are required for
+    this topology.
+
+    :class:`.BuildingBlock` placements:
+        metals: (0, 1, 2, 3)
+        ligands: (4, 5, 6, 7)
+
     See :class:`.Cage` for more details and examples.
 
     """
