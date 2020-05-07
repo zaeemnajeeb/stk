@@ -16,7 +16,7 @@ class M3L6(Cage):
     """
     Represents a cage topology graph.
 
-    Metal building blocks with two functional groups are
+    Metal building blocks with four functional groups are
     required for this topology.
 
     Ligand building blocks with two functional groups are required for
