@@ -52,73 +52,25 @@ class M8L6Cube(Cage):
     #     )
 
     _vertex_prototypes = (
-        _NonLinearCageVertex(0, [1, 1, 1]),
-        _NonLinearCageVertex(1, [1, -1, 1]),
-        _NonLinearCageVertex(2, [-1, -1, 1]),
-        _NonLinearCageVertex(3, [-1, 1, 1]),
-        _NonLinearCageVertex(4, [1, 1, -1]),
-        _NonLinearCageVertex(5, [1, -1, -1]),
-        _NonLinearCageVertex(6, [-1, -1, -1]),
-        _NonLinearCageVertex(7, [-1, 1, -1]),
+        _NonLinearCageVertex(0, [2, 2, 2]),
+        _NonLinearCageVertex(1, [2, -2, 2]),
+        _NonLinearCageVertex(2, [-2, -2, 2]),
+        _NonLinearCageVertex(3, [-2, 2, 2]),
+        _NonLinearCageVertex(4, [2, 2, -2]),
+        _NonLinearCageVertex(5, [2, -2, -2]),
+        _NonLinearCageVertex(6, [-2, -2, -2]),
+        _NonLinearCageVertex(7, [-2, 2, -2]),
     )
 
     _vertex_prototypes = (
         *_vertex_prototypes,
 
-        _NonLinearCageVertex.init_at_center(
-            id=8,
-            vertices=(
-                _vertex_prototypes[0],
-                _vertex_prototypes[1],
-                _vertex_prototypes[2],
-                _vertex_prototypes[3],
-            ),
-        ),
-        _NonLinearCageVertex.init_at_center(
-            id=9,
-            vertices=(
-                _vertex_prototypes[0],
-                _vertex_prototypes[1],
-                _vertex_prototypes[4],
-                _vertex_prototypes[5],
-            ),
-        ),
-        _NonLinearCageVertex.init_at_center(
-            id=10,
-            vertices=(
-                _vertex_prototypes[0],
-                _vertex_prototypes[3],
-                _vertex_prototypes[4],
-                _vertex_prototypes[7],
-            ),
-        ),
-        _NonLinearCageVertex.init_at_center(
-            id=11,
-            vertices=(
-                _vertex_prototypes[2],
-                _vertex_prototypes[3],
-                _vertex_prototypes[6],
-                _vertex_prototypes[7],
-            ),
-        ),
-        _NonLinearCageVertex.init_at_center(
-            id=12,
-            vertices=(
-                _vertex_prototypes[4],
-                _vertex_prototypes[5],
-                _vertex_prototypes[6],
-                _vertex_prototypes[7],
-            ),
-        ),
-        _NonLinearCageVertex.init_at_center(
-            id=13,
-            vertices=(
-                _vertex_prototypes[1],
-                _vertex_prototypes[2],
-                _vertex_prototypes[5],
-                _vertex_prototypes[6],
-            ),
-        ),
+        _NonLinearCageVertex(8, position=[0, 0, 2]),
+        _NonLinearCageVertex(9, position=[2, 0, 0]),
+        _NonLinearCageVertex(10, position=[0, 2, 0]),
+        _NonLinearCageVertex(11, position=[-2, 0, 0]),
+        _NonLinearCageVertex(12, position=[0, 0, -2]),
+        _NonLinearCageVertex(13, position=[0, -2, 0]),
     )
 
     _edge_prototypes = (
