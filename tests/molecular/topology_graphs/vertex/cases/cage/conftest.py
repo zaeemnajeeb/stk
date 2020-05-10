@@ -9,8 +9,6 @@ from ...case_data import CaseData
 vertices = stk.cage.vertices
 
 
-print('HERE')
-
 @pytest.fixture(
     params=(
         lazy_fixture('cage1'),
@@ -63,6 +61,7 @@ def position(request):
     params=(
         vertices._LinearCageVertex,
         vertices._NonLinearCageVertex,
+        vertices._MetalVertex,
     ),
 )
 def cls(request):
@@ -73,6 +72,7 @@ def cls(request):
     params=(
         vertices._LinearCageVertex.init_at_center,
         vertices._NonLinearCageVertex.init_at_center,
+        vertices._MetalVertex.init_at_center,
     ),
 )
 def init_at_center(request):
