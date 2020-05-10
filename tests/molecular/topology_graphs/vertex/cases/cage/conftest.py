@@ -9,6 +9,8 @@ from ...case_data import CaseData
 vertices = stk.cage.vertices
 
 
+print('HERE')
+
 @pytest.fixture(
     params=(
         lazy_fixture('cage1'),
