@@ -53,8 +53,8 @@ class M3L3Triangle(Cage):
     #         num_processes=num_processes,
     #     )
 
-    _x = np.sqrt(3)/4
-    _y = 1
+    _x = 2*np.sqrt(3)/4
+    _y = 2
     _vertex_prototypes = (
         _BentMetalComplexCageVertex(0, [0, _x, 0]),
         _BentMetalComplexCageVertex(1, [_y/2, -_x, 0]),
