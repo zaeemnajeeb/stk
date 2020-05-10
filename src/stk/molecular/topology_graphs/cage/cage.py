@@ -201,6 +201,63 @@ class Cage(TopologyGraph):
             vertex_alignments={0: 1, 1: 1, 2: 2},
         )
 
+    *Metal-organic Cage Construction*
+
+    A series of common metal-organic cage topologies are provided and
+    can be constructed in the same way as :class:`.Cage` instances
+    using metal atoms and :class:`DativeReactionFactory` instances to
+    produce metal-ligand bonds. Each metal topology has specific
+    vertices for the metal atoms/complexes, which can be found in their
+    documentation.
+
+    .. code-block:: python
+
+        # Produce a Pd+2 atom with 4 functional groups.
+        atom = rdkit.MolFromSmiles('[Pd+2]')
+        atom.AddConformer(rdkit.Conformer(atom.GetNumAtoms()))
+        palladium_atom = stk.BuildingBlock.init_from_rdkit_mol(atom)
+        atom_0, = palladium_atom.get_atoms(0)
+        palladium_atom = palladium_atom.with_functional_groups(
+            (stk.SingleAtom(atom_0) for i in range(4))
+        )
+
+        # Build a building block with two functional groups using
+        # the SmartsFunctionalGroupFactory.
+        bb1 = stk.BuildingBlock(
+            smiles=(
+                '[H]C1=NC([H])=C([H])C(C2=C([H])C([H])=C([H])C(C3=C('
+                '[H])C([H])=NC([H])=C3[H])=C2[H])=C1[H]'
+            ),
+            functional_groups=[
+                stk.SmartsFunctionalGroupFactory(
+                    smarts='[#6]~[#7X2]~[#6]',
+                    bonders=(1, ),
+                    deleters=(),
+                ),
+            ],
+        )
+
+        # Build a metal-organic cage with dative bonds between
+        # GenericFunctionalGroup and SingleAtom functional groups.
+        cage1 = stk.ConstructedMolecule(
+            stk.cage.M2L4Lantern(
+                building_blocks={
+                    palladium_atom: (0, 1),
+                    bb1: (2, 3, 4, 5)
+                },
+                reaction_factory=stk.DativeReactionFactory(
+                    stk.GenericReactionFactory(
+                        bond_orders={
+                            frozenset({
+                                stk.GenericFunctionalGroup,
+                                stk.SingleAtom
+                            }): 9
+                        }
+                    )
+                )
+            )
+        )
+
     """
 
     def __init_subclass__(cls, **kwargs):
