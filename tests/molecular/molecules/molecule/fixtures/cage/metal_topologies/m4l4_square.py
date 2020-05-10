@@ -14,7 +14,7 @@ _metal_atom = _metal_atom.with_functional_groups(
     (stk.SingleAtom(atom_0) for i in range(4))
 )
 
-palladium_bi_1 = stk.BuildingBlock.init_from_file(
+palladium_bi_1 = stk.BuildingBlock(
     smiles='[H]N([H])C([H])([H])C([H])([H])N([H])[H]',
     functional_groups=[
         stk.SmartsFunctionalGroupFactory(

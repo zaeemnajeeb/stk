@@ -70,7 +70,7 @@ iron_complex = stk.BuildingBlock.init_from_molecule(
     params=(
         CaseData(
             molecule=stk.ConstructedMolecule(
-                stk.cage.M4L4Tetrahedron(
+                stk.cage.M6L2L3Prism(
                     building_blocks={
                         iron_complex: range(6),
                         tritopic_linker: range(6, 8),
@@ -79,36 +79,35 @@ iron_complex = stk.BuildingBlock.init_from_molecule(
                 )
             ),
             smiles=(
-                '[H]C1=C([H])C([H])=N2->[Fe+2]3456<-N7=C([H])C([H])=C'
-                '([H])C([H])=C7C([H])=N->3C3=C([H])C([H])=C(C([H])=C3'
-                '[H])C3C7=C([H])C([H])=C(C([H])=C7[H])N7->[Fe+2]89%10'
-                '(<-N%11=C([H])C([H])=C([H])C([H])=C%11C=7[H])<-N7=C('
-                '[H])C([H])=C([H])C([H])=C7C([H])=N->8C7=C([H])C([H])'
-                '=C(C([H])=C7[H])C7C8=C([H])C([H])=C(C([H])=C8[H])N8-'
-                '>[Fe+2]%11%12%13(<-N%14=C([H])C([H])=C([H])C([H])=C%'
-                '14C([H])=N->%11C%11=C([H])C([H])=C(C([H])=C%11[H])C3'
-                'C3=C([H])C([H])=C(C([H])=C3[H])N3->[Fe+2]%11%14%15(<'
-                '-N%16=C([H])C([H])=C([H])C([H])=C%16C([H])=N->%11C%1'
-                '1=C([H])C([H])=C(C([H])=C%11[H])C%11C%16=C([H])C([H]'
-                ')=C(C([H])=C%16[H])N%16->[Fe+2]%17%18(<-N%19=C([H])C'
-                '([H])=C([H])C([H])=C%19C=%16[H])(<-N%16=C([H])C([H])'
-                '=C([H])C([H])=C%16C([H])=N->%17C%16=C([H])C([H])=C(C'
-                '([H])=C%16[H])C7C7=C([H])C([H])=C(C([H])=C7[H])N7->['
-                'Fe+2]%16%17(<-N%19=C([H])C([H])=C([H])C([H])=C%19C(['
-                'H])=N->%16C%16=C([H])C([H])=C(C([H])=C%16[H])C%11C%1'
-                '1=C([H])C([H])=C(C([H])=C%11[H])N->4=C([H])C2=C1[H])'
-                '(<-N1=C([H])C([H])=C([H])C([H])=C1C=7[H])<-N1=C([H])'
-                'C([H])=C([H])C([H])=C1C([H])=N->%17C1=C([H])C([H])=C'
-                '(C([H])=C1[H])N(C1=C([H])C([H])=C(C([H])=C1[H])N->5='
-                'C([H])C1=C([H])C([H])=C([H])C([H])=N->61)C1=C([H])C('
-                '[H])=C(C([H])=C1[H])N->9=C([H])C1=C([H])C([H])=C([H]'
-                ')C([H])=N->%101)<-N1=C([H])C([H])=C([H])C([H])=C1C(['
-                'H])=N->%18C1=C([H])C([H])=C(C([H])=C1[H])N(C1=C([H])'
-                'C([H])=C(C([H])=C1[H])N->%14=C([H])C1=C([H])C([H])=C'
-                '([H])C([H])=N->%151)C1=C([H])C([H])=C(C([H])=C1[H])N'
-                '->%12=C([H])C1=C([H])C([H])=C([H])C([H])=N->%131)<-N'
-                '1=C([H])C([H])=C([H])C([H])=C1C=3[H])<-N1=C([H])C([H'
-                '])=C([H])C([H])=C1C=8[H]'
+                '[H]C1=C([H])C([H])=N2->[Fe+2]3456<-N7=C([H])C([H])=C('
+                '[H])C([H])=C7C([H])=N->3C3=C([H])C([H])=C(C([H])=C3[H'
+                '])C3([H])C7=C([H])C([H])=C(C([H])=C7[H])N7->[Fe+2]89%'
+                '10(<-N%11=C([H])C([H])=C([H])C([H])=C%11C([H])=N->8C8'
+                '=C([H])C([H])=C(C([H])=C8[H])N(C8=C([H])C([H])=C(C([H'
+                '])=C8[H])N->4=C([H])C2=C1[H])C1=C([H])C([H])=C(C([H])'
+                '=C1[H])N1->[Fe+2]248(<-N%11=C([H])C([H])=C([H])C([H])'
+                '=C%11C=1[H])<-N1=C([H])C([H])=C([H])C([H])=C1C([H])=N'
+                '->2C1=C([H])C([H])=C(C([H])=C1[H])C([H])(C1=C([H])C(['
+                'H])=C(C([H])=C1[H])N->5=C([H])C1=C([H])C([H])=C([H])C'
+                '([H])=N->61)C1([H])C2=C([H])C([H])=C(C([H])=C2[H])N2-'
+                '>[Fe+2]56%11(<-N%12=C([H])C([H])=C([H])C([H])=C%12C(['
+                'H])=N->5C5=C([H])C([H])=C(C([H])=C5[H])N5C%12=C([H])C'
+                '([H])=C(C([H])=C%12[H])N%12->[Fe+2]%13%14(<-N%15=C([H'
+                '])C([H])=C([H])C([H])=C%15C=%12[H])(<-N%12=C([H])C([H'
+                '])=C([H])C([H])=C%12C([H])=N->%13C%12=C([H])C([H])=C('
+                'C([H])=C%12[H])C3([H])C3=C([H])C([H])=C(C([H])=C3[H])'
+                'N3->[Fe+2]%12%13(<-N%15=C([H])C([H])=C([H])C([H])=C%1'
+                '5C([H])=N->%12C%12=C([H])C([H])=C5C([H])=C%12[H])(<-N'
+                '5=C([H])C([H])=C([H])C([H])=C5C=3[H])<-N3=C([H])C([H]'
+                ')=C([H])C([H])=C3C([H])=N->%13C3=C([H])C([H])=C(C([H]'
+                ')=C3[H])C([H])(C3=C([H])C([H])=C(C([H])=C3[H])N->9=C('
+                '[H])C3=C([H])C([H])=C([H])C([H])=N->%103)C([H])(C3=C('
+                '[H])C([H])=C(C([H])=C3[H])N->4=C([H])C3=C([H])C([H])='
+                'C([H])C([H])=N->83)C3=C([H])C([H])=C(C([H])=C3[H])N->'
+                '6=C([H])C3=C([H])C([H])=C([H])C([H])=N->%113)<-N3=C(['
+                'H])C([H])=C([H])C([H])=C3C([H])=N->%14C3=C([H])C([H])'
+                '=C1C([H])=C3[H])<-N1=C([H])C([H])=C([H])C([H])=C1C=2['
+                'H])<-N1=C([H])C([H])=C([H])C([H])=C1C=7[H]'
             ),
         ),
     ),
