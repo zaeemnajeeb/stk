@@ -49,24 +49,27 @@ palladium_cispbi_sqpl = stk.ConstructedMolecule(
 @pytest.fixture
 def bent_metal(position, bent_aligner_edge, bent_building_block):
 
-    core_fg_direction = np.array([-1, 0, 0], dtype=np.float64)
-
-    def get_core_fg_direction(building_block):
-        core_centroid = building_block.get_centroid(
-            atom_ids=building_block.get_core_atom_ids(),
-        )
-        vector = core_centroid - position
-        return (vector)/np.linalg.norm(vector)
-
     vertex = vertices._BentMetalComplexCageVertex(
         id=0,
         position=position,
         aligner_edge=bent_aligner_edge,
     )
+    edges = tuple(get_bent_edges(vertex))
+    edge_centroid = (
+        sum(edge.get_position() for edge in edges) / len(edges)
+    )
+
+    core_fg_direction = position - edge_centroid
+
+    def get_core_fg_direction(building_block):
+        core_centroid = building_block.get_centroid(
+            atom_ids=building_block.get_core_atom_ids(),
+        )
+        return core_centroid - position
 
     return CaseData(
         vertex=vertex,
-        edges=tuple(get_bent_edges(vertex)),
+        edges=edges,
         building_block=bent_building_block,
         position=position,
         alignment_tests={
@@ -75,17 +78,6 @@ def bent_metal(position, bent_aligner_edge, bent_building_block):
         functional_group_edges=(
             {0: 0, 1: 1} if bent_aligner_edge == 0 else {0: 1, 1: 0}
         ),
-    )
-
-
-def get_closest_point(points, point):
-    return min(points, key=partial(euclidean, point))
-
-
-def get_fg_position(id, building_block):
-    functional_group = next(building_block.get_functional_groups(id))
-    return building_block.get_centroid(
-        atom_ids=functional_group.get_placer_ids(),
     )
 
 
