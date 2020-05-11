@@ -59,6 +59,45 @@ stk.molecular.topology_graphs.cage.two_plus_five.twelve_plus_thirty\
     Twenty Plus Thirty <\
 stk.molecular.topology_graphs.cage.two_plus_three.twenty_plus_thirty\
 >
+    M2L4 Lantern <\
+stk.molecular.topology_graphs.cage.metal_topologies.m2l4_lantern\
+>
+    M3L3 Triangle <\
+stk.molecular.topology_graphs.cage.metal_topologies.m3l3_triangle\
+>
+    M3L6 <\
+stk.molecular.topology_graphs.cage.metal_topologies.m3l6\
+>
+    M4L4 Square <\
+stk.molecular.topology_graphs.cage.metal_topologies.m4l4_square\
+>
+    M4L4 Tetrahedron <\
+stk.molecular.topology_graphs.cage.metal_topologies.m4l4_tetrahedron\
+>
+    M4L6 Tetrahedron Spacer <\
+stk.molecular.topology_graphs.cage.metal_topologies.m4l6_tetrahedron_spacer\
+>
+    M4L6 Tetrahedron <\
+stk.molecular.topology_graphs.cage.metal_topologies.m4l6_tetrahedron\
+>
+    M4L8 <\
+stk.molecular.topology_graphs.cage.metal_topologies.m4l8\
+>
+    M6L2L3 Prism <\
+stk.molecular.topology_graphs.cage.metal_topologies.m6l2l3_prism\
+>
+    M6L12 Cube <\
+stk.molecular.topology_graphs.cage.metal_topologies.m6l12_cube\
+>
+    M8L6 Cube <\
+stk.molecular.topology_graphs.cage.metal_topologies.m8l6_cube\
+>
+    M12L24 <\
+stk.molecular.topology_graphs.cage.metal_topologies.m12l24\
+>
+    M24L48 <\
+stk.molecular.topology_graphs.cage.metal_topologies.m24l48\
+>
 
 """
 
@@ -255,6 +294,91 @@ class Cage(TopologyGraph):
                         }
                     )
                 )
+            )
+        )
+
+    *Controlling Metal-complex Stereochemistry*
+
+    When building metal-organic cages from octahedral metals, i.e.
+    Fe(II), the stereochemistry of around the metal centre can be
+    important. Maintaining that stereochemistry during :class:`.Cage`
+    construction is difficult, so we have provided an alternative
+    route to these types of structures. Firstly, you would construct a
+    :class:`.MetalComplex` instance with the appropriate
+    stereochemistry and dummy reactive groups (bromine in the following
+    example). Then, :class:`.MetalComplex` instances can be placed on
+    the appropriate :class:`.Cage` topology to produce a structure
+    with the desired stereochemistry.
+
+    .. code-block:: python
+
+        # Produce a Fe+2 atom with 6 functional groups.
+        atom = rdkit.MolFromSmiles('[Fe+2]')
+        atom.AddConformer(rdkit.Conformer(atom.GetNumAtoms()))
+        iron_atom = stk.BuildingBlock.init_from_rdkit_mol(atom)
+        atom_0, = iron_atom.get_atoms(0)
+        iron_atom = iron_atom.with_functional_groups(
+            (stk.SingleAtom(atom_0) for i in range(6))
+        )
+
+        # Define coordinating ligand with dummy bromine groups and
+        # metal coordianting functional groups.
+        bb2 = stk.BuildingBlock(
+            smiles='[H]C1=NC(C([H])=NBr)=C([H])C([H])=C1[H]',
+            functional_groups=[
+                stk.SmartsFunctionalGroupFactory(
+                    smarts='[#6]~[#7X2]~[#35]',
+                    bonders=(1, ),
+                    deleters=(),
+                ),
+                stk.SmartsFunctionalGroupFactory(
+                    smarts='[#6]~[#7X2]~[#6]',
+                    bonders=(1, ),
+                    deleters=(),
+                ),
+            ]
+        )
+
+        # Build iron complex with delta stereochemistry.
+        iron_oct_delta = stk.ConstructedMolecule(
+            stk.metal_complex.OctahedralDelta(
+                metals={iron_atom: 0},
+                ligands={bb2: (0, 1, 2)},
+                reaction_factory=stk.DativeReactionFactory(
+                    stk.GenericReactionFactory(
+                        bond_orders={
+                            frozenset({
+                                stk.GenericFunctionalGroup,
+                                stk.SingleAtom
+                            }): 9
+                        }
+                    )
+                )
+            )
+        )
+
+        # Define spacer building block.
+        bb3 = stk.BuildingBlock(
+            smiles=(
+                '[H]C1=C([H])C(C2=C([H])C([H])=C(Br)C([H])=C2[H])=C('
+                '[H])C([H])=C1Br'
+            ),
+            functional_groups=[stk.BromoFactory()]
+        )
+
+        # Assign Bromo functional groups to the metal complex.
+        iron_oct_delta = stk.BuildingBlock.init_from_molecule(
+            molecule=iron_oct_delta,
+            functional_groups=[stk.BromoFactory()]
+        )
+
+        # Build an M4L6 Tetrahedron with a Spacer.
+        cage2 = stk.ConstructedMolecule(
+            stk.cage.M4L6TetrahedronSpacer(
+                building_blocks={
+                    iron_oct_delta: range(4),
+                    bb3: range(4, 10)
+                },
             )
         )
 
