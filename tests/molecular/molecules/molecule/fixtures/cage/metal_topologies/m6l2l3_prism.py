@@ -1,17 +1,16 @@
 import pytest
 import stk
-from rdkit.Chem import AllChem as rdkit
 
 from ....case_data import CaseData
 
 
-atom = rdkit.MolFromSmiles('[Fe+2]')
-atom.AddConformer(rdkit.Conformer(atom.GetNumAtoms()))
-
-_metal_atom = stk.BuildingBlock.init_from_rdkit_mol(atom)
-atom_0, = _metal_atom.get_atoms(0)
-_metal_atom = _metal_atom.with_functional_groups(
-    (stk.SingleAtom(atom_0) for i in range(6))
+metal_atom = stk.BuildingBlock(
+    smiles='[Fe+2]',
+    functional_groups=(
+        stk.SingleAtom(stk.Fe(0, charge=2))
+        for i in range(6)
+    ),
+    position_matrix=([0, 0, 0], ),
 )
 
 tritopic_linker = stk.BuildingBlock(
@@ -46,7 +45,7 @@ complex_ligand = stk.BuildingBlock(
 )
 iron_complex = stk.ConstructedMolecule(
     stk.metal_complex.OctahedralDelta(
-        metals={_metal_atom: 0},
+        metals={metal_atom: 0},
         ligands={complex_ligand: (0, 1, 2)},
         reaction_factory=stk.DativeReactionFactory(
             stk.GenericReactionFactory(

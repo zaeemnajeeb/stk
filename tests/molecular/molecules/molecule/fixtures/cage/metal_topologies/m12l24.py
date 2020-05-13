@@ -1,17 +1,16 @@
 import pytest
 import stk
-from rdkit.Chem import AllChem as rdkit
 
 from ....case_data import CaseData
 
 
-atom = rdkit.MolFromSmiles('[Pd+2]')
-atom.AddConformer(rdkit.Conformer(atom.GetNumAtoms()))
-
-_metal_atom = stk.BuildingBlock.init_from_rdkit_mol(atom)
-atom_0, = _metal_atom.get_atoms(0)
-_metal_atom = _metal_atom.with_functional_groups(
-    (stk.SingleAtom(atom_0) for i in range(4))
+metal_atom = stk.BuildingBlock(
+    smiles='[Pd+2]',
+    functional_groups=(
+        stk.SingleAtom(stk.Pd(0, charge=2))
+        for i in range(4)
+    ),
+    position_matrix=([0, 0, 0], ),
 )
 linker = stk.BuildingBlock(
     smiles=(
@@ -34,7 +33,7 @@ linker = stk.BuildingBlock(
             molecule=stk.ConstructedMolecule(
                 stk.cage.M12L24(
                     building_blocks={
-                        _metal_atom: range(12),
+                        metal_atom: range(12),
                         linker: range(12, 36)
                     },
                     reaction_factory=stk.DativeReactionFactory(
