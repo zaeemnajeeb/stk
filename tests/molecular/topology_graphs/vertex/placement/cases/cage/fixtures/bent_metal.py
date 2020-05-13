@@ -48,23 +48,29 @@ palladium_cispbi_sqpl = stk.ConstructedMolecule(
 @pytest.fixture
 def bent_metal(position, bent_aligner_edge, bent_building_block):
 
+    point1, point2 = points = (
+        position + [10, 0, 0],
+        position + [-10, 0, 0],
+    )
+
     vertex = vertices._BentMetalComplexCageVertex(
         id=0,
         position=position,
         aligner_edge=bent_aligner_edge,
     )
     edges = tuple(get_bent_edges(vertex))
-    edge_centroid = (
-        sum(edge.get_position() for edge in edges) / len(edges)
-    )
 
-    core_fg_direction = position - edge_centroid
-
-    def get_core_fg_direction(building_block):
-        core_centroid = building_block.get_centroid(
-            atom_ids=building_block.get_core_atom_ids(),
+    def get_point_closest_to_edge_centroid(building_block):
+        return get_closest_point(
+            points=points,
+            point=get_edge_centroid_position(edges),
         )
-        return core_centroid - position
+
+    def get_point_closest_to_core(building_block):
+        return get_closest_point(
+            points=points,
+            point=get_core_position(building_block),
+        )
 
     return CaseData(
         vertex=vertex,
@@ -72,12 +78,30 @@ def bent_metal(position, bent_aligner_edge, bent_building_block):
         building_block=bent_building_block,
         position=position,
         alignment_tests={
-            get_core_fg_direction: core_fg_direction,
+            get_point_closest_to_edge_centroid: point1,
+            get_point_closest_to_core: point2,
         },
         functional_group_edges=(
             {0: 0, 1: 1} if bent_aligner_edge == 0 else {0: 1, 1: 0}
         ),
     )
+
+
+def get_edge_centroid_position(edges):
+    edge_centroid = (
+        sum(edge.get_position() for edge in edges) / len(edges)
+    )
+    return edge_centroid
+
+
+def get_core_position(building_block):
+    return building_block.get_centroid(
+        atom_ids=building_block.get_core_atom_ids(),
+    )
+
+
+def get_closest_point(points, point):
+    return min(points, key=partial(euclidean, point))
 
 
 def get_bent_edges(vertex):
