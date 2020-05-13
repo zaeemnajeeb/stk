@@ -1,14 +1,10 @@
 import pytest
 import numpy as np
 import stk
-from rdkit.Chem import AllChem as rdkit
 
 from ....case_data import CaseData
 
 vertices = stk.metal_complex.vertices
-
-single_atom = rdkit.MolFromSmiles('[Fe]')
-single_atom.AddConformer(rdkit.Conformer(single_atom.GetNumAtoms()))
 
 
 @pytest.fixture(
@@ -19,8 +15,9 @@ single_atom.AddConformer(rdkit.Conformer(single_atom.GetNumAtoms()))
                 position=(1, 2, 3),
             ),
             edges=(),
-            building_block=stk.BuildingBlock.init_from_rdkit_mol(
-                single_atom
+            building_block=stk.BuildingBlock(
+                smiles='[Fe]',
+                position_matrix=np.array([[0, 0, 0]]),
             ),
             position=np.array([1, 2, 3], dtype=np.float64),
             alignment_tests={},
