@@ -304,7 +304,7 @@ class _MetalVertex(_CageVertex):
         ).get_position_matrix()
 
     def map_functional_groups_to_edges(self, building_block, edges):
-        edges = sorted(edges, key=lambda i: i.get_id())
+
         return {
             fg_id: edge.get_id() for fg_id, edge in enumerate(edges)
         }
