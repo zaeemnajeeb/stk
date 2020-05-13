@@ -14,7 +14,7 @@ metal_atom = stk.BuildingBlock(
         stk.SingleAtom(stk.Pd(0, charge=2))
         for i in range(4)
     ),
-    position_matrix=np.array([[0, 0, 0]]),
+    position_matrix=([0, 0, 0], ),
 )
 
 palladium_bi_1 = stk.BuildingBlock(
@@ -81,9 +81,7 @@ def bent_metal(position, bent_aligner_edge, bent_building_block):
             get_point_closest_to_edge_centroid: point1,
             get_point_closest_to_core: point2,
         },
-        functional_group_edges=(
-            {0: 0, 1: 1} if bent_aligner_edge == 0 else {0: 1, 1: 0}
-        ),
+        functional_group_edges=({0: 0, 1: 1}),
     )
 
 
