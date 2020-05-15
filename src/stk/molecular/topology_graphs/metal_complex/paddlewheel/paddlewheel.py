@@ -17,11 +17,14 @@ class Paddlewheel(MetalComplex):
     required for this topology.
 
     Ligand building blocks with two functional groups are required for
-    this topology.
+    this topology graph.
 
-    :class:`.BuildingBlock` placements:
-        metals: (0, 1)
-        ligands: (0, 1, 2, 3)
+    When using a :class:`dict` for initialization, a
+    :class:`.BuildingBlock` needs to be assigned to each of the
+    following numbers:
+
+        | metals: (0, 1)
+        | ligands: (0, 1, 2, 3)
 
     See :class:`.MetalComplex` for more details and examples.
 

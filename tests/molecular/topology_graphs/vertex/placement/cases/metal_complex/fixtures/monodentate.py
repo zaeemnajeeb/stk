@@ -1,5 +1,4 @@
 import pytest
-import numpy as np
 import stk
 from functools import partial
 from scipy.spatial.distance import euclidean
@@ -12,12 +11,21 @@ vertices = stk.metal_complex.vertices
 @pytest.fixture
 def monodentate(position, building_block_1):
 
-    point1 = points = (position + [-10, 0, 0], )
+    point1, point2 = points = (
+        position + [-10, 0, 0],
+        position + [10, 0, 0],
+    )
 
     def get_fg0_point(building_block):
         return get_closest_point(
             points=points,
             point=get_fg_position(0, building_block),
+        )
+
+    def get_core_point(building_block):
+        return get_closest_point(
+            points=points,
+            point=get_core_position(building_block),
         )
 
     vertex = vertices._MonoDentateLigandVertex(
@@ -30,7 +38,10 @@ def monodentate(position, building_block_1):
         edges=tuple(get_edge(vertex)),
         building_block=building_block_1,
         position=position,
-        alignment_tests={get_fg0_point: point1},
+        alignment_tests={
+            get_fg0_point: point1,
+            get_core_point: point2,
+        },
         functional_group_edges=({0: 0}),
     )
 
@@ -43,6 +54,13 @@ def get_fg_position(id, building_block):
     functional_group = next(building_block.get_functional_groups(id))
     return building_block.get_centroid(
         atom_ids=functional_group.get_placer_ids(),
+    )
+
+
+def get_core_position(building_block):
+
+    return building_block.get_centroid(
+        atom_ids=building_block.get_core_atom_ids(),
     )
 
 
@@ -67,17 +85,3 @@ def get_edge(vertex):
 )
 def building_block_1(request):
     return request.param
-
-
-@pytest.fixture(
-    params=(
-        [1, 2, -20],
-    ),
-)
-def position(request):
-    """
-    The `position` of a vertex.
-
-    """
-
-    return np.array(request.param, dtype=np.float64)

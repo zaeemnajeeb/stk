@@ -16,12 +16,15 @@ class BidentateSquarePlanar(MetalComplex):
     Metal building blocks with at least four functional groups are
     required for this topology graph.
 
-    Linker building blocks with two functional groups are required
+    Ligand building blocks with two functional groups are required
     for this topology graph.
 
-    :class:`.BuildingBlock` placements:
-        metals: (0, )
-        ligands: (0, 1)
+    When using a :class:`dict` for initialization, a
+    :class:`.BuildingBlock` needs to be assigned to each of the
+    following numbers:
+
+        | metals: (0, )
+        | ligands: (0, 1)
 
     See :class:`.MetalComplex` for more details and examples.
 
