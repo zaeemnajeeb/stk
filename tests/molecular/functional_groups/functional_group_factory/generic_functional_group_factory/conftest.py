@@ -427,7 +427,84 @@ from ..case_data import CaseData
                 ),
             ),
         ),
-
+        CaseData(
+            factory=stk.AcetalFactory(),
+            molecule=stk.BuildingBlock('CCOC(CC)(CCC(O)OC(C)C)OC'),
+            functional_groups=(
+                stk.Acetal(
+                    carbon=stk.C(3),
+                    oxygen1=stk.O(2),
+                    atom1=stk.C(1),
+                    oxygen2=stk.O(14),
+                    atom2=stk.C(15),
+                    atom3=stk.C(4),
+                    atom4=stk.C(6),
+                    bonders=(stk.C(3), ),
+                    deleters=(
+                        stk.O(2), stk.C(1), stk.O(14), stk.C(15)
+                    ),
+                ),
+                stk.Acetal(
+                    carbon=stk.C(8),
+                    oxygen1=stk.O(9),
+                    atom1=stk.H(31),
+                    oxygen2=stk.O(10),
+                    atom2=stk.C(11),
+                    atom3=stk.C(7),
+                    atom4=stk.H(30),
+                    bonders=(stk.C(8), ),
+                    deleters=(
+                        stk.O(9), stk.H(31), stk.O(10), stk.C(11)
+                    ),
+                ),
+            ),
+        ),
+        CaseData(
+            factory=stk.ThioacetalFactory(),
+            molecule=stk.BuildingBlock('CSC(CC)(C(S)SC(C)C)SC'),
+            functional_groups=(
+                stk.Thioacetal(
+                    carbon=stk.C(5),
+                    sulfur1=stk.S(6),
+                    atom1=stk.H(22),
+                    sulfur2=stk.S(7),
+                    atom2=stk.C(8),
+                    atom3=stk.C(2),
+                    atom4=stk.H(21),
+                    bonders=(stk.C(5), ),
+                    deleters=(
+                        stk.S(6), stk.H(22), stk.S(7), stk.C(8)
+                    ),
+                ),
+                stk.Thioacetal(
+                    carbon=stk.C(2),
+                    sulfur1=stk.S(1),
+                    atom1=stk.C(0),
+                    sulfur2=stk.S(11),
+                    atom2=stk.C(12),
+                    atom3=stk.C(3),
+                    atom4=stk.C(5),
+                    bonders=(stk.C(2), ),
+                    deleters=(
+                        stk.S(1), stk.C(0), stk.S(11), stk.C(12)
+                    ),
+                ),
+            ),
+        ),
+        CaseData(
+            factory=stk.DisulfideFactory(),
+            molecule=stk.BuildingBlock('COSSC(C)C'),
+            functional_groups=(
+                stk.Disulfide(
+                    sulfur1=stk.S(2),
+                    atom1=stk.O(1),
+                    sulfur2=stk.S(3),
+                    atom2=stk.C(4),
+                    bonders=(stk.S(2), ),
+                    deleters=(stk.S(3), stk.C(4), ),
+                ),
+            ),
+        ),
     )
 )
 def case_data(request):

@@ -5,6 +5,7 @@ Functional Group
 .. toctree::
     :maxdepth: 2
 
+    Acetal <stk.molecular.functional_groups.functional_groups.acetal>
     Alcohol <stk.molecular.functional_groups.functional_groups.alcohol>
     Aldehyde <\
 stk.molecular.functional_groups.functional_groups.aldehyde\
@@ -24,6 +25,9 @@ stk.molecular.functional_groups.functional_groups.carboxylic_acid\
 stk.molecular.functional_groups.functional_groups.difluoro\
 >
     Diol <stk.molecular.functional_groups.functional_groups.diol>
+    Disulfide <\
+stk.molecular.functional_groups.functional_groups.disulfide\
+>
     Fluoro <stk.molecular.functional_groups.functional_groups.fluoro>
     Generic Functional Group <\
 stk.molecular.functional_groups.functional_groups.\
@@ -42,6 +46,7 @@ stk.molecular.functional_groups.functional_groups.secondary_amino\
     Single Atom <\
 stk.molecular.functional_groups.functional_groups.single_atom\
 >
+Thioacetal <stk.molecular.functional_groups.functional_groups.thioacetal>
     Thioacid <\
 stk.molecular.functional_groups.functional_groups.thioacid\
 >

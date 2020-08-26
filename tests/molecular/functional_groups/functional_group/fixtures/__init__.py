@@ -17,3 +17,6 @@ from .fluoro import *
 from .iodo import *
 from .thiol import *
 from .ring_amine import *
+from .acetal import *
+from .disulfide import *
+from .thioacetal import *

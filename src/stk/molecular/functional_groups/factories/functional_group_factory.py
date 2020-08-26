@@ -5,6 +5,9 @@ Functional Group Factory
 .. toctree::
     :maxdepth: 2
 
+    Acetal Factory <\
+stk.molecular.functional_groups.factories.acetal_factory\
+>
     Alcohol Factory <\
 stk.molecular.functional_groups.factories.alcohol_factory\
 >
@@ -32,6 +35,9 @@ stk.molecular.functional_groups.factories.difluoro_factory\
     Diol Factory <\
 stk.molecular.functional_groups.factories.diol_factory\
 >
+    Disulfide Factory <\
+stk.molecular.functional_groups.factories.disulfide_factory\
+>
     Fluoro Factory <\
 stk.molecular.functional_groups.factories.fluoro_factory\
 >
@@ -55,6 +61,9 @@ stk.molecular.functional_groups.factories.terminal_alkene_factory\
 >
     Terminal Alkyne Factory <\
 stk.molecular.functional_groups.factories.terminal_alkyne_factory\
+>
+    Thioacetal Factory <\
+stk.molecular.functional_groups.factories.thioacetal_factory\
 >
     Thioacid Factory <\
 stk.molecular.functional_groups.factories.thioacid_factory\

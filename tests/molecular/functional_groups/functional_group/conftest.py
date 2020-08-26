@@ -25,6 +25,9 @@ from .fixtures import * # noqa
         lazy_fixture('fluoro'),
         lazy_fixture('iodo'),
         lazy_fixture('thiol'),
+        lazy_fixture('acetal'),
+        lazy_fixture('thioacetal'),
+        lazy_fixture('disulfide'),
     ),
 )
 def generic_case_data(request):
