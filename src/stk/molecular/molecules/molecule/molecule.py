@@ -864,20 +864,6 @@ class Molecule:
         }[extension](self, path, atom_ids)
         return self
 
-    def delete_bond(self,bond_to_delete):
-        """Deletes all bonds that match the given atomic id
-        within a given Molecule.
-        E.g. bond_to_delete=(5,6,2) will delete the A=A present if
-        they have the id A(5) and A(6) where A is any atom"""
-        
-        x=0
-        for bond in self._bonds:
-            if bond.get_atom1().get_id() is bond_to_delete[0] and bond.get_atom2().get_id() is bond_to_delete[1]:
-                self._bonds=tuple(self._bonds[:x]+self._bonds[(x+1):])
-                break
-            else:
-                x+=1
-
     def __str__(self):
         return repr(self)
 
