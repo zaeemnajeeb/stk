@@ -19,7 +19,7 @@ def acetal(get_atom_ids):
 
 
 def _acetal(carbon, oxygen1, atom1, oxygen2, atom2, atom3, atom4):
-    bonders = (carbon)
+    bonders = (carbon, )
     deleters = (oxygen1, atom1, oxygen2, atom2)
     return GenericCaseData(
         functional_group=stk.Acetal(

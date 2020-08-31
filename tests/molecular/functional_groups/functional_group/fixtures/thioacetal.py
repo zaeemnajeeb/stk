@@ -19,10 +19,10 @@ def thioacetal(get_atom_ids):
 
 
 def _thioacetal(carbon, sulfur1, atom1, sulfur2, atom2, atom3, atom4):
-    bonders = (carbon)
+    bonders = (carbon, )
     deleters = (sulfur1, atom1, sulfur2, atom2)
     return GenericCaseData(
-        functional_group=stk.Acetal(
+        functional_group=stk.Thioacetal(
             carbon=carbon,
             sulfur1=sulfur1,
             atom1=atom1,
