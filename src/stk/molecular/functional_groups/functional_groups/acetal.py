@@ -220,6 +220,6 @@ class Acetal(GenericFunctionalGroup):
             f'{self.__class__.__name__}('
             f'{self._carbon}, {self._oxygen1}, {self._atom1}, '
             f'{self._oxygen2}, {self._atom2}, {self._atom3}, '
-            f'{self._atom4}), '
+            f'{self._atom4}, '
             f'bonders={self._bonders}, deleters={self._deleters})'
         )
