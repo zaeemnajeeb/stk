@@ -28,3 +28,24 @@ def _get_atom_ids(query, molecule):
     yield from rdkit_mol.GetSubstructMatches(
         query=rdkit.MolFromSmarts(query),
     )
+
+def _find_R_ids(molecule, deleters, bonder, previous_deleters = set()):
+    if len(previous_deleters) is len(deleters):
+        return deleters
+    else:
+        new=set()
+        for atoms in deleters.difference(previous_deleters):
+            for bonds in molecule.get_bonds():
+                if atoms is bonds.get_atom1().get_id():
+                    new.add(bonds.get_atom2().get_id())
+                elif atoms is bonds.get_atom2().get_id():
+                    new.add(bonds.get_atom1().get_id())
+        new.discard(bonder)  
+        previous_deleters=deleters.copy()
+        deleters=deleters.union(new)
+        return _find_R_ids(
+            molecule=molecule,
+            deleters=deleters,
+            previous_deleters=previous_deleters,
+            bonder=bonder
+            )

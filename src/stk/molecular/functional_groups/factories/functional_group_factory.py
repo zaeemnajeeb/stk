@@ -14,6 +14,9 @@ stk.molecular.functional_groups.factories.alcohol_factory\
     Aldehyde Factory <\
 stk.molecular.functional_groups.factories.aldehyde_factory\
 >
+    Alkene Metathesis Factory <\
+stk.molecular.functional_groups.factories.alkene_metathesis_factory\
+>
     Amide Factory <\
 stk.molecular.functional_groups.factories.amide_factory\
 >
@@ -37,6 +40,9 @@ stk.molecular.functional_groups.factories.diol_factory\
 >
     Disulfide Factory <\
 stk.molecular.functional_groups.factories.disulfide_factory\
+>
+    Disulfide Exchange Factory <\
+stk.molecular.functional_groups.factories.disulfide_exchange_factory\
 >
     Fluoro Factory <\
 stk.molecular.functional_groups.factories.fluoro_factory\

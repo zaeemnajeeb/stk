@@ -505,6 +505,73 @@ from ..case_data import CaseData
                 ),
             ),
         ),
+        CaseData(
+            factory=stk.DisulfideExchangeFactory(),
+            molecule=stk.BuildingBlock('C=CSSCN(CCC)C(C)SSC'),
+            functional_groups=(
+                stk.Disulfide(
+                    sulfur1=stk.S(2),
+                    atom1=stk.C(1),
+                    sulfur2=stk.S(3),
+                    atom2=stk.C(4),
+                    bonders=(stk.S(3), ),
+                    deleters=(
+                        stk.C(0), stk.C(1), stk.S(2), 
+                        stk.H(14), stk.H(15), stk.H(16), 
+                        ),
+                ),
+                stk.Disulfide(
+                    sulfur1=stk.S(11),
+                    atom1=stk.C(9),
+                    sulfur2=stk.S(12),
+                    atom2=stk.C(13),
+                    bonders=(stk.S(11), ),
+                    deleters=(
+                        stk.S(12), stk.C(13), 
+                        stk.H(30), stk.H(31), stk.H(32)),
+                ),
+            ),
+        ),
+        CaseData(
+            factory=stk.AlkeneMetathesisFactory(),
+            molecule=stk.BuildingBlock('NC=CCCC(CC=C)C(C)(C)C/C=C/C'),
+            functional_groups=(
+                stk.Alkene(
+                    carbon1=stk.C(1),
+                    atom1=stk.N(0),
+                    atom2=stk.H(18),
+                    carbon2=stk.C(2),
+                    atom3=stk.C(3),
+                    atom4=stk.H(19),
+                    bonders=(stk.C(2), ),
+                    deleters=(
+                        stk.N(0), stk.C(1), 
+                        stk.H(16),stk.H(17), stk.H(18)),
+                ),
+                stk.Alkene(
+                    carbon1=stk.C(7),
+                    atom1=stk.C(6),
+                    atom2=stk.H(27),
+                    carbon2=stk.C(8),
+                    atom3=stk.H(28),
+                    atom4=stk.H(29),
+                    bonders=(stk.C(7), ),
+                    deleters=(stk.C(8), stk.H(28), stk.H(29)),
+                ),
+                stk.Alkene(
+                    carbon1=stk.C(13),
+                    atom1=stk.C(12),
+                    atom2=stk.H(38),
+                    carbon2=stk.C(14),
+                    atom3=stk.C(15),
+                    atom4=stk.H(39),
+                    bonders=(stk.C(13), ),
+                    deleters=(
+                        stk.C(14), stk.C(15), stk.H(39),
+                        stk.H(40), stk.H(41), stk.H(42)),
+                ),
+            ),
+        )
     )
 )
 def case_data(request):
